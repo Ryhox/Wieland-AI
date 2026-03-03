@@ -9,31 +9,6 @@ const { exec } = require('child_process');
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
-// DEMO MODE 
-const DEMO_MODE = false;
-
-const DEMO_RESPONSES = [
-  `**Hallo! Ich bin Wieland** – dein lokaler KI-Assistent.\n\nDies ist eine **Demo-Vorschau**. Im echten Betrieb läuft hier ein lokales Sprachmodell (Qwen3-VL) vollständig offline auf deinem Gerät.\n\n*Keine Daten verlassen deinen Computer.*`,
-  `Das ist eine gute Frage! In der **Live-Version** würde ich dir jetzt eine ausführliche Antwort geben – vollständig lokal und ohne Internetverbindung.\n\nIn dieser Vorschau simuliere ich nur das Streaming-Verhalten. ✓`,
-  `**Demo-Modus aktiv.** In der echten Version verarbeite ich:\n\n- Textnachrichten\n- Bilder (JPG, PNG, GIF, WebP)\n- Lange Gesprächsverläufe\n\nAlles bleibt **offline** auf deinem Gerät.`,
-  `Interessant! Hier würde die KI deine Anfrage in Echtzeit verarbeiten.\n\nDiese Vorschau zeigt dir das **Streaming-Verhalten**: Die Antwort erscheint Wort für Wort, genau wie im echten Betrieb.`,
-];
-
-let demoIndex = 0;
-
-async function streamDemoResponse(res) {
-  const text   = DEMO_RESPONSES[demoIndex % DEMO_RESPONSES.length];
-  demoIndex++;
-  const tokens = text.split(/(?<=\s)|(?=\s)/);
-
-  for (const token of tokens) {
-    if (res.writableEnded) break;
-    res.write(token);
-    await new Promise(r => setTimeout(r, 18 + Math.random() * 24));
-  }
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cors());
@@ -79,6 +54,7 @@ function toSafeFilename(str) {
     .slice(0, 40);
 }
 
+
 const SYSTEM = `You are a LOCAL, OFFLINE language model. YOUR NAME IS "Wieland".
 - You are NOT online and have no internet access.
 - You CAN analyse images provided in this conversation.
@@ -86,6 +62,7 @@ const SYSTEM = `You are a LOCAL, OFFLINE language model. YOUR NAME IS "Wieland".
 Always respond in the exact language of the user's last message.
 Speak naturally and concisely. If you don't know something, say so.
 You may use *italic*, **bold**, and - bullet points.`;
+
 
 const OLLAMA_OPTIONS_8B = {
   think:       false,
@@ -146,11 +123,6 @@ async function pipeOllamaChatStream(ollamaRes, expressRes) {
 }
 
 async function generateChatTitle(firstUserMessage) {
-  // In demo mode skip the Ollama title call and derive a title from the message
-  if (DEMO_MODE) {
-    return firstUserMessage.slice(0, 50);
-  }
-
   const truncated = firstUserMessage.slice(0, 200);
   try {
     const res = await fetch('http://localhost:11434/api/chat', {
@@ -176,16 +148,7 @@ async function generateChatTitle(firstUserMessage) {
   }
 }
 
-// ─── Health ───────────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
-  if (DEMO_MODE) {
-    return res.json({
-      status:    'ok',
-      timestamp: new Date().toISOString(),
-      ollama:    'demo-mode',
-      models:    'demo-mode – no real models loaded',
-    });
-  }
   exec('ollama list', (err, stdout) => {
     res.json({
       status:    'ok',
@@ -196,40 +159,24 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// ─── Chat stream ──────────────────────────────────────────────────────────────
 app.post('/api/chat/stream', upload.single('image'), async (req, res) => {
   const imageFile = req.file ?? null;
   const message   = req.body.message?.trim() || (imageFile ? 'Describe this image' : '');
   if (!message) return res.status(400).json({ error: 'message or image required' });
 
-  res.setHeader('Content-Type',      'text/plain; charset=utf-8');
-  res.setHeader('Cache-Control',     'no-cache');
-  res.setHeader('Connection',        'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no');
-
-  // ── DEMO: stream a pre-written reply and skip Ollama entirely ──────────────
-  if (DEMO_MODE) {
-    try {
-      await streamDemoResponse(res);
-    } catch (err) {
-      console.error('Demo stream error:', err.message);
-      if (!res.headersSent) res.status(502).end('Demo stream error');
-    } finally {
-      res.end();
-    }
-    return;
-  }
-  // ── LIVE: original Ollama path (unchanged) ─────────────────────────────────
-
   const requestedModel = req.body.model || 'qwen3-vl:8b-instruct';
   const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : 'qwen3-vl:8b-instruct';
-  const options = model === 'qwen3-vl:4b-instruct' ? OLLAMA_OPTIONS_4B : OLLAMA_OPTIONS_8B;
-
+const options = model === 'qwen3-vl:4b-instruct' ? OLLAMA_OPTIONS_4B : OLLAMA_OPTIONS_8B; 
   let context = [];
   try {
     context = req.body.context ? JSON.parse(req.body.context) : [];
     if (!Array.isArray(context)) context = [];
   } catch { context = []; }
+
+  res.setHeader('Content-Type',      'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control',     'no-cache');
+  res.setHeader('Connection',        'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
 
   const ollamaMessages = [
     { role: 'system', content: SYSTEM },
@@ -250,7 +197,13 @@ app.post('/api/chat/stream', upload.single('image'), async (req, res) => {
     const ollamaRes = await fetch('http://localhost:11434/api/chat', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ model, messages: ollamaMessages, stream: true, options }),
+      body:    JSON.stringify({
+        model,
+        messages: ollamaMessages,
+        stream:   true,
+        options: options,
+
+      }),
     });
 
     if (!ollamaRes.ok) {
@@ -268,7 +221,6 @@ app.post('/api/chat/stream', upload.single('image'), async (req, res) => {
   }
 });
 
-// ─── History endpoints (unchanged) ───────────────────────────────────────────
 app.post('/api/history/upload-image', upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No image provided' });
   try {
@@ -356,11 +308,13 @@ app.get('/api/history', (_req, res) => {
   }
 });
 
+
 app.use((err, _req, res, _next) => {
   console.error('Unhandled:', err.message);
   res.status(err.status ?? 500).json({ error: err.message || 'Internal server error' });
 });
 
+
 app.listen(PORT, () => {
-  console.log(`Wieland http://localhost:${PORT}${DEMO_MODE ? '  [DEMO MODE]' : ''}`);
+  console.log(`Wieland http://localhost:${PORT}`);
 });
