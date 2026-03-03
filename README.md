@@ -12,7 +12,7 @@
 - Chat history with optional automatic titles
 - Image upload and preview
 - Editable messages
-- Responsive design for desktop and mobile
+- Responsive design for desktop and mobile(a bit)
 - Multiple models (`qwen3-vl:8b-instruct`, `qwen3-vl:4b-instruct`)
 
 ---
