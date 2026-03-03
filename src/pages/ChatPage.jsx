@@ -4,7 +4,7 @@ import Starfield from '../components/Starfield';
 import Scene3D from '../components/Scene3D';
 import ChatInterface from '../components/ChatInterface';
 import LoadingAnimation from '../components/LoadingAnimation';
-import Header from '../components/header';
+import Header from '../components/Header';
 import '../styles/HomePage.css';
 
 function ChatPage() {
