@@ -1,4 +1,4 @@
-import '../styles/Header.css';
+import '../styles/header.css';
 
 function Header({ isSidebarOpen, noSidebar, onNewChat }) {
 
