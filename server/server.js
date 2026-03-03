@@ -9,23 +9,22 @@ const { exec } = require('child_process');
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
-
-
-const DEMO_MODE = true;
+// DEMO MODE 
+const DEMO_MODE = false;
 
 const DEMO_RESPONSES = [
-  `**Hallo! Ich bin Wieland** – dein lokaler KI-Assistent.\n\nDies ist eine **Demo-Vorschau**. Im echten Betrieb läuft hier ein lokales Sprachmodell (Qwen3-VL) vollständig offline auf deinem Gerät.\n\n*Um Ressourcen zu schonen läuft hier keine wirkliche AI*`,
+  `**Hallo! Ich bin Wieland** – dein lokaler KI-Assistent.\n\nDies ist eine **Demo-Vorschau**. Im echten Betrieb läuft hier ein lokales Sprachmodell (Qwen3-VL) vollständig offline auf deinem Gerät.\n\n*Keine Daten verlassen deinen Computer.*`,
+  `Das ist eine gute Frage! In der **Live-Version** würde ich dir jetzt eine ausführliche Antwort geben – vollständig lokal und ohne Internetverbindung.\n\nIn dieser Vorschau simuliere ich nur das Streaming-Verhalten. ✓`,
+  `**Demo-Modus aktiv.** In der echten Version verarbeite ich:\n\n- Textnachrichten\n- Bilder (JPG, PNG, GIF, WebP)\n- Lange Gesprächsverläufe\n\nAlles bleibt **offline** auf deinem Gerät.`,
+  `Interessant! Hier würde die KI deine Anfrage in Echtzeit verarbeiten.\n\nDiese Vorschau zeigt dir das **Streaming-Verhalten**: Die Antwort erscheint Wort für Wort, genau wie im echten Betrieb.`,
 ];
 
 let demoIndex = 0;
 
-const demoChats  = new Map();
-const demoImages = new Map();
-
 async function streamDemoResponse(res) {
   const text   = DEMO_RESPONSES[demoIndex % DEMO_RESPONSES.length];
   demoIndex++;
-  const tokens = text.split(/(?<=\s)|(?=\s)/); 
+  const tokens = text.split(/(?<=\s)|(?=\s)/);
 
   for (const token of tokens) {
     if (res.writableEnded) break;
@@ -33,28 +32,20 @@ async function streamDemoResponse(res) {
     await new Promise(r => setTimeout(r, 18 + Math.random() * 24));
   }
 }
+// ─────────────────────────────────────────────────────────────────────────────
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cors());
 
-
 const HISTORY_DIR = path.join(__dirname, 'history');
 const IMAGES_DIR  = path.join(__dirname, 'history', 'images');
 
-if (!DEMO_MODE) {
-  for (const dir of [HISTORY_DIR, IMAGES_DIR]) {
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  }
-  app.use('/history/images', express.static(IMAGES_DIR));
-} else {
-  app.get('/history/images/:filename', (req, res) => {
-    const entry = demoImages.get(req.params.filename);
-    if (!entry) return res.status(404).end('Not found');
-    res.setHeader('Content-Type', entry.mimetype);
-    res.send(entry.buffer);
-  });
+for (const dir of [HISTORY_DIR, IMAGES_DIR]) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
+
+app.use('/history/images', express.static(IMAGES_DIR));
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 
@@ -67,18 +58,12 @@ const upload = multer({
   },
 });
 
-function saveImage(buffer, mimetype) {
+function saveImageToDisk(buffer, mimetype) {
   const ext      = mimetype.split('/')[1].replace('jpeg', 'jpg');
   const hash     = crypto.createHash('sha256').update(buffer).digest('hex').slice(0, 16);
   const filename = `${hash}.${ext}`;
-
-  if (DEMO_MODE) {
-    if (!demoImages.has(filename)) demoImages.set(filename, { buffer, mimetype });
-  } else {
-    const filepath = path.join(IMAGES_DIR, filename);
-    if (!fs.existsSync(filepath)) fs.writeFileSync(filepath, buffer);
-  }
-
+  const filepath = path.join(IMAGES_DIR, filename);
+  if (!fs.existsSync(filepath)) fs.writeFileSync(filepath, buffer);
   return `/history/images/${filename}`;
 }
 
@@ -161,7 +146,10 @@ async function pipeOllamaChatStream(ollamaRes, expressRes) {
 }
 
 async function generateChatTitle(firstUserMessage) {
-  if (DEMO_MODE) return firstUserMessage.slice(0, 50);
+  // In demo mode skip the Ollama title call and derive a title from the message
+  if (DEMO_MODE) {
+    return firstUserMessage.slice(0, 50);
+  }
 
   const truncated = firstUserMessage.slice(0, 200);
   try {
@@ -188,6 +176,7 @@ async function generateChatTitle(firstUserMessage) {
   }
 }
 
+// ─── Health ───────────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
   if (DEMO_MODE) {
     return res.json({
@@ -207,6 +196,7 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+// ─── Chat stream ──────────────────────────────────────────────────────────────
 app.post('/api/chat/stream', upload.single('image'), async (req, res) => {
   const imageFile = req.file ?? null;
   const message   = req.body.message?.trim() || (imageFile ? 'Describe this image' : '');
@@ -217,6 +207,7 @@ app.post('/api/chat/stream', upload.single('image'), async (req, res) => {
   res.setHeader('Connection',        'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no');
 
+  // ── DEMO: stream a pre-written reply and skip Ollama entirely ──────────────
   if (DEMO_MODE) {
     try {
       await streamDemoResponse(res);
@@ -228,8 +219,10 @@ app.post('/api/chat/stream', upload.single('image'), async (req, res) => {
     }
     return;
   }
+  // ── LIVE: original Ollama path (unchanged) ─────────────────────────────────
+
   const requestedModel = req.body.model || 'qwen3-vl:8b-instruct';
-  const model   = ALLOWED_MODELS.has(requestedModel) ? requestedModel : 'qwen3-vl:8b-instruct';
+  const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : 'qwen3-vl:8b-instruct';
   const options = model === 'qwen3-vl:4b-instruct' ? OLLAMA_OPTIONS_4B : OLLAMA_OPTIONS_8B;
 
   let context = [];
@@ -275,10 +268,11 @@ app.post('/api/chat/stream', upload.single('image'), async (req, res) => {
   }
 });
 
+// ─── History endpoints (unchanged) ───────────────────────────────────────────
 app.post('/api/history/upload-image', upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No image provided' });
   try {
-    res.json({ url: saveImage(req.file.buffer, req.file.mimetype) });
+    res.json({ url: saveImageToDisk(req.file.buffer, req.file.mimetype) });
   } catch (err) {
     console.error('Image save error:', err);
     res.status(500).json({ error: 'Failed to save image' });
@@ -300,25 +294,15 @@ app.post('/api/history/save', async (req, res) => {
     const targetFilename = path.basename(
       filename ?? `${title ? toSafeFilename(title) : 'chat'}_${Date.now()}.json`
     );
+    const filepath = path.join(HISTORY_DIR, targetFilename);
+    const existing = fs.existsSync(filepath) ? readJSON(filepath) : null;
 
-    if (DEMO_MODE) {
-      const existing = demoChats.get(targetFilename) ?? null;
-      demoChats.set(targetFilename, {
-        timestamp: existing?.timestamp ?? new Date().toISOString(),
-        updated:   new Date().toISOString(),
-        title:     title ?? existing?.title ?? null,
-        messages,
-      });
-    } else {
-      const filepath = path.join(HISTORY_DIR, targetFilename);
-      const existing = fs.existsSync(filepath) ? readJSON(filepath) : null;
-      fs.writeFileSync(filepath, JSON.stringify({
-        timestamp: existing?.timestamp ?? new Date().toISOString(),
-        updated:   new Date().toISOString(),
-        title:     title ?? existing?.title ?? null,
-        messages,
-      }, null, 2), 'utf8');
-    }
+    fs.writeFileSync(filepath, JSON.stringify({
+      timestamp: existing?.timestamp ?? new Date().toISOString(),
+      updated:   new Date().toISOString(),
+      title:     title ?? existing?.title ?? null,
+      messages,
+    }, null, 2), 'utf8');
 
     res.json({ success: true, filename: targetFilename, title });
   } catch (err) {
@@ -328,15 +312,7 @@ app.post('/api/history/save', async (req, res) => {
 });
 
 app.get('/api/history/:filename', (req, res) => {
-  const name = path.basename(req.params.filename);
-
-  if (DEMO_MODE) {
-    const data = demoChats.get(name);
-    if (!data) return res.status(404).json({ error: 'Not found' });
-    return res.json(data);
-  }
-
-  const fp = path.join(HISTORY_DIR, name);
+  const fp = path.join(HISTORY_DIR, path.basename(req.params.filename));
   if (!fs.existsSync(fp)) return res.status(404).json({ error: 'Not found' });
   const data = readJSON(fp);
   if (!data) return res.status(500).json({ error: 'Corrupt file' });
@@ -344,15 +320,7 @@ app.get('/api/history/:filename', (req, res) => {
 });
 
 app.delete('/api/history/:filename', (req, res) => {
-  const name = path.basename(req.params.filename);
-
-  if (DEMO_MODE) {
-    if (!demoChats.has(name)) return res.status(404).json({ error: 'Not found' });
-    demoChats.delete(name);
-    return res.json({ success: true });
-  }
-
-  const fp = path.join(HISTORY_DIR, name);
+  const fp = path.join(HISTORY_DIR, path.basename(req.params.filename));
   if (!fs.existsSync(fp)) return res.status(404).json({ error: 'Not found' });
   try { fs.unlinkSync(fp); res.json({ success: true }); }
   catch { res.status(500).json({ error: 'Failed to delete' }); }
@@ -360,25 +328,6 @@ app.delete('/api/history/:filename', (req, res) => {
 
 app.get('/api/history', (_req, res) => {
   try {
-    if (DEMO_MODE) {
-      const files = [...demoChats.entries()]
-        .map(([filename, data]) => {
-          const firstUser = data.messages?.find(m => m.role === 'user')?.content ?? '';
-          return {
-            filename,
-            created:      data.timestamp,
-            updated:      data.updated,
-            messageCount: data.messages?.length ?? 0,
-            title:        data.title ?? null,
-            preview:      data.title
-                          || firstUser.replace(/!\[.*?\]\([^)]+\)\n\n?/g, '').slice(0, 60)
-                          || 'Neuer Chat',
-          };
-        })
-        .sort((a, b) => new Date(b.updated) - new Date(a.updated));
-      return res.json(files);
-    }
-
     const files = fs.readdirSync(HISTORY_DIR)
       .filter(f => f.endsWith('.json'))
       .map(f => {
@@ -413,5 +362,5 @@ app.use((err, _req, res, _next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Wieland http://localhost:${PORT}${DEMO_MODE ? '  [DEMO MODE — in-memory only]' : ''}`);
+  console.log(`Wieland http://localhost:${PORT}${DEMO_MODE ? '  [DEMO MODE]' : ''}`);
 });
