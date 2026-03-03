@@ -1,0 +1,24 @@
+#stars-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#three-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.home-container {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: #0a0a0a;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+}
+
