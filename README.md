@@ -1,9 +1,9 @@
-# Wieland-AI
+# [Wieland-AI](https://ai.ryhox.dev)
+
 
 **Wieland-AI** is a locally hosted, offline AI chat assistant powered by [Ollama](https://ollama.com). It supports text and image inputs, live streaming of responses, and chat history with optional automatic titles. Designed for privacy and offline use.
 
 ---
-
 ## Features
 
 - Offline, local AI chat assistant
