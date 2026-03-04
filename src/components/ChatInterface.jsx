@@ -1,3 +1,5 @@
+
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import '../styles/ChatInterface.css';
 import Sidebar from './Sidebar';
@@ -81,6 +83,8 @@ export default function ChatInterface({
   inputOffset = 50,
   onNewChatRef,
 }) {
+  const DEMO_MODE = true;
+
   const [messages,      setMessages]      = useState([]);
   const [input,         setInput]         = useState('');
   const [isSending,     setIsSending]     = useState(false);
@@ -281,7 +285,7 @@ useEffect(() => {
       const isNew = !currentChatRef.current && final.length <= 2;
       await saveChat(final, currentChatRef.current, isNew);
 
-    } catch (err) {
+} catch (err) {
       if (err.name === 'AbortError') {
         if (currentChatRef.current) {
           await saveChat(
@@ -293,8 +297,11 @@ useEffect(() => {
         return;
       }
       console.error('Stream error:', err);
+      const fallback = DEMO_MODE
+        ? '**Hallo! Ich bin Wieland** – dein lokaler KI-Assistent.\n\nDies ist eine **Demo-Vorschau**. Im echten Betrieb läuft hier ein lokales Sprachmodell (Qwen3-VL) vollständig offline auf deinem Gerät.\n\n*Um Ressourcen zu schonen läuft hier keine wirkliche AI*'
+        : 'Fehler bei der Kommunikation mit dem Server.';
       setMessages(prev => prev.map(m =>
-        m.id === aiId ? { ...m, content: 'Fehler bei der Kommunikation mit dem Server.' } : m
+        m.id === aiId ? { ...m, content: fallback } : m
       ));
     } finally {
       abortRef.current = null;
