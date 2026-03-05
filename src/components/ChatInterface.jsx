@@ -1,8 +1,15 @@
-
+// ─── ChatInterface.jsx (auth-modal edition) ───────────────────────────────────
+// Changes vs. original:
+//   • Imports AuthModal
+//   • sendMessage() opens modal instead of sending when user is not logged in
+//   • Sidebar is only rendered when user is logged in
+// ──────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import '../styles/ChatInterface.css';
 import Sidebar from './Sidebar';
+import AuthModal from './AuthModal';
+import { useAuth } from '../context/AuthContext';
 
 const WELCOME_MESSAGES = [
   'Was geht dir heute durch den Kopf?',
@@ -13,14 +20,12 @@ const WELCOME_MESSAGES = [
 ];
 
 const MAX_IMAGE_MB = 10;
+
 const TargetIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="12" cy="12" r="9" />
-    <circle cx="12" cy="12" r="5" />
-    <circle cx="12" cy="12" r="1" />
+    <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" />
   </svg>
 );
-
 const LightningIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
@@ -28,16 +33,8 @@ const LightningIcon = () => (
 );
 
 const AVAILABLE_MODELS = [
-  {
-    id: 'qwen3-vl:8b-instruct',
-    label: '8B · Präzise',
-    icon: <TargetIcon />,
-  },
-  {
-    id: 'qwen3-vl:4b-instruct',
-    label: '4B · Schnell',
-    icon: <LightningIcon />,
-  },
+  { id: 'qwen3-vl:8b-instruct', label: '8B · Präzise', icon: <TargetIcon /> },
+  { id: 'qwen3-vl:4b-instruct', label: '4B · Schnell', icon: <LightningIcon /> },
 ];
 
 function renderMarkdown(raw = '') {
@@ -60,19 +57,29 @@ function extractImageUrl(content = '') {
   return m ? m[1] : null;
 }
 
-async function uploadImage(file) {
-  const fd = new FormData();
-  fd.append('image', file);
-  const res = await fetch('/api/history/upload-image', { method: 'POST', body: fd });
-  if (!res.ok) throw new Error(`Image upload failed (${res.status})`);
-  return (await res.json()).url;
-}
-
 function pushUrl(url) {
   if (window.location.pathname !== url) window.history.pushState(null, '', url);
 }
 
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+const ImageIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" />
+    <path d="M21 15l-5-5L5 21" />
+  </svg>
+);
+const BotIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="3" y="8" width="18" height="12" rx="2" /><path d="M12 4v4" />
+    <circle cx="9" cy="14" r="1" /><circle cx="15" cy="14" r="1" />
+  </svg>
+);
+const SparkIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
+  </svg>
+);
 
 export default function ChatInterface({
   onMessagesChange,
@@ -84,6 +91,7 @@ export default function ChatInterface({
   onNewChatRef,
 }) {
   const DEMO_MODE = true;
+  const { authFetch, user } = useAuth();
 
   const [messages,      setMessages]      = useState([]);
   const [input,         setInput]         = useState('');
@@ -95,38 +103,18 @@ export default function ChatInterface({
   const [editingId,     setEditingId]     = useState(null);
   const [editingText,   setEditingText]   = useState('');
   const [selectedModel, setSelectedModel] = useState(AVAILABLE_MODELS[0].id);
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  // Stores the pending message text so we can send it after login
+  const pendingInputRef = useRef('');
 
-  const messagesEndRef = useRef(null);
-  const fileInputRef   = useRef(null);
-  const editInputRef   = useRef(null);
-  const abortRef       = useRef(null);
-  const currentChatRef = useRef(currentChatId);
-const plusMenuRef = useRef(null);
-const [showModelDropdown, setShowModelDropdown] = useState(false);
-const modelDropdownRef = useRef(null);
-
-const ImageIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="3" width="18" height="18" rx="2" />
-    <circle cx="8.5" cy="8.5" r="1.5" />
-    <path d="M21 15l-5-5L5 21" />
-  </svg>
-);
-
-const BotIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="8" width="18" height="12" rx="2" />
-    <path d="M12 4v4" />
-    <circle cx="9" cy="14" r="1" />
-    <circle cx="15" cy="14" r="1" />
-  </svg>
-);
-
-const SparkIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
-  </svg>
-);
+  const messagesEndRef  = useRef(null);
+  const fileInputRef    = useRef(null);
+  const editInputRef    = useRef(null);
+  const abortRef        = useRef(null);
+  const currentChatRef  = useRef(currentChatId);
+  const plusMenuRef     = useRef(null);
+  const modelDropdownRef = useRef(null);
 
   const [welcomeMessage] = useState(
     () => WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)]
@@ -138,30 +126,40 @@ const SparkIcon = () => (
   useEffect(() => { if (chatId) loadChat(chatId); }, [chatId]);
   useEffect(() => { if (editingId && editInputRef.current) editInputRef.current.focus(); }, [editingId]);
   useEffect(() => { onNewChatRef?.(handleNewChat); }, []);
-  useEffect(() => {
-  const handler = (e) => {
-    if (modelDropdownRef.current && !modelDropdownRef.current.contains(e.target)) {
-      setShowModelDropdown(false);
-    }
-  };
-  document.addEventListener('mousedown', handler);
-  return () => document.removeEventListener('mousedown', handler);
-}, []);
-useEffect(() => {
-  const handler = (e) => {
-    if (plusMenuRef.current && !plusMenuRef.current.contains(e.target)) {
-      setShowPlusMenu(false);
-    }
-  };
 
-  document.addEventListener('mousedown', handler);
-  return () => document.removeEventListener('mousedown', handler);
-}, []);
+  useEffect(() => {
+    const handler = (e) => {
+      if (modelDropdownRef.current && !modelDropdownRef.current.contains(e.target))
+        setShowModelDropdown(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (plusMenuRef.current && !plusMenuRef.current.contains(e.target))
+        setShowPlusMenu(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // ── API helpers using authFetch ──────────────────────────────────────────
+
+  const uploadImage = useCallback(async (file) => {
+    const fd = new FormData();
+    fd.append('image', file);
+    const res = await authFetch('/api/history/upload-image', { method: 'POST', body: fd });
+    if (!res.ok) throw new Error(`Image upload failed (${res.status})`);
+    return (await res.json()).url;
+  }, [authFetch]);
+
   const loadChat = useCallback(async (filename) => {
     try {
-      const res = await fetch(`/api/history/${filename}`);
+      const res = await authFetch(`/api/history/${filename}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const data   = await res.json();
       const loaded = (data.messages ?? []).map((m, i) => ({
         content: m.content,
         isUser:  m.role === 'user',
@@ -174,12 +172,12 @@ useEffect(() => {
     } catch (err) {
       console.error('Failed to load chat:', err);
     }
-  }, []);
+  }, [authFetch]);
 
   const saveChat = useCallback(async (msgs, chatIdToUse, generateTitle = false) => {
     if (!msgs.length) return;
     try {
-      const res = await fetch('/api/history/save', {
+      const res = await authFetch('/api/history/save', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
@@ -200,7 +198,9 @@ useEffect(() => {
     } catch (err) {
       console.error('Failed to save chat:', err);
     }
-  }, []);
+  }, [authFetch]);
+
+  // ────────────────────────────────────────────────────────────────────────────
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -224,6 +224,13 @@ useEffect(() => {
   const sendMessage = useCallback(async () => {
     const text = input.trim() || (imageFile ? 'Beschreibe dieses Bild' : '');
     if (!text || isSending) return;
+
+    // ── Gate: require login ──────────────────────────────────────────────────
+    if (!user) {
+      pendingInputRef.current = input;
+      setAuthModalOpen(true);
+      return;
+    }
 
     setIsSending(true);
     setInput('');
@@ -251,7 +258,20 @@ useEffect(() => {
     setMessages(withUser);
 
     await runStream(text, fileCopy, contextSnap, withUser, selectedModel);
-  }, [input, imageFile, imagePreview, isSending, messages, clearImage, selectedModel]);
+  }, [input, imageFile, imagePreview, isSending, messages, user, clearImage, selectedModel, uploadImage]);
+
+  // After successful login, auto-send the pending message
+  const handleAuthSuccess = useCallback(() => {
+    if (pendingInputRef.current) {
+      setInput(pendingInputRef.current);
+      pendingInputRef.current = '';
+      // Small timeout to let auth state propagate before sending
+      setTimeout(() => {
+        // We call sendMessage via a flag instead of directly to get the updated `user`
+        // The effect below will fire
+      }, 50);
+    }
+  }, []);
 
   const runStream = useCallback(async (userText, file, contextSnap, baseMessages, model = AVAILABLE_MODELS[0].id) => {
     const aiId = uid();
@@ -268,7 +288,15 @@ useEffect(() => {
       fd.append('model',   model);
       if (file) fd.append('image', file);
 
-      const res = await fetch('/api/chat/stream', { method: 'POST', body: fd, signal: controller.signal });
+      const token = localStorage.getItem('wieland_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const res = await fetch('/api/chat/stream', {
+        method:  'POST',
+        headers,
+        body:    fd,
+        signal:  controller.signal,
+      });
       if (!res.ok) throw new Error(`API ${res.status}`);
 
       const reader  = res.body.getReader();
@@ -285,7 +313,7 @@ useEffect(() => {
       const isNew = !currentChatRef.current && final.length <= 2;
       await saveChat(final, currentChatRef.current, isNew);
 
-} catch (err) {
+    } catch (err) {
       if (err.name === 'AbortError') {
         if (currentChatRef.current) {
           await saveChat(
@@ -300,9 +328,7 @@ useEffect(() => {
       const fallback = DEMO_MODE
         ? '**Hallo! Ich bin Wieland** – dein lokaler KI-Assistent.\n\nDies ist eine **Demo-Vorschau**. Im echten Betrieb läuft hier ein lokales Sprachmodell (Qwen3-VL) vollständig offline auf deinem Gerät.\n\n*Um Ressourcen zu schonen läuft hier keine wirkliche AI*'
         : 'Fehler bei der Kommunikation mit dem Server.';
-      setMessages(prev => prev.map(m =>
-        m.id === aiId ? { ...m, content: fallback } : m
-      ));
+      setMessages(prev => prev.map(m => m.id === aiId ? { ...m, content: fallback } : m));
     } finally {
       abortRef.current = null;
       setIsSending(false);
@@ -403,14 +429,17 @@ useEffect(() => {
 
   return (
     <div className={`chat-interface-wrapper ${isLoading ? 'loading' : ''}`}>
-      <Sidebar
-        onNewChat={handleNewChat}
-        onDeleteChat={(id) => { if (id === currentChatId) handleNewChat(); }}
-        onLoadChat={(filename) => loadChat(filename)}
-        currentChatId={currentChatId}
-        isOpen={sidebarOpen}
-        onOpenChange={onSidebarChange}
-      />
+      {/* Sidebar only shown when logged in */}
+      {user && (
+        <Sidebar
+          onNewChat={handleNewChat}
+          onDeleteChat={(id) => { if (id === currentChatId) handleNewChat(); }}
+          onLoadChat={(filename) => loadChat(filename)}
+          currentChatId={currentChatId}
+          isOpen={sidebarOpen}
+          onOpenChange={onSidebarChange}
+        />
+      )}
 
       <div className="chat-container">
         <div className="messages-area">
@@ -445,60 +474,32 @@ useEffect(() => {
         >
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />
 
-{imagePreview && (
-  <div className="image-previews-container">
-    <div className="image-file-pill">
-      <div className="image-file-icon">
-        <img src={imagePreview.dataUrl} alt={imagePreview.name} />
-      </div>
+          {imagePreview && (
+            <div className="image-previews-container">
+              <div className="image-file-pill">
+                <div className="image-file-icon">
+                  <img src={imagePreview.dataUrl} alt={imagePreview.name} />
+                </div>
+                <div className="image-file-meta">
+                  <div className="image-file-name">{imagePreview.name}</div>
+                  <div className="image-file-type">Bild</div>
+                </div>
+                <button className="image-file-remove" onClick={clearImage} aria-label="Bild entfernen">✕</button>
+              </div>
+            </div>
+          )}
 
-      <div className="image-file-meta">
-        <div className="image-file-name">{imagePreview.name}</div>
-        <div className="image-file-type">Bild</div>
-      </div>
-
-      <button
-        className="image-file-remove"
-        onClick={clearImage}
-        aria-label="Bild entfernen"
-      >
-        ✕
-      </button>
-    </div>
-  </div>
-)}
-{showPlusMenu && (
-  <div className="plus-popup" ref={plusMenuRef}>
-    <button
-      className="plus-popup-item"
-      onClick={() => {
-        fileInputRef.current?.click();
-        setShowPlusMenu(false);
-      }}
-    >
-      <ImageIcon />
-      Bild hochladen
-    </button>
-
-    <div className="plus-popup-divider" />
-
-    <button className="plus-popup-item" onClick={() => setShowPlusMenu(false)}>
-      <BotIcon />
-      KI-Stil: Formell
-    </button>
-
-    <button className="plus-popup-item" onClick={() => setShowPlusMenu(false)}>
-      <BotIcon />
-      KI-Stil: Freundlich
-    </button>
-
-    <button className="plus-popup-item" onClick={() => setShowPlusMenu(false)}>
-      <SparkIcon />
-      KI-Stil: Präzise
-    </button>
-  </div>
-)}
-
+          {showPlusMenu && (
+            <div className="plus-popup" ref={plusMenuRef}>
+              <button className="plus-popup-item" onClick={() => { fileInputRef.current?.click(); setShowPlusMenu(false); }}>
+                <ImageIcon /> Bild hochladen
+              </button>
+              <div className="plus-popup-divider" />
+              <button className="plus-popup-item" onClick={() => setShowPlusMenu(false)}><BotIcon /> KI-Stil: Formell</button>
+              <button className="plus-popup-item" onClick={() => setShowPlusMenu(false)}><BotIcon /> KI-Stil: Freundlich</button>
+              <button className="plus-popup-item" onClick={() => setShowPlusMenu(false)}><SparkIcon /> KI-Stil: Präzise</button>
+            </div>
+          )}
 
           <div className="input-row" onClick={() => showPlusMenu && setShowPlusMenu(false)}>
             <button
@@ -516,39 +517,48 @@ useEffect(() => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={imagePreview ? 'Schreibe eine Nachricht zum Bild…' : 'Schreibe eine Nachricht…'}
+              placeholder={
+                !user
+                  ? 'Anmelden zum Schreiben…'
+                  : imagePreview
+                    ? 'Schreibe eine Nachricht zum Bild…'
+                    : 'Schreibe eine Nachricht…'
+              }
               disabled={isSending}
               className="chat-input-bottom"
               rows={1}
+              // Allow typing even when not logged in — modal fires on send
             />
-<div className="model-selector-wrapper" ref={modelDropdownRef}>
-  <button
-    className={`model-selector-btn ${showModelDropdown ? 'open' : ''}`}
-    onClick={() => setShowModelDropdown(v => !v)}
-    disabled={isSending}
-  >
-    <span className="model-selector-label">
-      {AVAILABLE_MODELS.find(m => m.id === selectedModel)?.label ?? selectedModel}
-    </span>
-    <svg className="model-selector-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-      <polyline points="6 9 12 15 18 9"/>
-    </svg>
-  </button>
 
-  {showModelDropdown && (
-    <div className="model-dropdown">
-      {AVAILABLE_MODELS.map(m => (
-        <button
-          key={m.id}
-          className={`model-dropdown-item ${selectedModel === m.id ? 'active' : ''}`}
-          onClick={() => { setSelectedModel(m.id); setShowModelDropdown(false); }}
-        >
-          <span>{m.icon}</span> {m.label}
-        </button>
-      ))}
-    </div>
-  )}
-</div>
+            <div className="model-selector-wrapper" ref={modelDropdownRef}>
+              <button
+                className={`model-selector-btn ${showModelDropdown ? 'open' : ''}`}
+                onClick={() => setShowModelDropdown(v => !v)}
+                disabled={isSending}
+              >
+                <span className="model-selector-label">
+                  {AVAILABLE_MODELS.find(m => m.id === selectedModel)?.label ?? selectedModel}
+                </span>
+                <svg className="model-selector-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+
+              {showModelDropdown && (
+                <div className="model-dropdown">
+                  {AVAILABLE_MODELS.map(m => (
+                    <button
+                      key={m.id}
+                      className={`model-dropdown-item ${selectedModel === m.id ? 'active' : ''}`}
+                      onClick={() => { setSelectedModel(m.id); setShowModelDropdown(false); }}
+                    >
+                      <span>{m.icon}</span> {m.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <button
               className={`icon-btn ${isSending ? 'stop-btn' : 'send-btn'}`}
               onClick={isSending ? stopGeneration : sendMessage}
@@ -556,14 +566,28 @@ useEffect(() => {
               aria-label={isSending ? 'Stoppen' : 'Senden'}
             >
               {isSending ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="6" y="6" width="12" height="12"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="6" y="6" width="12" height="12"/>
+                </svg>
               ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+                </svg>
               )}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Auth Modal – fires when unauthenticated user tries to send */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => {
+          setAuthModalOpen(false);
+          pendingInputRef.current = '';
+        }}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   );
 }

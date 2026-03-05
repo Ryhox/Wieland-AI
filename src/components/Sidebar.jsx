@@ -1,35 +1,53 @@
 import { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import '../styles/Sidebar.css';
 
 export default function Sidebar({ onNewChat, onDeleteChat, onLoadChat, currentChatId, isOpen, onOpenChange }) {
-  const [chats, setChats] = useState([]);
-  const sidebarRef = useRef(null);
+  const { user, logout, authFetch } = useAuth();
+  const navigate                    = useNavigate();
+  const [chats, setChats]           = useState([]);
+  const sidebarRef                  = useRef(null);
+
+  // Derive initials from username (up to 2 chars)
+  const initials = user?.username
+    ? user.username.slice(0, 2).toUpperCase()
+    : '?';
 
   useEffect(() => {
     loadChats();
-    const interval = setInterval(loadChats, 2000);
+    const interval = setInterval(loadChats, 3000);
     return () => clearInterval(interval);
   }, []);
-useEffect(() => {
-  if (!isOpen) return;
 
-  const handler = (e) => {
-    if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
-      onOpenChange(false);
-    }
-  };
+  useEffect(() => {
+    // Reload chats when a chat update event fires (dispatched by ChatInterface)
+    const handler = () => loadChats();
+    window.addEventListener('chatHistoryUpdated', handler);
+    return () => window.removeEventListener('chatHistoryUpdated', handler);
+  }, []);
 
-  document.addEventListener('mousedown', handler);
-  return () => document.removeEventListener('mousedown', handler);
-}, [isOpen, onOpenChange]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
+        onOpenChange(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isOpen, onOpenChange]);
+
   const loadChats = async () => {
     try {
-      const response = await fetch('/api/history');
+      const response = await authFetch('/api/history');
       if (response.ok) {
         const data = await response.json();
         setChats(Array.isArray(data) ? data : data.chats || []);
       }
-    } catch (error) { console.error('Error loading chats:', error); }
+    } catch (error) {
+      console.error('Error loading chats:', error);
+    }
   };
 
   const handleNewChat = async () => {
@@ -37,26 +55,31 @@ useEffect(() => {
     await loadChats();
   };
 
-  const handleLoadChat = (filename) => {
-    onLoadChat(filename);
-  };
-
   const handleDeleteChat = async (filename, e) => {
     e.stopPropagation();
     if (window.confirm('Chat wirklich löschen?')) {
       try {
-        const response = await fetch(`/api/history/${filename}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        if (response.ok) { await onDeleteChat(filename); await loadChats(); }
-        else alert('Fehler beim Löschen des Chats');
-      } catch (error) { alert('Fehler beim Löschen des Chats'); }
+        const response = await authFetch(`/api/history/${filename}`, { method: 'DELETE' });
+        if (response.ok) {
+          await onDeleteChat(filename);
+          await loadChats();
+        } else {
+          alert('Fehler beim Löschen des Chats');
+        }
+      } catch {
+        alert('Fehler beim Löschen des Chats');
+      }
     }
   };
 
+  const handleLogout = () => {
+    onOpenChange(false);
+    logout();
+    navigate('/');
+  };
+
   return (
-    <aside   ref={sidebarRef} className={`sidebar ${isOpen ? 'open' : 'collapsed'}`}>
+    <aside ref={sidebarRef} className={`sidebar ${isOpen ? 'open' : 'collapsed'}`}>
 
       <div
         className={`sidebar-hamburger ${isOpen ? 'sidebar-open' : ''}`}
@@ -64,8 +87,8 @@ useEffect(() => {
         title="Menü"
       >
         <svg fill="none" viewBox="0 0 50 50" height="28" width="28">
-          <path className="lineTop line" strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 11L44 11" />
-          <path className="lineMid line" strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 24H43" />
+          <path className="lineTop line"    strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 11L44 11" />
+          <path className="lineMid line"    strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 24H43" />
           <path className="lineBottom line" strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 37H43" />
         </svg>
       </div>
@@ -99,31 +122,21 @@ useEffect(() => {
                 <div
                   key={chat.filename}
                   className={`chat-item ${chat.filename === currentChatId ? 'active' : ''}`}
-                  onClick={() => handleLoadChat(chat.filename)}
+                  onClick={() => onLoadChat(chat.filename)}
                 >
                   <span className="chat-name">{chat.preview || `Chat ${chat.filename.slice(-6)}`}</span>
-<button
-  className="delete-chat-btn"
-  onClick={(e) => handleDeleteChat(chat.filename, e)}
-  title="Löschen"
->
-  <svg 
-    width="15" 
-    height="15" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round"
-  >
-    <polyline points="3 6 5 6 21 6" />
-    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-    <path d="M10 11v6" />
-    <path d="M14 11v6" />
-    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-  </svg>
-</button>
+                  <button
+                    className="delete-chat-btn"
+                    onClick={(e) => handleDeleteChat(chat.filename, e)}
+                    title="Löschen"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                      <path d="M10 11v6" /><path d="M14 11v6" />
+                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                    </svg>
+                  </button>
                 </div>
               ))
             )}
@@ -135,12 +148,25 @@ useEffect(() => {
 
       <div className="sidebar-bottom">
         <div className="sidebar-profile">
-          <div className="sidebar-avatar">Kürzel</div>
+          <div className="sidebar-avatar">{initials}</div>
           {isOpen && (
-            <div className="sidebar-profile-info">
-              <span className="sidebar-profile-name">Name</span>
-              <span className="sidebar-profile-plan">PLan</span>
-            </div>
+            <>
+              <div className="sidebar-profile-info">
+                <span className="sidebar-profile-name">{user?.username ?? '—'}</span>
+                <span className="sidebar-profile-plan">{user?.plan ?? 'Free'}</span>
+              </div>
+              <button
+                className="sidebar-logout-btn"
+                onClick={handleLogout}
+                title="Abmelden"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </button>
+            </>
           )}
         </div>
       </div>

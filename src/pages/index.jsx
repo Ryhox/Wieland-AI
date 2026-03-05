@@ -5,24 +5,29 @@ import ChatInterface from '../components/ChatInterface';
 import LoadingAnimation from '../components/LoadingAnimation';
 import Header from '../components/Header';
 import '../styles/HomePage.css';
+import { useAuth } from '../context/AuthContext';
 
 function Home() {
   const [is3DReady, setIs3DReady] = useState(false);
   const [hasMessages, setHasMessages] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isInitialLoadRef = useRef(true);
+  const { user } = useAuth();                     // check if user is logged in
+  const [sidebarOpen, setSidebarOpen] = useState(false);  const isInitialLoadRef = useRef(true);
+  const noSidebar = !user;
+
   const newChatRef = useRef(null); 
 
   const showLoading = isInitialLoadRef.current && !is3DReady;
 
   return (
-    <div className="home-container">
+    <div className={`home-container ${sidebarOpen ? 'sidebar-open' : ''}`}>
+      <Header 
+        isSidebarOpen={sidebarOpen}
+        noSidebar={noSidebar}                      // now correctly passed
+        onNewChat={() => newChatRef.current?.()}
+      />
       <LoadingAnimation isVisible={showLoading} />
-<Header 
-  isSidebarOpen={sidebarOpen} 
-  onHamburgerClick={() => setSidebarOpen(v => !v)} 
-  onNewChat={() => newChatRef.current?.()}
-/>      <Starfield />
+
+  <Starfield />
       
 
       

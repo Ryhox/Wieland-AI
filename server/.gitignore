@@ -3,3 +3,6 @@ npm-debug.log
 .DS_Store
 history/
 *.log
+
+.env
+setup_db.sql
