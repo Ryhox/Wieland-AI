@@ -1,10 +1,3 @@
-// ─── ChatInterface.jsx (auth-modal edition) ───────────────────────────────────
-// Changes vs. original:
-//   • Imports AuthModal
-//   • sendMessage() opens modal instead of sending when user is not logged in
-//   • Sidebar is only rendered when user is logged in
-// ──────────────────────────────────────────────────────────────────────────────
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import '../styles/ChatInterface.css';
 import Sidebar from './Sidebar';
@@ -105,7 +98,6 @@ export default function ChatInterface({
   const [selectedModel, setSelectedModel] = useState(AVAILABLE_MODELS[0].id);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  // Stores the pending message text so we can send it after login
   const pendingInputRef = useRef('');
 
   const messagesEndRef  = useRef(null);
@@ -144,8 +136,6 @@ export default function ChatInterface({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
-  // ── API helpers using authFetch ──────────────────────────────────────────
 
   const uploadImage = useCallback(async (file) => {
     const fd = new FormData();
@@ -200,8 +190,6 @@ export default function ChatInterface({
     }
   }, [authFetch]);
 
-  // ────────────────────────────────────────────────────────────────────────────
-
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -225,7 +213,6 @@ export default function ChatInterface({
     const text = input.trim() || (imageFile ? 'Beschreibe dieses Bild' : '');
     if (!text || isSending) return;
 
-    // ── Gate: require login ──────────────────────────────────────────────────
     if (!user) {
       pendingInputRef.current = input;
       setAuthModalOpen(true);
@@ -260,15 +247,11 @@ export default function ChatInterface({
     await runStream(text, fileCopy, contextSnap, withUser, selectedModel);
   }, [input, imageFile, imagePreview, isSending, messages, user, clearImage, selectedModel, uploadImage]);
 
-  // After successful login, auto-send the pending message
   const handleAuthSuccess = useCallback(() => {
     if (pendingInputRef.current) {
       setInput(pendingInputRef.current);
       pendingInputRef.current = '';
-      // Small timeout to let auth state propagate before sending
       setTimeout(() => {
-        // We call sendMessage via a flag instead of directly to get the updated `user`
-        // The effect below will fire
       }, 50);
     }
   }, []);
@@ -429,7 +412,6 @@ export default function ChatInterface({
 
   return (
     <div className={`chat-interface-wrapper ${isLoading ? 'loading' : ''}`}>
-      {/* Sidebar only shown when logged in */}
       {user && (
         <Sidebar
           onNewChat={handleNewChat}
@@ -527,7 +509,6 @@ export default function ChatInterface({
               disabled={isSending}
               className="chat-input-bottom"
               rows={1}
-              // Allow typing even when not logged in — modal fires on send
             />
 
             <div className="model-selector-wrapper" ref={modelDropdownRef}>
@@ -579,7 +560,6 @@ export default function ChatInterface({
         </div>
       </div>
 
-      {/* Auth Modal – fires when unauthenticated user tries to send */}
       <AuthModal
         isOpen={authModalOpen}
         onClose={() => {

@@ -394,7 +394,6 @@ app.post('/api/history/save', requireAuth, async (req, res) => {
   }
 });
 
-// ─── HISTORY GET ──────────────────────────────────────────────────────────────
 app.get('/api/history/:filename', requireAuth, async (req, res) => {
   try {
     const chatResult = await pool.query(
@@ -415,7 +414,7 @@ app.get('/api/history/:filename', requireAuth, async (req, res) => {
   }
 });
 
-// ─── HISTORY DELETE ───────────────────────────────────────────────────────────
+
 app.delete('/api/history/:filename', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
@@ -430,7 +429,6 @@ app.delete('/api/history/:filename', requireAuth, async (req, res) => {
   }
 });
 
-// ─── HISTORY LIST ─────────────────────────────────────────────────────────────
 app.get('/api/history', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
@@ -463,20 +461,18 @@ app.get('/api/history', requireAuth, async (req, res) => {
   }
 });
 
-// ─── HEALTH ───────────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
   exec('ollama list', (err, stdout) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString(), ollama: err ? 'unreachable' : 'running', models: stdout || 'none' });
   });
 });
 
-// ─── ERROR HANDLER ────────────────────────────────────────────────────────────
 app.use((err, _req, res, _next) => {
   console.error('Unhandled:', err.message);
   res.status(err.status ?? 500).json({ error: err.message || 'Internal server error' });
 });
 
-// ─── START ────────────────────────────────────────────────────────────────────
+
 initDB().then(() => {
   app.listen(PORT, () => console.log(`Wieland http://localhost:${PORT}`));
 }).catch(err => {

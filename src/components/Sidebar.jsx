@@ -9,7 +9,6 @@ export default function Sidebar({ onNewChat, onDeleteChat, onLoadChat, currentCh
   const [chats, setChats]           = useState([]);
   const sidebarRef                  = useRef(null);
 
-  // Derive initials from username (up to 2 chars)
   const initials = user?.username
     ? user.username.slice(0, 2).toUpperCase()
     : '?';
@@ -21,7 +20,6 @@ export default function Sidebar({ onNewChat, onDeleteChat, onLoadChat, currentCh
   }, []);
 
   useEffect(() => {
-    // Reload chats when a chat update event fires (dispatched by ChatInterface)
     const handler = () => loadChats();
     window.addEventListener('chatHistoryUpdated', handler);
     return () => window.removeEventListener('chatHistoryUpdated', handler);

@@ -1,10 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-/**
- * Wrap routes that require authentication.
- * Saves the attempted URL so after login the user is redirected back.
- */
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const location          = useLocation();

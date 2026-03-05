@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 function Home() {
   const [is3DReady, setIs3DReady] = useState(false);
   const [hasMessages, setHasMessages] = useState(false);
-  const { user } = useAuth();                     // check if user is logged in
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);  const isInitialLoadRef = useRef(true);
   const noSidebar = !user;
 
@@ -22,7 +22,7 @@ function Home() {
     <div className={`home-container ${sidebarOpen ? 'sidebar-open' : ''}`}>
       <Header 
         isSidebarOpen={sidebarOpen}
-        noSidebar={noSidebar}                      // now correctly passed
+        noSidebar={noSidebar}
         onNewChat={() => newChatRef.current?.()}
       />
       <LoadingAnimation isVisible={showLoading} />

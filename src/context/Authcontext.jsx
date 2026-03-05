@@ -12,7 +12,6 @@ export function AuthProvider({ children }) {
   const [token,   setToken]   = useState(() => localStorage.getItem(TOKEN_KEY));
   const [loading, setLoading] = useState(true);
 
-  // Validate token on mount
   useEffect(() => {
     const storedToken = localStorage.getItem(TOKEN_KEY);
     if (!storedToken) { setLoading(false); return; }
@@ -49,7 +48,6 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
-  /** Fetch wrapper that always includes Authorization header */
   const authFetch = useCallback((url, options = {}) => {
     const headers = { ...(options.headers || {}) };
     const tok = localStorage.getItem(TOKEN_KEY);

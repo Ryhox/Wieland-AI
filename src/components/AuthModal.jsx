@@ -96,7 +96,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
           </p>
         </div>
 
-        {/* Tabs */}
         <div className="auth-modal-tabs">
           <button
             className={`auth-modal-tab ${mode === 'login' ? 'active' : ''}`}
@@ -114,7 +113,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* Form */}
         <form className="auth-modal-form" onSubmit={handleSubmit} noValidate>
 
           {mode === 'register' && (
