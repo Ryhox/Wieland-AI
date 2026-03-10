@@ -6,12 +6,12 @@ import Footer from '../components/Footer';
 function Download({ isSidebarOpen }) {
   return (
     <div className={`page-wrapper ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-<Header noSidebar />
+      <Header noSidebar />
 
       <main className="page-content">
         <div className="page-container">
 
-            <h1>Download</h1>
+          <h1>Download</h1>
         </div>
       </main>
 

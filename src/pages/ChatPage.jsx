@@ -22,7 +22,7 @@ function ChatPage() {
           const response = await fetch('/api/history');
           if (response.ok) {
             const chats = await response.json();
-            const matchingChat = chats.find(chat => 
+            const matchingChat = chats.find(chat =>
               chat.filename.includes(chatId)
             );
             if (matchingChat) {
@@ -37,7 +37,7 @@ function ChatPage() {
           setActualFilename(null);
         }
       };
-      
+
       findChatFile();
     } else {
       setActualFilename(null);
@@ -49,22 +49,22 @@ function ChatPage() {
   return (
     <div className="home-container">
       <LoadingAnimation isVisible={showLoading} />
-<Header 
-  isSidebarOpen={sidebarOpen} 
-  onHamburgerClick={() => setSidebarOpen(v => !v)} 
-  onNewChat={() => newChatRef.current?.()}
-/>
+      <Header
+        isSidebarOpen={sidebarOpen}
+        onHamburgerClick={() => setSidebarOpen(v => !v)}
+        onNewChat={() => newChatRef.current?.()}
+      />
       <Starfield />
       <Scene3D hasMessages={hasMessages} onReady={() => { setIs3DReady(true); isInitialLoadRef.current = false; }} />
-<ChatInterface
-  onMessagesChange={setHasMessages}
-  chatId={actualFilename}
-  sidebarOpen={sidebarOpen}
-  onSidebarChange={setSidebarOpen}
-  inputOffset={hasMessages ? 50 : 425}
-  onNewChatRef={(fn) => { newChatRef.current = fn; }}
+      <ChatInterface
+        onMessagesChange={setHasMessages}
+        chatId={actualFilename}
+        sidebarOpen={sidebarOpen}
+        onSidebarChange={setSidebarOpen}
+        inputOffset={hasMessages ? 50 : 425}
+        onNewChatRef={(fn) => { newChatRef.current = fn; }}
 
-/>
+      />
     </div>
   );
 }

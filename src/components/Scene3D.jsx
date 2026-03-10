@@ -23,22 +23,22 @@ function makeSpring(stiffness = 100, damping = 16) {
 }
 
 export default function Scene3D({ hasMessages, onReady }) {
-  const canvasRef          = useRef(null);
-  const sceneRef           = useRef(null);
-  const cameraRef          = useRef(null);
+  const canvasRef = useRef(null);
+  const sceneRef = useRef(null);
+  const cameraRef = useRef(null);
   const objectsToRotateRef = useRef([]);
   const currentRotationRef = useRef(0);
-  const isReadyRef         = useRef(false);
+  const isReadyRef = useRef(false);
 
-  const characterRef   = useRef(null);
+  const characterRef = useRef(null);
   const planetGroupRef = useRef(null);
 
-  const camSpringX  = useRef(makeSpring(70,  15));
-  const charSpringX = useRef(makeSpring(80,  13));
-  const charSpringY = useRef(makeSpring(55,   9));
-  const planSpringX = useRef(makeSpring(75,  12));
-  const planSpringY = useRef(makeSpring(50,   8));
-  const rotSpring   = useRef(makeSpring(60,  13));
+  const camSpringX = useRef(makeSpring(70, 15));
+  const charSpringX = useRef(makeSpring(80, 13));
+  const charSpringY = useRef(makeSpring(55, 9));
+  const planSpringX = useRef(makeSpring(75, 12));
+  const planSpringY = useRef(makeSpring(50, 8));
+  const rotSpring = useRef(makeSpring(60, 13));
 
   const charBaseY = useRef(-1.0);
   const planBaseY = useRef(0);
@@ -87,22 +87,22 @@ export default function Scene3D({ hasMessages, onReady }) {
     scene.add(planetGlow);
 
     const particleCount = 400;
-    const particleGeo   = new THREE.BufferGeometry();
+    const particleGeo = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
-    const particleColors    = new Float32Array(particleCount * 3);
+    const particleColors = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount; i++) {
       const r = 3 + Math.random() * 4;
       const theta = Math.random() * Math.PI * 2;
-      const phi   = Math.random() * Math.PI * 2;
-      particlePositions[i*3]   = Math.sin(theta) * Math.cos(phi) * r;
-      particlePositions[i*3+1] = Math.sin(theta) * Math.sin(phi) * r * 0.3;
-      particlePositions[i*3+2] = Math.cos(theta) * r;
-      particleColors[i*3]   = 0.8 + Math.random() * 0.4;
-      particleColors[i*3+1] = 0.7 + Math.random() * 0.5;
-      particleColors[i*3+2] = 1.0;
+      const phi = Math.random() * Math.PI * 2;
+      particlePositions[i * 3] = Math.sin(theta) * Math.cos(phi) * r;
+      particlePositions[i * 3 + 1] = Math.sin(theta) * Math.sin(phi) * r * 0.3;
+      particlePositions[i * 3 + 2] = Math.cos(theta) * r;
+      particleColors[i * 3] = 0.8 + Math.random() * 0.4;
+      particleColors[i * 3 + 1] = 0.7 + Math.random() * 0.5;
+      particleColors[i * 3 + 2] = 1.0;
     }
     particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-    particleGeo.setAttribute('color',    new THREE.BufferAttribute(particleColors, 3));
+    particleGeo.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
     const particleMat = new THREE.PointsMaterial({
       size: 0.08, vertexColors: true, transparent: true,
       opacity: 0.4, blending: THREE.AdditiveBlending,
@@ -137,7 +137,7 @@ export default function Scene3D({ hasMessages, onReady }) {
       const size = new THREE.Vector3();
       box.getSize(size);
       const maxDim = Math.max(size.x, size.y, size.z);
-      const scale  = (ER * 2) / maxDim;
+      const scale = (ER * 2) / maxDim;
       fbx.scale.setScalar(scale);
       const center = new THREE.Vector3();
       box.getCenter(center);
@@ -178,26 +178,26 @@ export default function Scene3D({ hasMessages, onReady }) {
     ));
 
     const NPART = 180;
-    const pPh    = new Float32Array(NPART);
-    const pRad   = new Float32Array(NPART);
-    const pSpd   = new Float32Array(NPART);
-    const pH     = new Float32Array(NPART);
-    const pTilt  = new Float32Array(NPART);
+    const pPh = new Float32Array(NPART);
+    const pRad = new Float32Array(NPART);
+    const pSpd = new Float32Array(NPART);
+    const pH = new Float32Array(NPART);
+    const pTilt = new Float32Array(NPART);
     const pColor = new Float32Array(NPART * 3);
     for (let i = 0; i < NPART; i++) {
-      pRad[i]  = ER + 0.25 + Math.random() * 1.2;
-      pPh[i]   = Math.random() * Math.PI * 2;
-      pSpd[i]  = 0.04 + Math.random() * 0.15;
-      pH[i]    = (Math.random() - 0.5) * 0.8;
+      pRad[i] = ER + 0.25 + Math.random() * 1.2;
+      pPh[i] = Math.random() * Math.PI * 2;
+      pSpd[i] = 0.04 + Math.random() * 0.15;
+      pH[i] = (Math.random() - 0.5) * 0.8;
       pTilt[i] = (Math.random() - 0.5) * 1.2;
       const cv = Math.random();
-      if (cv < 0.33)      { pColor[i*3]=0.9; pColor[i*3+1]=0.8; pColor[i*3+2]=1.0; }
-      else if (cv < 0.66) { pColor[i*3]=0.7; pColor[i*3+1]=1.0; pColor[i*3+2]=0.9; }
-      else                { pColor[i*3]=1.0; pColor[i*3+1]=0.9; pColor[i*3+2]=0.7; }
+      if (cv < 0.33) { pColor[i * 3] = 0.9; pColor[i * 3 + 1] = 0.8; pColor[i * 3 + 2] = 1.0; }
+      else if (cv < 0.66) { pColor[i * 3] = 0.7; pColor[i * 3 + 1] = 1.0; pColor[i * 3 + 2] = 0.9; }
+      else { pColor[i * 3] = 1.0; pColor[i * 3 + 1] = 0.9; pColor[i * 3 + 2] = 0.7; }
     }
     const pGeo = new THREE.BufferGeometry();
     pGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NPART * 3), 3));
-    pGeo.setAttribute('color',    new THREE.BufferAttribute(pColor, 3));
+    pGeo.setAttribute('color', new THREE.BufferAttribute(pColor, 3));
     const pMat = new THREE.PointsMaterial({
       size: 0.022, vertexColors: true, transparent: true,
       opacity: 0.8, sizeAttenuation: true, blending: THREE.AdditiveBlending,
@@ -215,31 +215,31 @@ export default function Scene3D({ hasMessages, onReady }) {
     const DEF_DOWN = (35 * Math.PI) / 180;
     const breathBones = [];
     const BC = 3.9, BAC = 0.4, BAS = 0.4, BAH = 0.03;
-    const CK = ['chest','spine1','spine_1','spine01','upperchest','upper_chest'];
-    const SK = ['spine','pelvis','hips','root'];
+    const CK = ['chest', 'spine1', 'spine_1', 'spine01', 'upperchest', 'upper_chest'];
+    const SK = ['spine', 'pelvis', 'hips', 'root'];
 
     const ARM_POSE = {
-      Shoulderr: { ax: new THREE.Vector3(0, 0,  1), ag:  0.2  },
-      Shoulderl: { ax: new THREE.Vector3(0, 0, -1), ag:  0.2  },
-      UpperArmr: { ax: new THREE.Vector3(0, 0,  1), ag:  1.22 },
-      UpperArml: { ax: new THREE.Vector3(0, 0, -1), ag:  1.22 },
-      LowerArmr: { ax: new THREE.Vector3(1, 0,  0), ag:  0.18 },
-      LowerArml: { ax: new THREE.Vector3(1, 0,  0), ag:  0.18 },
-      Thumbr:    { ax: new THREE.Vector3(1, 0,  0), ag: -1.5  },
-      Thumbl:    { ax: new THREE.Vector3(1, 0,  0), ag: -1.5  },
+      Shoulderr: { ax: new THREE.Vector3(0, 0, 1), ag: 0.2 },
+      Shoulderl: { ax: new THREE.Vector3(0, 0, -1), ag: 0.2 },
+      UpperArmr: { ax: new THREE.Vector3(0, 0, 1), ag: 1.22 },
+      UpperArml: { ax: new THREE.Vector3(0, 0, -1), ag: 1.22 },
+      LowerArmr: { ax: new THREE.Vector3(1, 0, 0), ag: 0.18 },
+      LowerArml: { ax: new THREE.Vector3(1, 0, 0), ag: 0.18 },
+      Thumbr: { ax: new THREE.Vector3(1, 0, 0), ag: -1.5 },
+      Thumbl: { ax: new THREE.Vector3(1, 0, 0), ag: -1.5 },
     };
 
     const D_MIN = 40, D_MAX = 480;
     const MH = (25 * Math.PI) / 180;
     const MV = (15 * Math.PI) / 180;
-    const DZ = (5  * Math.PI) / 180;
+    const DZ = (5 * Math.PI) / 180;
     const raycaster = new THREE.Raycaster();
-    const mouse   = new THREE.Vector2();
+    const mouse = new THREE.Vector2();
     const mousePx = new THREE.Vector2(window.innerWidth / 2, window.innerHeight / 2);
 
     const mouseMoveHandler = (e) => {
       mousePx.set(e.clientX, e.clientY);
-      mouse.x =  (e.clientX / window.innerWidth)  * 2 - 1;
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
     };
     window.addEventListener('mousemove', mouseMoveHandler);
@@ -331,9 +331,9 @@ export default function Scene3D({ hasMessages, onReady }) {
       const pp = pGeo.attributes.position;
       for (let i = 0; i < NPART; i++) {
         const a = pPh[i] + el * pSpd[i];
-        pp.array[i*3]   = Math.cos(a) * pRad[i];
-        pp.array[i*3+1] = Math.sin(a) * Math.sin(pTilt[i]) * pRad[i] + pH[i];
-        pp.array[i*3+2] = Math.sin(a) * Math.cos(pTilt[i]) * pRad[i];
+        pp.array[i * 3] = Math.cos(a) * pRad[i];
+        pp.array[i * 3 + 1] = Math.sin(a) * Math.sin(pTilt[i]) * pRad[i] + pH[i];
+        pp.array[i * 3 + 2] = Math.sin(a) * Math.cos(pTilt[i]) * pRad[i];
       }
       pp.needsUpdate = true;
       pMat.opacity = 0.6 + 0.25 * Math.sin(el * 0.6);
@@ -352,35 +352,35 @@ export default function Scene3D({ hasMessages, onReady }) {
       scene.updateMatrixWorld();
 
       if (headBone && origHeadQ) {
-        const hp  = headBone.getWorldPosition(new THREE.Vector3());
-        const hs  = w2s(hp);
+        const hp = headBone.getWorldPosition(new THREE.Vector3());
+        const hs = w2s(hp);
         const dist = mousePx.distanceTo(hs);
-        const gf  = Math.pow(Math.max(0, Math.min(1, (dist - D_MIN) / (D_MAX - D_MIN))), 0.65);
-        const cd  = camera.getWorldDirection(new THREE.Vector3());
+        const gf = Math.pow(Math.max(0, Math.min(1, (dist - D_MIN) / (D_MAX - D_MIN))), 0.65);
+        const cd = camera.getWorldDirection(new THREE.Vector3());
         raycaster.setFromCamera(mouse, camera);
-        const dn  = raycaster.ray.direction.dot(cd);
+        const dn = raycaster.ray.direction.dot(cd);
         if (Math.abs(dn) > 1e-6) {
           const t2 = hp.clone().sub(raycaster.ray.origin).dot(cd) / dn;
           if (t2 >= 0) {
-            const tp  = raycaster.ray.at(t2, new THREE.Vector3());
+            const tp = raycaster.ray.at(t2, new THREE.Vector3());
             const dir = new THREE.Vector3().subVectors(tp, hp).normalize().negate();
-            const fl  = Math.sqrt(dir.x ** 2 + dir.z ** 2);
-            const ha  = Math.atan2(dir.x, dir.z) * Math.min(1, (fl / 0.35) ** 2);
-            const va  = Math.atan2(-dir.y, fl);
-            const rf  = 1 - (currentRotationRef.current / (Math.PI / 2)) * 0.6;
-            const tH  = Math.abs(ha) > DZ ? Math.sign(ha) * Math.min(Math.abs(ha), MH * rf) * gf : 0;
-            const tV  = Math.abs(va) > DZ ? Math.sign(va) * Math.min(Math.abs(va), MV * rf) * gf : 0;
-            curH  += (tH  - curH)  * SMOOTH;
-            curV  += (tV  - curV)  * SMOOTH;
+            const fl = Math.sqrt(dir.x ** 2 + dir.z ** 2);
+            const ha = Math.atan2(dir.x, dir.z) * Math.min(1, (fl / 0.35) ** 2);
+            const va = Math.atan2(-dir.y, fl);
+            const rf = 1 - (currentRotationRef.current / (Math.PI / 2)) * 0.6;
+            const tH = Math.abs(ha) > DZ ? Math.sign(ha) * Math.min(Math.abs(ha), MH * rf) * gf : 0;
+            const tV = Math.abs(va) > DZ ? Math.sign(va) * Math.min(Math.abs(va), MV * rf) * gf : 0;
+            curH += (tH - curH) * SMOOTH;
+            curV += (tV - curV) * SMOOTH;
             curBH += (curH - curBH) * BS;
             curBV += (curV - curBV) * BS;
             for (const e of bodyLeanBones) {
-              const lH = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), -curBH * e.bl);
-              const lV = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), -curBV * e.bl * 0.5);
+              const lH = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -curBH * e.bl);
+              const lV = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -curBV * e.bl * 0.5);
               e.bone.quaternion.copy(e.restQ).premultiply(lH.multiply(lV));
             }
-            const rH = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), -curH);
-            const rV = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), -curV);
+            const rH = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -curH);
+            const rV = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -curV);
             headBone.quaternion.copy(rH.multiply(rV).multiply(origHeadQ));
           }
         }
@@ -390,7 +390,7 @@ export default function Scene3D({ hasMessages, onReady }) {
         cameraRef.current.position.x = camSpringX.current.step(dt);
       }
 
-    
+
       if (characterRef.current) {
         characterRef.current.position.x = charSpringX.current.step(dt);
         characterRef.current.position.y = charBaseY.current + charSpringY.current.step(dt);

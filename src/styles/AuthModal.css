@@ -13,8 +13,13 @@
 }
 
 @keyframes overlayIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .auth-modal-card {
@@ -37,8 +42,15 @@
 
 
 @keyframes cardIn {
-  from { opacity: 0; transform: translateY(24px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .auth-modal-close {
@@ -196,9 +208,19 @@
 }
 
 @keyframes errorShake {
-  0%, 100% { transform: translateX(0); }
-  25%       { transform: translateX(-4px); }
-  75%       { transform: translateX(4px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-4px);
+  }
+
+  75% {
+    transform: translateX(4px);
+  }
 }
 
 .auth-modal-submit {
@@ -241,7 +263,9 @@
 }
 
 @keyframes modalSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .auth-modal-switch {
@@ -284,5 +308,8 @@
     padding: 28px 20px 22px;
     border-radius: 16px;
   }
-  .auth-modal-title { font-size: 18px; }
+
+  .auth-modal-title {
+    font-size: 18px;
+  }
 }

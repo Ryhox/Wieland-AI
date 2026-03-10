@@ -5,9 +5,9 @@ import '../styles/Sidebar.css';
 
 export default function Sidebar({ onNewChat, onDeleteChat, onLoadChat, currentChatId, isOpen, onOpenChange }) {
   const { user, logout, authFetch } = useAuth();
-  const navigate                    = useNavigate();
-  const [chats, setChats]           = useState([]);
-  const sidebarRef                  = useRef(null);
+  const navigate = useNavigate();
+  const [chats, setChats] = useState([]);
+  const sidebarRef = useRef(null);
 
   const initials = user?.username
     ? user.username.slice(0, 2).toUpperCase()
@@ -85,8 +85,8 @@ export default function Sidebar({ onNewChat, onDeleteChat, onLoadChat, currentCh
         title="Menü"
       >
         <svg fill="none" viewBox="0 0 50 50" height="28" width="28">
-          <path className="lineTop line"    strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 11L44 11" />
-          <path className="lineMid line"    strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 24H43" />
+          <path className="lineTop line" strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 11L44 11" />
+          <path className="lineMid line" strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 24H43" />
           <path className="lineBottom line" strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 37H43" />
         </svg>
       </div>

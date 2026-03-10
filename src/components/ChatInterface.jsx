@@ -34,10 +34,10 @@ function renderMarkdown(raw = '') {
   return raw
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/\*\*(.*?)\*\*/gs, '<strong>$1</strong>')
-    .replace(/__(.*?)__/gs,     '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/gs,     '<em>$1</em>')
-    .replace(/_(.*?)_/gs,       '<em>$1</em>')
-    .replace(/`(.*?)`/g,        '<code>$1</code>')
+    .replace(/__(.*?)__/gs, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/gs, '<em>$1</em>')
+    .replace(/_(.*?)_/gs, '<em>$1</em>')
+    .replace(/`(.*?)`/g, '<code>$1</code>')
     .replace(/\[(.*?)\]\((https?:\/\/[^)]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
     .replace(/\n/g, '<br />');
@@ -86,26 +86,26 @@ export default function ChatInterface({
   const DEMO_MODE = true;
   const { authFetch, user } = useAuth();
 
-  const [messages,      setMessages]      = useState([]);
-  const [input,         setInput]         = useState('');
-  const [isSending,     setIsSending]     = useState(false);
-  const [imageFile,     setImageFile]     = useState(null);
-  const [imagePreview,  setImagePreview]  = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [currentChatId, setCurrentChatId] = useState(chatId || null);
-  const [showPlusMenu,  setShowPlusMenu]  = useState(false);
-  const [editingId,     setEditingId]     = useState(null);
-  const [editingText,   setEditingText]   = useState('');
+  const [showPlusMenu, setShowPlusMenu] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editingText, setEditingText] = useState('');
   const [selectedModel, setSelectedModel] = useState(AVAILABLE_MODELS[0].id);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const pendingInputRef = useRef('');
 
-  const messagesEndRef  = useRef(null);
-  const fileInputRef    = useRef(null);
-  const editInputRef    = useRef(null);
-  const abortRef        = useRef(null);
-  const currentChatRef  = useRef(currentChatId);
-  const plusMenuRef     = useRef(null);
+  const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const editInputRef = useRef(null);
+  const abortRef = useRef(null);
+  const currentChatRef = useRef(currentChatId);
+  const plusMenuRef = useRef(null);
   const modelDropdownRef = useRef(null);
 
   const [welcomeMessage] = useState(
@@ -149,11 +149,11 @@ export default function ChatInterface({
     try {
       const res = await authFetch(`/api/history/${filename}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data   = await res.json();
+      const data = await res.json();
       const loaded = (data.messages ?? []).map((m, i) => ({
         content: m.content,
-        isUser:  m.role === 'user',
-        id:      `loaded-${i}-${uid()}`,
+        isUser: m.role === 'user',
+        id: `loaded-${i}-${uid()}`,
       }));
       setMessages(loaded);
       setCurrentChatId(filename);
@@ -168,11 +168,11 @@ export default function ChatInterface({
     if (!msgs.length) return;
     try {
       const res = await authFetch('/api/history/save', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          messages:      msgs.map(m => ({ role: m.isUser ? 'user' : 'assistant', content: m.content })),
-          filename:      chatIdToUse ?? undefined,
+        body: JSON.stringify({
+          messages: msgs.map(m => ({ role: m.isUser ? 'user' : 'assistant', content: m.content })),
+          filename: chatIdToUse ?? undefined,
           generateTitle,
         }),
       });
@@ -222,7 +222,7 @@ export default function ChatInterface({
     setIsSending(true);
     setInput('');
 
-    let imageUrl   = null;
+    let imageUrl = null;
     const fileCopy = imageFile;
     if (fileCopy) {
       clearImage();
@@ -234,10 +234,10 @@ export default function ChatInterface({
     }
 
     const userContent = imageUrl ? `![Bild](${imageUrl})\n\n${text}` : text;
-    const userMsg     = { content: userContent, isUser: true, id: uid() };
+    const userMsg = { content: userContent, isUser: true, id: uid() };
 
     const contextSnap = messages.map(m => ({
-      role:    m.isUser ? 'user' : 'assistant',
+      role: m.isUser ? 'user' : 'assistant',
       content: stripImg(m.content),
     }));
 
@@ -268,21 +268,21 @@ export default function ChatInterface({
       const fd = new FormData();
       fd.append('message', userText);
       fd.append('context', JSON.stringify(contextSnap));
-      fd.append('model',   model);
+      fd.append('model', model);
       if (file) fd.append('image', file);
 
       const token = localStorage.getItem('wieland_token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
       const res = await fetch('/api/chat/stream', {
-        method:  'POST',
+        method: 'POST',
         headers,
-        body:    fd,
-        signal:  controller.signal,
+        body: fd,
+        signal: controller.signal,
       });
       if (!res.ok) throw new Error(`API ${res.status}`);
 
-      const reader  = res.body.getReader();
+      const reader = res.body.getReader();
       const decoder = new TextDecoder();
 
       while (true) {
@@ -352,11 +352,11 @@ export default function ChatInterface({
     const idx = messages.findIndex(m => m.id === msgId);
     if (idx === -1) return;
 
-    const orig       = messages[idx];
-    const imgUrl     = extractImageUrl(orig.content);
+    const orig = messages[idx];
+    const imgUrl = extractImageUrl(orig.content);
     const newContent = imgUrl ? `![Bild](${imgUrl})\n\n${editingText}` : editingText;
 
-    const updated   = messages.map((m, i) => i === idx ? { ...m, content: newContent } : m);
+    const updated = messages.map((m, i) => i === idx ? { ...m, content: newContent } : m);
     const truncated = updated.slice(0, idx + 1);
 
     setMessages(truncated);
@@ -386,11 +386,11 @@ export default function ChatInterface({
     if (isSending || !messages.length) return;
     const aiIdx = [...messages].reduceRight((found, m, i) => found === -1 && !m.isUser ? i : found, -1);
     if (aiIdx === -1) return;
-    const uIdx  = messages.slice(0, aiIdx).reduceRight((f, m, i) => f === -1 && m.isUser ? i : f, -1);
+    const uIdx = messages.slice(0, aiIdx).reduceRight((f, m, i) => f === -1 && m.isUser ? i : f, -1);
     if (uIdx === -1) return;
 
-    const uMsg      = messages[uIdx];
-    const imgUrl    = extractImageUrl(uMsg.content);
+    const uMsg = messages[uIdx];
+    const imgUrl = extractImageUrl(uMsg.content);
     const truncated = messages.slice(0, aiIdx);
     setMessages(truncated);
     setIsSending(true);
@@ -491,7 +491,7 @@ export default function ChatInterface({
               aria-label="Optionen"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
               </svg>
             </button>
 
@@ -521,7 +521,7 @@ export default function ChatInterface({
                   {AVAILABLE_MODELS.find(m => m.id === selectedModel)?.label ?? selectedModel}
                 </span>
                 <svg className="model-selector-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="6 9 12 15 18 9"/>
+                  <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
 
@@ -548,11 +548,11 @@ export default function ChatInterface({
             >
               {isSending ? (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="6" y="6" width="12" height="12"/>
+                  <rect x="6" y="6" width="12" height="12" />
                 </svg>
               ) : (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+                  <line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" />
                 </svg>
               )}
             </button>
@@ -592,7 +592,7 @@ function MessageRow({
               rows={3}
             />
             <div className="edit-actions">
-              <button className="edit-save-btn"   onClick={() => onEditSave(msg.id)}>Speichern</button>
+              <button className="edit-save-btn" onClick={() => onEditSave(msg.id)}>Speichern</button>
               <button className="edit-cancel-btn" onClick={onEditCancel}>Abbrechen</button>
             </div>
           </div>
@@ -622,23 +622,23 @@ function MessageRow({
             <>
               {isLastUser && (
                 <button className="message-action-btn" onClick={() => onEdit(msg)} title="Bearbeiten">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3L21 7L7 21H3V17L17 3Z"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3L21 7L7 21H3V17L17 3Z" /></svg>
                 </button>
               )}
               <button className="message-action-btn" onClick={() => onCopy(msg.content)} title="Kopieren">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
               </button>
             </>
           ) : (
             <>
               {msg.content && isLast && (
                 <button className="message-action-btn" onClick={onRegenerate} disabled={isSending} title="Neu generieren">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 4v6h6" /><path d="M23 20v-6h-6" /><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" /></svg>
                 </button>
               )}
               {msg.content && (
                 <button className="message-action-btn" onClick={() => onCopy(msg.content)} title="Kopieren">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
                 </button>
               )}
             </>
@@ -652,8 +652,8 @@ function MessageRow({
 function TypingLoader() {
   return (
     <div className="loader" aria-label="Lädt…">
-      {[0,1,2,3].map(i => (
-        <div key={i} className="circle"><div className="dot"/><div className="outline"/></div>
+      {[0, 1, 2, 3].map(i => (
+        <div key={i} className="circle"><div className="dot" /><div className="outline" /></div>
       ))}
     </div>
   );

@@ -6,12 +6,12 @@ import Footer from '../components/Footer';
 function LegalNotice({ isSidebarOpen }) {
   return (
     <div className={`page-wrapper ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-<Header noSidebar />
+      <Header noSidebar />
 
       <main className="page-content">
         <div className="page-container">
 
-            <h1>Legal Notice</h1>
+          <h1>Legal Notice</h1>
         </div>
       </main>
 

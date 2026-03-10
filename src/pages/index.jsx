@@ -11,34 +11,34 @@ function Home() {
   const [is3DReady, setIs3DReady] = useState(false);
   const [hasMessages, setHasMessages] = useState(false);
   const { user } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);  const isInitialLoadRef = useRef(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); const isInitialLoadRef = useRef(true);
   const noSidebar = !user;
 
-  const newChatRef = useRef(null); 
+  const newChatRef = useRef(null);
 
   const showLoading = isInitialLoadRef.current && !is3DReady;
 
   return (
     <div className={`home-container ${sidebarOpen ? 'sidebar-open' : ''}`}>
-      <Header 
+      <Header
         isSidebarOpen={sidebarOpen}
         noSidebar={noSidebar}
         onNewChat={() => newChatRef.current?.()}
       />
       <LoadingAnimation isVisible={showLoading} />
 
-  <Starfield />
-      
+      <Starfield />
 
-      
+
+
       <Scene3D hasMessages={hasMessages} onReady={() => { setIs3DReady(true); isInitialLoadRef.current = false; }} />
-<ChatInterface
-  onMessagesChange={setHasMessages}
-  sidebarOpen={sidebarOpen}
-  onSidebarChange={setSidebarOpen}
-  inputOffset={hasMessages ? 50 : 425}
-  onNewChatRef={(fn) => { newChatRef.current = fn; }}
-/>
+      <ChatInterface
+        onMessagesChange={setHasMessages}
+        sidebarOpen={sidebarOpen}
+        onSidebarChange={setSidebarOpen}
+        inputOffset={hasMessages ? 50 : 425}
+        onNewChatRef={(fn) => { newChatRef.current = fn; }}
+      />
     </div>
   );
 }

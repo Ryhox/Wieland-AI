@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
-  const location          = useLocation();
+  const location = useLocation();
 
   if (loading) {
     return (

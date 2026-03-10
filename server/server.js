@@ -1,31 +1,31 @@
 require('dotenv').config();
 
-const express  = require('express');
-const cors     = require('cors');
-const fs       = require('fs');
-const path     = require('path');
-const multer   = require('multer');
-const crypto   = require('crypto');
+const express = require('express');
+const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
+const crypto = require('crypto');
 const { exec } = require('child_process');
-const bcrypt   = require('bcrypt');
-const jwt      = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3001;
 
-const JWT_SECRET    = process.env.JWT_SECRET    || (() => { throw new Error('JWT_SECRET env var required'); })();
-const JWT_EXPIRES   = process.env.JWT_EXPIRES   || '7d';
+const JWT_SECRET = process.env.JWT_SECRET || (() => { throw new Error('JWT_SECRET env var required'); })();
+const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
 
 const pool = new Pool({
-  host:     process.env.PGHOST     || 'localhost',
-  port:     parseInt(process.env.PGPORT || '5432', 10),
+  host: process.env.PGHOST || 'localhost',
+  port: parseInt(process.env.PGPORT || '5432', 10),
   database: process.env.PGDATABASE || 'wieland',
-  user:     process.env.PGUSER     || 'wieland_user',
+  user: process.env.PGUSER || 'wieland_user',
   password: process.env.PGPASSWORD || (() => { throw new Error('PGPASSWORD env var required'); })(),
-  max:      20,
-  idleTimeoutMillis:    30_000,
+  max: 20,
+  idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,
   ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : false,
 });
@@ -73,7 +73,7 @@ async function initDB() {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cors({
-  origin:      process.env.FRONTEND_ORIGIN || 'http://localhost:3000',
+  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000',
   credentials: true,
 }));
 
@@ -84,7 +84,7 @@ app.use('/history/images', express.static(IMAGES_DIR));
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits:  { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (ALLOWED_MIME.has(file.mimetype)) return cb(null, true);
     cb(Object.assign(new Error('Only images allowed'), { status: 400 }), false);
@@ -92,8 +92,8 @@ const upload = multer({
 });
 
 function saveImageToDisk(buffer, mimetype) {
-  const ext      = mimetype.split('/')[1].replace('jpeg', 'jpg');
-  const hash     = crypto.createHash('sha256').update(buffer).digest('hex').slice(0, 16);
+  const ext = mimetype.split('/')[1].replace('jpeg', 'jpg');
+  const hash = crypto.createHash('sha256').update(buffer).digest('hex').slice(0, 16);
   const filename = `${hash}.${ext}`;
   const filepath = path.join(IMAGES_DIR, filename);
   if (!fs.existsSync(filepath)) fs.writeFileSync(filepath, buffer);
@@ -106,7 +106,7 @@ function signToken(userId) {
 
 function requireAuth(req, res, next) {
   const header = req.headers['authorization'] || '';
-  const token  = header.startsWith('Bearer ') ? header.slice(7) : null;
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'Authentication required' });
   try {
     const payload = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
@@ -118,7 +118,7 @@ function requireAuth(req, res, next) {
 }
 
 function isValidUsername(u) { return typeof u === 'string' && /^[a-zA-Z0-9_-]{3,32}$/.test(u); }
-function isValidEmail(e)    { return typeof e === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 255; }
+function isValidEmail(e) { return typeof e === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 255; }
 function isValidPassword(p) { return typeof p === 'string' && p.length >= 8 && p.length <= 128; }
 function toSafeFilename(str) {
   return str.toLowerCase().replace(/[^a-z0-9äöüß]/g, '_').replace(/_+/g, '_').slice(0, 40);
@@ -135,13 +135,13 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: 'Password must be 8–128 characters' });
 
   try {
-    const hash   = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const result = await pool.query(
       `INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3)
        RETURNING id, username, email, plan`,
       [username.trim(), email.trim().toLowerCase(), hash]
     );
-    const user  = result.rows[0];
+    const user = result.rows[0];
     const token = signToken(user.id);
     res.status(201).json({
       token,
@@ -170,7 +170,7 @@ app.post('/api/auth/login', async (req, res) => {
     const user = result.rows[0];
 
     const hashToCheck = user?.password_hash ?? '$2b$12$invalidhashfortimingXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
-    const matches     = await bcrypt.compare(password, hashToCheck);
+    const matches = await bcrypt.compare(password, hashToCheck);
 
     if (!user || !matches)
       return res.status(401).json({ error: 'Invalid email or password' });
@@ -200,6 +200,174 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
   }
 });
 
+function requireAdmin(req, res, next) {
+  pool.query(`SELECT plan FROM users WHERE id = $1`, [req.userId])
+    .then(result => {
+      if (!result.rows[0] || result.rows[0].plan !== 'Admin')
+        return res.status(403).json({ error: 'Forbidden: Admin access required' });
+      next();
+    })
+    .catch(() => res.status(500).json({ error: 'Auth check failed' }));
+}
+
+app.get('/api/admin/stats', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        (SELECT COUNT(*) FROM users)::int         AS total_users,
+        (SELECT COUNT(*) FROM chats)::int          AS total_chats,
+        (SELECT COUNT(*) FROM chat_messages)::int  AS total_msgs
+    `);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Admin stats error:', err.message);
+    res.status(500).json({ error: 'Failed to load stats' });
+  }
+});
+
+app.get('/api/admin/users', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        u.id, u.username, u.email, u.plan, u.created_at,
+        COUNT(c.id)::int AS chat_count
+      FROM users u
+      LEFT JOIN chats c ON c.user_id = u.id
+      GROUP BY u.id
+      ORDER BY u.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Admin users error:', err.message);
+    res.status(500).json({ error: 'Failed to load users' });
+  }
+});
+
+app.post('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
+  const { username, email, password, plan } = req.body ?? {};
+  if (!isValidUsername(username)) return res.status(400).json({ error: 'Invalid username' });
+  if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid email' });
+  if (!isValidPassword(password)) return res.status(400).json({ error: 'Password too short' });
+
+  try {
+    const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const result = await pool.query(
+      `INSERT INTO users (username, email, password_hash, plan)
+       VALUES ($1, $2, $3, $4) RETURNING id, username, email, plan, created_at`,
+      [username.trim(), email.trim().toLowerCase(), hash, plan ?? 'Free']
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    if (err.code === '23505') {
+      const field = err.constraint?.includes('email') ? 'Email' : 'Username';
+      return res.status(409).json({ error: `${field} already taken` });
+    }
+    console.error('Admin create user error:', err.message);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
+app.put('/api/admin/users/:id', requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const { username, email, password, plan } = req.body ?? {};
+  if (!isValidUsername(username)) return res.status(400).json({ error: 'Invalid username' });
+  if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid email' });
+
+  try {
+    let query, params;
+    if (password) {
+      if (!isValidPassword(password)) return res.status(400).json({ error: 'Password too short' });
+      const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+      query = `UPDATE users SET username=$1, email=$2, password_hash=$3, plan=$4 WHERE id=$5 RETURNING id, username, email, plan`;
+      params = [username.trim(), email.trim().toLowerCase(), hash, plan ?? 'Free', id];
+    } else {
+      query = `UPDATE users SET username=$1, email=$2, plan=$3 WHERE id=$4 RETURNING id, username, email, plan`;
+      params = [username.trim(), email.trim().toLowerCase(), plan ?? 'Free', id];
+    }
+    const result = await pool.query(query, params);
+    if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    if (err.code === '23505') {
+      const field = err.constraint?.includes('email') ? 'Email' : 'Username';
+      return res.status(409).json({ error: `${field} already taken` });
+    }
+    console.error('Admin update user error:', err.message);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+app.delete('/api/admin/users/:id', requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const result = await pool.query(`DELETE FROM users WHERE id = $1 RETURNING id`, [id]);
+    if (!result.rowCount) return res.status(404).json({ error: 'User not found' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Admin delete user error:', err.message);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+app.get('/api/admin/chats', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        c.id, c.filename, c.title, c.created_at, c.updated_at, c.user_id,
+        u.username,
+        COUNT(cm.id)::int AS message_count
+      FROM chats c
+      JOIN users u ON u.id = c.user_id
+      LEFT JOIN chat_messages cm ON cm.chat_id = c.id
+      GROUP BY c.id, u.username
+      ORDER BY c.updated_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Admin chats error:', err.message);
+    res.status(500).json({ error: 'Failed to load chats' });
+  }
+});
+
+app.delete('/api/admin/chats/:id', requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const result = await pool.query(`DELETE FROM chats WHERE id = $1 RETURNING id`, [id]);
+    if (!result.rowCount) return res.status(404).json({ error: 'Chat not found' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Admin delete chat error:', err.message);
+    res.status(500).json({ error: 'Failed to delete chat' });
+  }
+});
+
+app.get('/api/admin/chats/:id/messages', requireAuth, requireAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const chatRes = await pool.query(
+      `SELECT c.id, c.filename, c.title, c.created_at, c.updated_at, c.user_id, u.username,
+              COUNT(cm.id)::int AS message_count
+       FROM chats c
+       JOIN users u ON u.id = c.user_id
+       LEFT JOIN chat_messages cm ON cm.chat_id = c.id
+       WHERE c.id = $1
+       GROUP BY c.id, u.username`,
+      [id]
+    );
+    if (!chatRes.rows[0]) return res.status(404).json({ error: 'Chat not found' });
+
+    const msgRes = await pool.query(
+      `SELECT role, content, created_at
+       FROM chat_messages WHERE chat_id = $1
+       ORDER BY created_at ASC, id ASC`,
+      [id]
+    );
+    res.json({ ...chatRes.rows[0], messages: msgRes.rows });
+  } catch (err) {
+    console.error('Admin chat messages error:', err.message);
+    res.status(500).json({ error: 'Failed to load messages' });
+  }
+});
 const SYSTEM = `You are a LOCAL, OFFLINE language model. YOUR NAME IS "Wieland".
 - You are NOT online and have no internet access.
 - You CAN analyse images provided in this conversation.
@@ -209,11 +377,11 @@ Speak naturally and concisely. If you don't know something, say so.
 You may use *italic*, **bold**, and - bullet points.`;
 
 const OLLAMA_OPTIONS_8B = { think: false, num_ctx: 2048, num_predict: 1024, temperature: 0.7 };
-const OLLAMA_OPTIONS_4B = { think: false, num_ctx: 1024, num_predict: 512,  temperature: 0.7 };
-const ALLOWED_MODELS    = new Set(['qwen3-vl:8b-instruct', 'qwen3-vl:4b-instruct']);
+const OLLAMA_OPTIONS_4B = { think: false, num_ctx: 1024, num_predict: 512, temperature: 0.7 };
+const ALLOWED_MODELS = new Set(['qwen3-vl:8b-instruct', 'qwen3-vl:4b-instruct']);
 
 async function pipeOllamaChatStream(ollamaRes, expressRes) {
-  const body   = ollamaRes.body;
+  const body = ollamaRes.body;
   const onLine = (line) => {
     if (!line.trim()) return;
     try {
@@ -224,9 +392,9 @@ async function pipeOllamaChatStream(ollamaRes, expressRes) {
   };
 
   if (typeof body.getReader === 'function') {
-    const reader  = body.getReader();
+    const reader = body.getReader();
     const decoder = new TextDecoder();
-    let   buf     = '';
+    let buf = '';
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -245,7 +413,7 @@ async function pipeOllamaChatStream(ollamaRes, expressRes) {
         buf = lines.pop() ?? '';
         lines.forEach(onLine);
       });
-      body.on('end',   () => { if (buf) onLine(buf); resolve(); });
+      body.on('end', () => { if (buf) onLine(buf); resolve(); });
       body.on('error', reject);
     });
   }
@@ -255,19 +423,19 @@ async function generateChatTitle(firstUserMessage) {
   const truncated = firstUserMessage.slice(0, 200);
   try {
     const res = await fetch('http://localhost:11434/api/chat', {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model:    'qwen3-vl:8b-instruct',
+        model: 'qwen3-vl:8b-instruct',
         messages: [{ role: 'user', content: `Generate a very short title (max 5 words, same language as message, no quotes, no punctuation): "${truncated}"` }],
-        stream:   false,
-        options:  { temperature: 0.3, num_predict: 20, num_ctx: 512, think: false },
+        stream: false,
+        options: { temperature: 0.3, num_predict: 20, num_ctx: 512, think: false },
       }),
       signal: AbortSignal.timeout(12_000),
     });
     if (!res.ok) throw new Error();
-    const data  = await res.json();
-    let   title = (data?.message?.content ?? '').trim().replace(/^["'\s]+|["'\s]+$/g, '');
+    const data = await res.json();
+    let title = (data?.message?.content ?? '').trim().replace(/^["'\s]+|["'\s]+$/g, '');
     if (title.split(' ').length > 6) title = title.split(' ').slice(0, 6).join(' ') + '…';
     return title || truncated.slice(0, 50);
   } catch {
@@ -277,11 +445,11 @@ async function generateChatTitle(firstUserMessage) {
 
 app.post('/api/chat/stream', requireAuth, upload.single('image'), async (req, res) => {
   const imageFile = req.file ?? null;
-  const message   = req.body.message?.trim() || (imageFile ? 'Describe this image' : '');
+  const message = req.body.message?.trim() || (imageFile ? 'Describe this image' : '');
   if (!message) return res.status(400).json({ error: 'message or image required' });
 
   const requestedModel = req.body.model || 'qwen3-vl:8b-instruct';
-  const model   = ALLOWED_MODELS.has(requestedModel) ? requestedModel : 'qwen3-vl:8b-instruct';
+  const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : 'qwen3-vl:8b-instruct';
   const options = model === 'qwen3-vl:4b-instruct' ? OLLAMA_OPTIONS_4B : OLLAMA_OPTIONS_8B;
 
   let context = [];
@@ -290,9 +458,9 @@ app.post('/api/chat/stream', requireAuth, upload.single('image'), async (req, re
     if (!Array.isArray(context)) context = [];
   } catch { context = []; }
 
-  res.setHeader('Content-Type',      'text/plain; charset=utf-8');
-  res.setHeader('Cache-Control',     'no-cache');
-  res.setHeader('Connection',        'keep-alive');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no');
 
   const ollamaMessages = [
@@ -305,9 +473,9 @@ app.post('/api/chat/stream', requireAuth, upload.single('image'), async (req, re
 
   try {
     const ollamaRes = await fetch('http://localhost:11434/api/chat', {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ model, messages: ollamaMessages, stream: true, options }),
+      body: JSON.stringify({ model, messages: ollamaMessages, stream: true, options }),
     });
 
     if (!ollamaRes.ok) {
@@ -315,7 +483,7 @@ app.post('/api/chat/stream', requireAuth, upload.single('image'), async (req, re
       return res.status(502).end('Upstream model error');
     }
 
-    req.on('close', () => { try { ollamaRes.body.cancel?.(); } catch {} });
+    req.on('close', () => { try { ollamaRes.body.cancel?.(); } catch { } });
     await pipeOllamaChatStream(ollamaRes, res);
     res.end();
   } catch (err) {
@@ -346,7 +514,7 @@ app.post('/api/history/save', requireAuth, async (req, res) => {
     let title = null;
     if (generateTitle) {
       const firstUser = messages.find(m => m.role === 'user')?.content ?? '';
-      const clean     = firstUser.replace(/!\[.*?\]\([^)]+\)\n\n?/g, '').trim();
+      const clean = firstUser.replace(/!\[.*?\]\([^)]+\)\n\n?/g, '').trim();
       if (clean) title = await generateChatTitle(clean);
     }
 
@@ -359,7 +527,7 @@ app.post('/api/history/save', requireAuth, async (req, res) => {
       );
       if (!existing.rows[0]) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Chat not found' }); }
 
-      chatId         = existing.rows[0].id;
+      chatId = existing.rows[0].id;
       targetFilename = filename;
       await client.query(
         `UPDATE chats SET updated_at = NOW(), title = COALESCE($1, title) WHERE id = $2`,
@@ -368,7 +536,7 @@ app.post('/api/history/save', requireAuth, async (req, res) => {
       await client.query(`DELETE FROM chat_messages WHERE chat_id = $1`, [chatId]);
     } else {
       targetFilename = `${title ? toSafeFilename(title) : 'chat'}_${Date.now()}.json`;
-      const result   = await client.query(
+      const result = await client.query(
         `INSERT INTO chats (user_id, filename, title) VALUES ($1, $2, $3) RETURNING id`,
         [req.userId, targetFilename, title]
       );
@@ -402,7 +570,7 @@ app.get('/api/history/:filename', requireAuth, async (req, res) => {
     );
     if (!chatResult.rows[0]) return res.status(404).json({ error: 'Not found' });
 
-    const chat      = chatResult.rows[0];
+    const chat = chatResult.rows[0];
     const msgResult = await pool.query(
       `SELECT role, content FROM chat_messages WHERE chat_id = $1 ORDER BY created_at ASC, id ASC`,
       [chat.id]
@@ -446,14 +614,14 @@ app.get('/api/history', requireAuth, async (req, res) => {
       [req.userId]
     );
     res.json(result.rows.map(row => ({
-      filename:     row.filename,
-      created:      row.created_at,
-      updated:      row.updated_at,
+      filename: row.filename,
+      created: row.created_at,
+      updated: row.updated_at,
       messageCount: row.message_count,
-      title:        row.title ?? null,
-      preview:      row.title
-                    || (row.first_user_message ?? '').replace(/!\[.*?\]\([^)]+\)\n\n?/g, '').slice(0, 60)
-                    || 'Neuer Chat',
+      title: row.title ?? null,
+      preview: row.title
+        || (row.first_user_message ?? '').replace(/!\[.*?\]\([^)]+\)\n\n?/g, '').slice(0, 60)
+        || 'Neuer Chat',
     })));
   } catch (err) {
     console.error('History list error:', err.message);
