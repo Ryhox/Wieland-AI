@@ -639,7 +639,20 @@ app.use((err, _req, res, _next) => {
   console.error('Unhandled:', err.message);
   res.status(err.status ?? 500).json({ error: err.message || 'Internal server error' });
 });
-
+app.get('/api/stats', async (_req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        (SELECT COUNT(*) FROM users)::int        AS total_users,
+        (SELECT COUNT(*) FROM chats)::int         AS total_chats,
+        (SELECT COUNT(*) FROM chat_messages)::int AS total_messages
+    `);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Stats error:', err.message);
+    res.status(500).json({ error: 'Failed to load stats' });
+  }
+});
 
 initDB().then(() => {
   app.listen(PORT, () => console.log(`Wieland http://localhost:${PORT}`));

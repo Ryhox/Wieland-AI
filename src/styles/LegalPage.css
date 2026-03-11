@@ -1,0 +1,135 @@
+
+.legal-container {
+  max-width: 760px;
+}
+
+.legal-hero {
+  margin-bottom: 48px;
+}
+
+.legal-eyebrow {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  color: rgba(232, 35, 250, 0.75);
+  border: 1px solid rgba(232, 35, 250, 0.22);
+  background: rgba(232, 35, 250, 0.07);
+  padding: 5px 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.legal-h1 {
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -1.5px;
+  color: #fff;
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.legal-h1 span {
+  background: linear-gradient(120deg, #e823fa, #9b5cfc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.legal-lead {
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.38);
+  max-width: 500px;
+}
+
+.legal-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 36px 40px;
+}
+
+.legal-section {
+  margin-bottom: 32px;
+}
+
+.legal-section:last-child {
+  margin-bottom: 0;
+}
+
+.legal-section-h {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 10px;
+  letter-spacing: -0.1px;
+}
+
+.legal-section-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin-bottom: 28px;
+}
+
+.legal-p {
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.legal-p + .legal-p {
+  margin-top: 10px;
+}
+
+.legal-p a {
+  color: rgba(232, 35, 250, 0.65);
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(232, 35, 250, 0.3);
+  transition: color 0.2s;
+}
+
+.legal-p a:hover {
+  color: #e823fa;
+}
+
+.legal-ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.legal-ul li {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.38);
+  line-height: 1.65;
+  padding-left: 18px;
+  position: relative;
+}
+
+.legal-ul li::before {
+  content: '·';
+  position: absolute;
+  left: 4px;
+  color: rgba(232, 35, 250, 0.45);
+  font-size: 20px;
+  line-height: 0.9;
+  top: 3px;
+}
+
+.legal-footer-note {
+  margin-top: 28px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.18);
+}
+
+@media (max-width: 600px) {
+  .legal-card {
+    padding: 24px 20px;
+  }
+}

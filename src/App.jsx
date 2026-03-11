@@ -11,6 +11,7 @@ import Download from "./pages/Download";
 import LegalNotice from "./pages/legal-notice";
 import PrivacyPolicy from "./pages/privacy-policy";
 import TermsOfService from "./pages/terms-of-service";
+import Pricing from "./pages/Pricing";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/404.jsx";
 
@@ -40,7 +41,7 @@ function App() {
           <Route path="/legal-notice" element={<LegalNotice />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
-
+          <Route path="/pricing" element={<Pricing />} />
 
 
           <Route path="*" element={<NotFound />} />
