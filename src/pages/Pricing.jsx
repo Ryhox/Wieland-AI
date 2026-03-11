@@ -13,16 +13,12 @@ const FREE_FEATURES = [
   { text: 'Gesprächsverlauf', enabled: true },
   { text: 'Prioritäts-Support', enabled: false },
   { text: 'Lokales Ollama-Modell (Qwen3-VL 8B)', enabled: false },
-
 ];
 
-const PRO_FEATURES = [
-  { text: 'Alles aus Free', enabled: true },
+const SUPPORT_FEATURES = [
+  { text: 'Unterstützt die Entwicklung von Wieland AI', enabled: true },
   { text: 'Prioritäts-Support', enabled: true },
-  { text: 'Frühzeitiger Zugang zu neuen Modellen', enabled: true },
-  { text: 'Erweiterte Gesprächsexporte', enabled: true },
-{ text: 'Lokales Ollama-Modell (Qwen3-VL 8B)', enabled: true },
-
+  { text: 'Frühzeitiger Zugang zu neuen Releases', enabled: true },
 ];
 
 const FAQ = [
@@ -31,16 +27,12 @@ const FAQ = [
     a: 'Nein. Wieland AI läuft vollständig lokal auf deinem Gerät. Solange du offline bist, verlässt kein einziger Token dein System.',
   },
   {
-    q: 'Was ist der Online-Fallback?',
-    a: 'Wenn kein lokales Modell verfügbar ist, kann Pro-Nutzer auf Mistral AI als Backup zurückgreifen — mit einem konfigurierbaren monatlichen Token-Budget.',
-  },
-  {
     q: 'Kann ich jederzeit kündigen?',
-    a: 'Ja. Pro ist monatlich kündbar, ohne Mindestlaufzeit oder versteckte Gebühren.',
+    a: 'Ja. Die Unterstützung ist monatlich kündbar, ohne Mindestlaufzeit oder versteckte Gebühren.',
   },
   {
     q: 'Gibt es einen Unterschied bei der Modellqualität?',
-    a: 'Free und Pro nutzen dasselbe lokale Ollama-Modell. Pro erweitert es lediglich um Online-Funktionen und zusätzliche Verwaltungstools.',
+    a: 'Nein. Alle Nutzer verwenden dieselben lokalen Modelle. Support dient ausschließlich zur Unterstützung der Entwicklung.',
   },
 ];
 
@@ -56,8 +48,8 @@ function Pricing({ isSidebarOpen }) {
             <span className="pricing-eyebrow">Preise</span>
             <h1 className="pricing-h1">Einfach.<br /><span>Transparent.</span></h1>
             <p className="pricing-lead">
-              Wieland AI ist für alle nutzbar — kostenlos und ohne Einschränkungen beim Kernprodukt.
-              Pro erweitert das Erlebnis für anspruchsvolle Nutzer.
+              Wieland AI ist für alle nutzbar — kostenlos und vollständig lokal.
+              Wenn dir das Projekt gefällt, kannst du die Entwicklung unterstützen.
             </p>
           </div>
 
@@ -72,6 +64,7 @@ function Pricing({ isSidebarOpen }) {
                 <span className="pricing-price-period">/ Monat</span>
               </div>
               <p className="pricing-price-sub">Für immer kostenlos.</p>
+
               <ul className="pricing-features">
                 {FREE_FEATURES.map(f => (
                   <li key={f.text} className={!f.enabled ? 'feat-disabled' : ''}>
@@ -83,22 +76,28 @@ function Pricing({ isSidebarOpen }) {
             </div>
 
             <div className="pricing-card featured">
-              <span className="pricing-badge">Pro</span>
-              <div className="pricing-plan-name">Pro</div>
+              <span className="pricing-badge">Support</span>
+              <div className="pricing-plan-name">Support</div>
               <div className="pricing-price-row">
                 <span className="pricing-price">4,99 €</span>
                 <span className="pricing-price-period">/ Monat</span>
               </div>
-              <p className="pricing-price-sub">Jährlich: 49,99 € — 2 Monate gratis.</p>
+              <p className="pricing-price-sub">
+                Unterstütze die Entwicklung von Wieland AI.
+              </p>
+
               <ul className="pricing-features">
-                {PRO_FEATURES.map(f => (
+                {SUPPORT_FEATURES.map(f => (
                   <li key={f.text}>
                     <span className="feat-icon">{CHECK}</span>
                     {f.text}
                   </li>
                 ))}
               </ul>
-              <button className="pricing-btn btn-pro">Auf Pro upgraden</button>
+
+              <button className="pricing-btn btn-pro">
+                Projekt unterstützen
+              </button>
             </div>
 
           </div>
