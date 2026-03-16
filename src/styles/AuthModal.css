@@ -202,8 +202,8 @@
   border: 1px solid rgba(220, 38, 38, 0.22);
   border-radius: 8px;
   color: #ff8080;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 14px;
+  line-height: 1.6;
   animation: errorShake 0.3s ease;
 }
 

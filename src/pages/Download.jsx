@@ -2,13 +2,15 @@ import '../styles/Download.css';
 import '../styles/main.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Sidebar from '../components/Sidebar';
+import { useAuth } from '../context/AuthContext';
 
 const requirements = [
-  ['Node.js',    '≥ 18.0'],
+  ['Node.js', '≥ 18.0'],
   ['PostgreSQL', '≥ 15'],
-  ['Ollama',     '≥ 0.3'],
-  ['RAM',        '≥ 8 GB'],
-  ['GPU',        'Optional, CUDA / Metal'],
+  ['Ollama', '≥ 0.3'],
+  ['RAM', '≥ 8 GB'],
+  ['GPU', 'Optional, CUDA / Metal'],
 ];
 
 const changelog = [
@@ -38,12 +40,14 @@ const changelog = [
   },
 ];
 
-const platforms = ['🪟 Windows', '🍎 macOS', '🐧 Linux'];
+const platforms = ['🌐 Chrome'];
 
-function Download({ isSidebarOpen }) {
+function Download({ isSidebarOpen, onSidebarToggle }) {
+  const { user } = useAuth();
   return (
-    <div className={`page-wrapper ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-      <Header noSidebar />
+    <div className={`page-wrapper content-page ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      <Header isSidebarOpen={isSidebarOpen} />
+      {user && <Sidebar isOpen={isSidebarOpen} onOpenChange={onSidebarToggle} />}
 
       <main className="page-content">
         <div className="page-container dl-container">
@@ -59,15 +63,13 @@ function Download({ isSidebarOpen }) {
 
           <div className="dl-main-card">
             <div className="dl-main-left">
-              <div className="dl-main-title">Wieland AI Desktop</div>
+              <div className="dl-main-title">Wieland AI Chrome Extension</div>
               <div className="dl-main-meta">
                 <span className="dl-badge dl-badge-version">v1.4.0</span>
                 <span className="dl-badge dl-badge-date">Jun 2025</span>
-                <span className="dl-badge dl-badge-size">~48 MB</span>
               </div>
               <div className="dl-main-desc">
-                Universelles Installer-Paket für Windows, macOS und Linux.
-                Enthält Setup-Assistent und Systemd-Service-Datei.
+                Nutze Wieland AI überall im Browser.
               </div>
             </div>
 
@@ -86,24 +88,6 @@ function Download({ isSidebarOpen }) {
             {platforms.map(p => (
               <span className="dl-platform-pill" key={p}>{p}</span>
             ))}
-          </div>
-
-          <p className="dl-section-label">Integrität</p>
-          <div className="dl-integrity">
-            <span className="dl-integrity-label">SHA-256</span>
-            <span className="dl-integrity-hash">
-              a3f8c2d1e94b07f65c3a9182e0d4b7f2c1a8e3d09b6f41c7e2a5d8b3f0c9e1a4
-            </span>
-          </div>
-
-          <div className="dl-notice">
-            <span className="dl-notice-icon">🔒</span>
-            <span className="dl-notice-text">
-              <strong>Kein Tracking, keine Telemetrie.</strong> Wieland AI sendet keinerlei Daten
-              an externe Server. Alle Modelle laufen lokal über Ollama — deine Gespräche
-              verlassen niemals dein Gerät. Internetverbindung nur für den optionalen
-              Mistral-Fallback erforderlich.
-            </span>
           </div>
 
         </div>

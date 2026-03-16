@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Header.css';
 import AuthModal from './AuthModal';
@@ -68,16 +69,27 @@ function LanguageButton() {
   );
 }
 
-function Header({ isSidebarOpen, noSidebar, onNewChat }) {
+function Header({ isSidebarOpen, onNewChat }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   let headerClass = 'header';
-  if (noSidebar) {
+  if (!user) {
     headerClass += ' no-sidebar';
   } else if (isSidebarOpen) {
     headerClass += ' sidebar-open';
   }
+
+  const handleLogoClick = (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate('/');
+    } else {
+      navigate('/');
+      onNewChat?.();
+    }
+  };
 
   return (
     <>
@@ -85,12 +97,7 @@ function Header({ isSidebarOpen, noSidebar, onNewChat }) {
         <a
           href="/"
           className="header-logo"
-          onClick={
-            noSidebar ? undefined : (e) => {
-              e.preventDefault();
-              onNewChat?.();
-            }
-          }
+          onClick={handleLogoClick}
         >
           <span className="header-logo-name">Wieland</span>
         </a>

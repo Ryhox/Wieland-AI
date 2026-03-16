@@ -2,11 +2,15 @@ import '../styles/LegalPage.css';
 import '../styles/main.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Sidebar from '../components/Sidebar';
+import { useAuth } from '../context/AuthContext';
 
-function LegalNotice({ isSidebarOpen }) {
+function LegalNotice({ isSidebarOpen, onSidebarToggle }) {
+  const { user } = useAuth();
   return (
-    <div className={`page-wrapper ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-      <Header noSidebar />
+    <div className={`page-wrapper content-page ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      <Header isSidebarOpen={isSidebarOpen} />
+      {user && <Sidebar isOpen={isSidebarOpen} onOpenChange={onSidebarToggle} />}
 
       <main className="page-content">
         <div className="page-container legal-container">

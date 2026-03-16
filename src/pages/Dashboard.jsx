@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Dashboard.css';
 import '../styles/Sidebar.css';
+import Header from '../components/Header';
+import Sidebar from '../components/Sidebar';
 import DBStats from '../components/dashboard/DBStats';
 import UsersTable from '../components/dashboard/UsersTable';
 import ChatsTable from '../components/dashboard/ChatsTable';
@@ -16,7 +18,7 @@ const TABS = [
     { id: 'chats', label: 'Chats', icon: '◧' },
 ];
 
-export default function Dashboard() {
+export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
     const { authFetch, user, logout } = useAuth();
     const navigate = useNavigate();
 

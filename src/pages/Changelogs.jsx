@@ -2,9 +2,24 @@ import '../styles/Changelogs.css';
 import '../styles/main.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Sidebar from '../components/Sidebar';
+import { useAuth } from '../context/AuthContext';
 
 const entries = [
-    {
+  {
+    version: 'v0.1.4',
+    date: '16 März 2026',
+    tag: 'green',
+    title: 'Content v2.0',
+    changes: [
+      'Bugfixes',
+      'Design überarbeitet auf allen Seiten',
+      '2 Neue Pages: Profile, Kontakt',
+      'Features: Abonnementssystem, Cookies, Email und Passwort bearbeiten, Chat-Search',
+      'Chat links können direkt aufgerufen werden (jetzt UUID statt Timestamp)',
+    ],
+  },
+  {
     version: 'v0.1.4',
     date: '10 März 2026',
     tag: 'pink',
@@ -63,10 +78,12 @@ const entries = [
   },
 ];
 
-function Changelogs({ isSidebarOpen }) {
+function Changelogs({ isSidebarOpen, onSidebarToggle }) {
+  const { user } = useAuth();
   return (
-    <div className={`page-wrapper ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-      <Header noSidebar />
+    <div className={`page-wrapper content-page ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      <Header isSidebarOpen={isSidebarOpen} />
+      {user && <Sidebar isOpen={isSidebarOpen} onOpenChange={onSidebarToggle} />}
 
       <main className="page-content">
         <div className="page-container cl-container">

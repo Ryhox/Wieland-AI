@@ -1,29 +1,32 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/FAQ.css';
 import '../styles/main.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Sidebar from '../components/Sidebar';
+import { useAuth } from '../context/AuthContext';
 
 const faqData = [
   {
-    q: 'Funktioniert Wieland AI wirklich ohne Internet?',
+    q: 'Funktioniert Wieland AI?',
     a: 'Ja. Solange Ollama lokal läuft, verarbeitet Wieland AI alle Anfragen vollständig auf deinem Gerät.',
   },
   {
     q: 'Welche Modelle werden unterstützt?',
-    a: 'Wieland AI unterstützt alle Ollama-kompatiblen Modelle. Standardmäßig sind Qwen3-VL-Varianten konfiguriert.',
+    a: 'Momentan werden Qwen3-VL 8B und 4B unterstützt.',
   },
   {
     q: 'Kann ich Bilder in den Chat hochladen?',
-    a: 'Ja, diese Bilder werden lokal verarbeitet und nicht extern gespeichert.',
+    a: 'Ja, Qwen3-VL unterstützt die Analyse von Bildern. Du kannst Bilder hochladen und Fragen dazu stellen.',
   },
   {
     q: 'Was passiert mit meinen Chat-Verläufen?',
-    a: 'Chats werden lokal in deiner PostgreSQL-Datenbank gespeichert. Es findet keine Synchronisation in die Cloud statt.',
+    a: 'Chats werden sicher in unserer Datenbank gespeichert, damit du von all deinen Geräten auf deine Daten zugreifen kannst. Alle Daten werden jedoch verschlüsselt und sicher gespeichert.',
   },
   {
     q: 'Auf welchen Betriebssystemen läuft Wieland AI?',
-    a: 'Wieland AI läuft überall, wo Node.js, PostgreSQL und Ollama verfügbar sind — also auf Windows, macOS und Linux.',
+    a: 'Wieland AI läuft in jdedem modernen Browser, damit ist es plattformunabhängig und funktioniert auf Windows, macOS und Linux.',
   },
 ];
 
@@ -48,12 +51,15 @@ function FAQItem({ q, a, open, onToggle }) {
   );
 }
 
-function FAQ({ isSidebarOpen }) {
+function FAQ({ isSidebarOpen, onSidebarToggle }) {
+  const { user } = useAuth();
   const [openIndex, setOpenIndex] = useState(null);
+  const navigate = useNavigate();
 
   return (
-    <div className={`page-wrapper ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-      <Header noSidebar />
+    <div className={`page-wrapper content-page ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      <Header isSidebarOpen={isSidebarOpen} />
+      {user && <Sidebar isOpen={isSidebarOpen} onOpenChange={onSidebarToggle} />}
 
       <main className="page-content">
         <div className="page-container faq-container">
@@ -77,7 +83,7 @@ function FAQ({ isSidebarOpen }) {
           </div>
 
           <p className="faq-footer-note">
-            Noch Fragen? Schreib uns — das Team hilft gern weiter.
+            Noch Fragen? <button onClick={() => navigate('/contact')} className="faq-contact-link">Schreib uns</button> — das Team hilft gern weiter.
           </p>
 
         </div>

@@ -5,6 +5,7 @@ function Footer() {
       <div className="footer-container">
         <span className="footer-logo">Wieland AI</span>
         <div className="footer-links">
+          <a href="/contact">Kontakt</a>
           <a href="/legal-notice">Impressum</a>
           <a href="/privacy-policy">Datenschutz</a>
           <a href="/terms-of-service">Nutzungsbedingungen</a>

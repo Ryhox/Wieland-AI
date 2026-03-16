@@ -1,13 +1,17 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Sidebar.css';
 
 export default function Sidebar({ onNewChat, onDeleteChat, onLoadChat, currentChatId, isOpen, onOpenChange }) {
   const { user, logout, authFetch } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [chats, setChats] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const sidebarRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const initials = user?.username
     ? user.username.slice(0, 2).toUpperCase()
@@ -24,6 +28,13 @@ export default function Sidebar({ onNewChat, onDeleteChat, onLoadChat, currentCh
     window.addEventListener('chatHistoryUpdated', handler);
     return () => window.removeEventListener('chatHistoryUpdated', handler);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsSearching(false);
+      setSearchQuery('');
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -49,8 +60,23 @@ export default function Sidebar({ onNewChat, onDeleteChat, onLoadChat, currentCh
   };
 
   const handleNewChat = async () => {
-    await onNewChat();
-    await loadChats();
+    if (location.pathname !== '/chat') {
+      navigate('/chat');
+      setTimeout(() => {
+        onNewChat?.();
+        loadChats();
+      }, 100);
+    } else {
+      await onNewChat?.();
+      await loadChats();
+    }
+  };
+
+  const handleLoadChat = async (filename) => {
+    const ts = filename.match(/\d+/)?.[0];
+    if (ts) {
+      navigate(`/chat/${ts}`);
+    }
   };
 
   const handleDeleteChat = async (filename, e) => {
@@ -76,6 +102,30 @@ export default function Sidebar({ onNewChat, onDeleteChat, onLoadChat, currentCh
     navigate('/');
   };
 
+  const handleSearchClick = () => {
+    if (!isOpen) {
+      onOpenChange(true);
+    }
+    setIsSearching(true);
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 0);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSearchBlur = () => {
+    if (!searchQuery.trim()) {
+      setIsSearching(false);
+    }
+  };
+
+  const filteredChats = chats.filter(chat =>
+    (chat.preview || `Chat ${chat.filename.slice(-6)}`).toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <aside ref={sidebarRef} className={`sidebar ${isOpen ? 'open' : 'collapsed'}`}>
 
@@ -100,12 +150,27 @@ export default function Sidebar({ onNewChat, onDeleteChat, onLoadChat, currentCh
           {isOpen && <span>Neuer Chat</span>}
         </button>
 
-        <button className="sidebar-icon-btn" title="Chats suchen">
+        <button
+          className="sidebar-icon-btn"
+          onClick={handleSearchClick}
+          title="Chats suchen"
+        >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          {isOpen && <span>Chats suchen</span>}
+          {!isSearching && isOpen && <span>Chats suchen</span>}
+          {isSearching && isOpen && (
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Chat suchen..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onBlur={handleSearchBlur}
+              className="sidebar-search-input"
+            />
+          )}
         </button>
       </div>
 
@@ -113,14 +178,14 @@ export default function Sidebar({ onNewChat, onDeleteChat, onLoadChat, currentCh
         <div className="sidebar-chats-section">
           <p className="sidebar-section-label">Deine Chats</p>
           <div className="chats-list">
-            {chats.length === 0 ? (
-              <p className="no-chats">Keine Chats vorhanden</p>
+            {filteredChats.length === 0 ? (
+              <p className="no-chats">{searchQuery ? 'Keine Chats gefunden' : 'Keine Chats vorhanden'}</p>
             ) : (
-              chats.map((chat) => (
+              filteredChats.map((chat) => (
                 <div
                   key={chat.filename}
                   className={`chat-item ${chat.filename === currentChatId ? 'active' : ''}`}
-                  onClick={() => onLoadChat(chat.filename)}
+                  onClick={() => handleLoadChat(chat.filename)}
                 >
                   <span className="chat-name">{chat.preview || `Chat ${chat.filename.slice(-6)}`}</span>
                   <button
@@ -145,28 +210,48 @@ export default function Sidebar({ onNewChat, onDeleteChat, onLoadChat, currentCh
       {!isOpen && <div className="sidebar-spacer" />}
 
       <div className="sidebar-bottom">
-        <div className="sidebar-profile">
-          <div className="sidebar-avatar">{initials}</div>
-          {isOpen && (
-            <>
-              <div className="sidebar-profile-info">
-                <span className="sidebar-profile-name">{user?.username ?? '—'}</span>
-                <span className="sidebar-profile-plan">{user?.plan ?? 'Free'}</span>
-              </div>
-              <button
-                className="sidebar-logout-btn"
-                onClick={handleLogout}
-                title="Abmelden"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
-              </button>
-            </>
-          )}
-        </div>
+        <button
+          className="sidebar-profile-btn"
+          onClick={() => navigate('/profile')}
+          title="Profil öffnen"
+        >
+          <div className="sidebar-profile">
+            <div className="sidebar-avatar">{initials}</div>
+            {isOpen && (
+              <>
+                <div className="sidebar-profile-info">
+                  <span className="sidebar-profile-name">{user?.username ?? '—'}</span>
+                  <div
+                    className="sidebar-profile-plan"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/pricing');
+                    }}
+                    title="Zum Plan wechseln"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {user?.plan ?? 'Free'}
+                  </div>
+                </div>
+                <div
+                  className="sidebar-logout-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLogout();
+                  }}
+                  title="Abmelden"
+                  style={{ cursor: 'pointer' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                </div>
+              </>
+            )}
+          </div>
+        </button>
       </div>
 
     </aside>

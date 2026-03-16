@@ -5,30 +5,33 @@ import Scene3D from '../components/Scene3D';
 import ChatInterface from '../components/ChatInterface';
 import LoadingAnimation from '../components/LoadingAnimation';
 import Header from '../components/Header';
+import { useAuth } from '../context/AuthContext';
 import '../styles/HomePage.css';
 
 function ChatPage() {
   const { chatId } = useParams();
+  const { authFetch } = useAuth();
   const [hasMessages, setHasMessages] = useState(true);
   const [is3DReady, setIs3DReady] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [actualFilename, setActualFilename] = useState(null);
   const isInitialLoadRef = useRef(true);
   const newChatRef = useRef(null);
+  const loadChatRef = useRef(null);
   useEffect(() => {
     if (chatId) {
       const findChatFile = async () => {
         try {
-          const response = await fetch('/api/history');
+          const response = await authFetch('/api/history');
           if (response.ok) {
             const chats = await response.json();
             const matchingChat = chats.find(chat =>
-              chat.filename.includes(chatId)
+              chat.filename.includes(chatId) || chat.filename === `chat_${chatId}.json`
             );
             if (matchingChat) {
               setActualFilename(matchingChat.filename);
             } else {
-              console.log('No chat found with timestamp:', chatId);
+              console.log('No chat found with UUID:', chatId);
               setActualFilename(null);
             }
           }
@@ -42,7 +45,13 @@ function ChatPage() {
     } else {
       setActualFilename(null);
     }
-  }, [chatId]);
+  }, [chatId, authFetch]);
+
+  useEffect(() => {
+    if (actualFilename && loadChatRef.current) {
+      loadChatRef.current(actualFilename);
+    }
+  }, [actualFilename]);
 
   const showLoading = isInitialLoadRef.current && !is3DReady;
 
@@ -63,7 +72,7 @@ function ChatPage() {
         onSidebarChange={setSidebarOpen}
         inputOffset={hasMessages ? 50 : 425}
         onNewChatRef={(fn) => { newChatRef.current = fn; }}
-
+        onLoadChatRef={(fn) => { loadChatRef.current = fn; }}
       />
     </div>
   );

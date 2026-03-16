@@ -1,0 +1,289 @@
+.profile-container {
+  max-width: 860px;
+}
+
+.profile-hero {
+  margin-bottom: 48px;
+}
+
+.profile-eyebrow {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  color: rgba(232, 35, 250, 0.75);
+  border: 1px solid rgba(232, 35, 250, 0.22);
+  background: rgba(232, 35, 250, 0.07);
+  padding: 5px 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.profile-h1 {
+  font-size: clamp(34px, 5vw, 56px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -1.5px;
+  color: #fff;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.profile-h1 span {
+  background: linear-gradient(120deg, #e823fa, #9b5cfc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.profile-lead {
+  font-size: 15.5px;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.45);
+  max-width: 540px;
+}
+
+.profile-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+  margin: 48px 0;
+}
+
+.profile-divider-thin {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 32px 0;
+}
+
+.profile-content {
+  margin-bottom: 48px;
+}
+
+.profile-message {
+  padding: 14px 18px;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: 0.3px;
+}
+
+.profile-message.success {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  color: #4caf50;
+}
+
+.profile-message.error {
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  color: #f44336;
+}
+
+.profile-section {
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  margin-bottom: 24px;
+}
+
+.profile-section-danger {
+  background: rgba(244, 67, 54, 0.03);
+  border: 1px solid rgba(244, 67, 54, 0.15);
+}
+
+.profile-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 20px;
+  letter-spacing: -0.3px;
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.profile-field-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+}
+
+.profile-field-display span {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.profile-plan-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(232, 35, 250, 0.15);
+  border: 1px solid rgba(232, 35, 250, 0.25);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(232, 35, 250, 0.9);
+  letter-spacing: 0.5px;
+}
+
+.profile-field-description {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.profile-form-group input {
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.profile-form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.profile-form-group input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(232, 35, 250, 0.4);
+  box-shadow: 0 0 8px rgba(232, 35, 250, 0.15);
+}
+
+.profile-form-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.profile-btn-primary {
+  padding: 10px 24px;
+  background: linear-gradient(120deg, #e823fa, #9b5cfc);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  font-family: inherit;
+}
+
+.profile-btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.profile-btn-secondary {
+  padding: 10px 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.profile-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.profile-btn-danger {
+  padding: 10px 24px;
+  background: rgba(244, 67, 54, 0.15);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 8px;
+  color: #f44336;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.profile-btn-danger:hover {
+  background: rgba(244, 67, 54, 0.25);
+  border-color: rgba(244, 67, 54, 0.5);
+}
+
+@media (max-width: 768px) {
+  .profile-section {
+    padding: 18px;
+  }
+
+  .profile-field-display {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-form-buttons {
+    flex-direction: column;
+  }
+
+  .profile-form-buttons button {
+    width: 100%;
+  }
+
+  .profile-h1 {
+    font-size: 32px;
+  }
+
+  .profile-lead {
+    font-size: 14px;
+  }
+}

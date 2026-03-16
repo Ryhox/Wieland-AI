@@ -1,13 +1,19 @@
+import { useState } from 'react';
 import '../styles/Pricing.css';
 import '../styles/main.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Sidebar from '../components/Sidebar';
+import AuthModal from '../components/AuthModal';
+import PaymentConfirmModal from '../components/PaymentConfirmModal';
+import PurchaseModal from '../components/PurchaseModal';
+import { useAuth } from '../context/AuthContext';
 
 const CHECK = '✦';
 const CROSS = '✕';
 
 const FREE_FEATURES = [
-  { text: 'Lokales Ollama-Modell (Qwen3-VL 2B)', enabled: true },
+  { text: 'Lokales Ollama-Modell (Qwen3-VL 4B)', enabled: true },
   { text: 'Unbegrenzte Gespräche', enabled: true },
   { text: 'Bild-Upload & Analyse', enabled: true },
   { text: 'Gesprächsverlauf', enabled: true },
@@ -15,16 +21,17 @@ const FREE_FEATURES = [
   { text: 'Lokales Ollama-Modell (Qwen3-VL 8B)', enabled: false },
 ];
 
-const SUPPORT_FEATURES = [
+const PRO_FEATURES = [
   { text: 'Unterstützt die Entwicklung von Wieland AI', enabled: true },
   { text: 'Prioritäts-Support', enabled: true },
   { text: 'Frühzeitiger Zugang zu neuen Releases', enabled: true },
+  { text: 'Lokales Ollama-Modell (Qwen3-VL 8B)', enabled: true },
 ];
 
 const FAQ = [
   {
     q: 'Werden meine Daten in der Cloud gespeichert?',
-    a: 'Nein. Wieland AI läuft vollständig lokal auf deinem Gerät. Solange du offline bist, verlässt kein einziger Token dein System.',
+    a: 'Ja deine Chats sowie deine Nutzerdaten werden in unserer Datenbank gespeichert, damit du von all deinen Geräten auf deine Daten zugreifen kannst. Alle Daten werden jedoch verschlüsselt und sicher gespeichert.',
   },
   {
     q: 'Kann ich jederzeit kündigen?',
@@ -32,14 +39,51 @@ const FAQ = [
   },
   {
     q: 'Gibt es einen Unterschied bei der Modellqualität?',
-    a: 'Nein. Alle Nutzer verwenden dieselben lokalen Modelle. Support dient ausschließlich zur Unterstützung der Entwicklung.',
+    a: 'Ja, Nutzer mit Pro können Zugang zu leistungsstärkeren Modellen haben.',
   },
 ];
 
-function Pricing({ isSidebarOpen }) {
+function Pricing({ isSidebarOpen, onSidebarToggle }) {
+  const { user } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false);
+  const [purchaseModal, setPurchaseModal] = useState(null);
+
+  const handleUpgrade = () => {
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
+    setPaymentConfirmOpen(true);
+  };
+
+  const handleConfirmPayment = () => {
+    setPaymentConfirmOpen(false);
+    setPurchaseModal('Pro');
+  };
   return (
-    <div className={`page-wrapper ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-      <Header noSidebar />
+    <div className={`page-wrapper content-page ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      <Header isSidebarOpen={isSidebarOpen} />
+      {user && <Sidebar isOpen={isSidebarOpen} onOpenChange={onSidebarToggle} />}
+
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+
+      {paymentConfirmOpen && (
+        <PaymentConfirmModal
+          plan="Pro"
+          price={4.99}
+          onConfirm={handleConfirmPayment}
+          onClose={() => setPaymentConfirmOpen(false)}
+        />
+      )}
+
+      {purchaseModal && (
+        <PurchaseModal
+          plan={purchaseModal}
+          onComplete={() => setPurchaseModal(null)}
+          onClose={() => setPurchaseModal(null)}
+        />
+      )}
 
       <main className="page-content">
         <div className="page-container pricing-container">
@@ -76,8 +120,8 @@ function Pricing({ isSidebarOpen }) {
             </div>
 
             <div className="pricing-card featured">
-              <span className="pricing-badge">Support</span>
-              <div className="pricing-plan-name">Support</div>
+              <span className="pricing-badge">Pro</span>
+              <div className="pricing-plan-name">Pro</div>
               <div className="pricing-price-row">
                 <span className="pricing-price">4,99 €</span>
                 <span className="pricing-price-period">/ Monat</span>
@@ -87,7 +131,7 @@ function Pricing({ isSidebarOpen }) {
               </p>
 
               <ul className="pricing-features">
-                {SUPPORT_FEATURES.map(f => (
+                {PRO_FEATURES.map(f => (
                   <li key={f.text}>
                     <span className="feat-icon">{CHECK}</span>
                     {f.text}
@@ -95,8 +139,8 @@ function Pricing({ isSidebarOpen }) {
                 ))}
               </ul>
 
-              <button className="pricing-btn btn-pro">
-                Projekt unterstützen
+              <button className="pricing-btn btn-pro" onClick={handleUpgrade}>
+                Upgrade
               </button>
             </div>
 

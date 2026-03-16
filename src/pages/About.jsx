@@ -4,21 +4,25 @@ import '../styles/About.css';
 import '../styles/main.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Sidebar from '../components/Sidebar';
+import { useAuth } from '../context/AuthContext';
 
-function About({ isSidebarOpen }) {
-    const [stats, setStats] = useState({ total_users: null, total_chats: null, total_messages: null });
+function About({ isSidebarOpen, onSidebarToggle }) {
+  const { user } = useAuth();
+  const [stats, setStats] = useState({ total_users: null, total_chats: null, total_messages: null });
 
   useEffect(() => {
     fetch('/api/stats')
       .then(r => r.json())
       .then(data => setStats(data))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const fmt = (n) => n === null ? '…' : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
   return (
-    <div className={`page-wrapper ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-      <Header noSidebar />
+    <div className={`page-wrapper content-page ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      <Header isSidebarOpen={isSidebarOpen} />
+      {user && <Sidebar isOpen={isSidebarOpen} onOpenChange={onSidebarToggle} />}
 
       <main className="page-content">
         <div className="page-container about-container">
@@ -27,18 +31,17 @@ function About({ isSidebarOpen }) {
             <span className="about-eyebrow">Über uns</span>
             <h1 className="about-h1">Intelligenz,<br /><span>lokal gedacht.</span></h1>
             <p className="about-lead">
-              Wieland AI ist ein offline-fähiger KI-Assistent, der direkt auf deinem Gerät läuft —
-              ohne Cloud, ohne Datenweitergabe, ohne Kompromisse.
+              Wieland AI ist ein einzigartiger KI-Assistent
             </p>
           </div>
 
           <div className="about-stats">
             {[
-              { num: '100%', label: 'Offline-fähig' },
-              { num: 'OpenSource',  label: 'GitHub' },
-              { num: 'MIT',  label: 'Lizenz' },
-              { num: fmt(stats.total_users),    label: 'Nutzer' },
-              { num: fmt(stats.total_chats),    label: 'Gespräche' },
+              { num: 'Browser-Extension', label: 'Downloade Jetzt!' },
+              { num: 'Schnell & Schlau', label: 'Performance' },
+              { num: 'Supportet Bild & Text', label: 'VLM' },
+              { num: fmt(stats.total_users), label: 'Nutzer' },
+              { num: fmt(stats.total_chats), label: 'Gespräche' },
               { num: fmt(stats.total_messages), label: 'Nachrichten' },
             ].map(s => (
               <div className="about-stat-card" key={s.label}>
@@ -54,11 +57,11 @@ function About({ isSidebarOpen }) {
           <div className="about-cards">
             <div className="about-card">
               <h3>Privatsphäre zuerst</h3>
-              <p>Deine Gespräche gehören dir. Wieland AI verarbeitet alle Anfragen lokal über Ollama — kein einziger Token verlässt dein Gerät, solange du offline bleibst.</p>
+              <p>Wir glauben an die Bedeutung der Privatsphäre. Wieland AI ist darauf ausgelegt, deine Daten sicher und verschlüsselt zu speichern.</p>
             </div>
             <div className="about-card">
               <h3>Moderne Technologie</h3>
-              <p>Gebaut mit React, Vite, Express und PostgreSQL. Modelle wie Qwen3-VL laufen direkt auf deiner Hardware und liefern erstklassige Antworten.</p>
+              <p>Wieland wird von Qwen3-VL unterstützt und bietet eine erstklassige KI-Erlebnis.</p>
             </div>
 
           </div>
@@ -68,10 +71,10 @@ function About({ isSidebarOpen }) {
           <p className="about-section-label">Technologie-Stack</p>
           <div className="about-stack">
             {[
-              { label: 'Frontend',   tags: ['React', 'Vite', 'CSS'] },
-              { label: 'Backend',    tags: ['Node.js', 'Express'] },
-              { label: 'Datenbank',  tags: ['PostgreSQL'] },
-              { label: 'KI-Engine',  tags: ['Ollama', 'Qwen3-VL'] },
+              { label: 'Frontend', tags: ['React', 'Vite', 'CSS'] },
+              { label: 'Backend', tags: ['Node.js', 'Express'] },
+              { label: 'Datenbank', tags: ['PostgreSQL'] },
+              { label: 'KI-Engine', tags: ['Ollama', 'Qwen3-VL'] },
             ].map(s => (
               <div className="about-stack-card" key={s.label}>
                 <span className="about-stack-label">{s.label}</span>

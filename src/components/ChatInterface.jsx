@@ -24,10 +24,27 @@ const LightningIcon = () => (
     <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
   </svg>
 );
+const BotIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="3" y="8" width="18" height="12" rx="2" /><path d="M12 4v4" />
+    <circle cx="9" cy="14" r="1" /><circle cx="15" cy="14" r="1" />
+  </svg>
+);
+const SparkIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
+  </svg>
+);
 
 const AVAILABLE_MODELS = [
   { id: 'qwen3-vl:8b-instruct', label: '8B · Präzise', icon: <TargetIcon /> },
   { id: 'qwen3-vl:4b-instruct', label: '4B · Schnell', icon: <LightningIcon /> },
+];
+
+const AI_STYLES = [
+  { id: 'formal', label: 'Formell', icon: <BotIcon /> },
+  { id: 'friendly', label: 'Freundlich', icon: <BotIcon /> },
+  { id: 'precise', label: 'Präzise', icon: <SparkIcon /> },
 ];
 
 function renderMarkdown(raw = '') {
@@ -62,17 +79,6 @@ const ImageIcon = () => (
     <path d="M21 15l-5-5L5 21" />
   </svg>
 );
-const BotIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="8" width="18" height="12" rx="2" /><path d="M12 4v4" />
-    <circle cx="9" cy="14" r="1" /><circle cx="15" cy="14" r="1" />
-  </svg>
-);
-const SparkIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
-  </svg>
-);
 
 export default function ChatInterface({
   onMessagesChange,
@@ -82,9 +88,18 @@ export default function ChatInterface({
   onSidebarChange,
   inputOffset = 50,
   onNewChatRef,
+  onLoadChatRef,
 }) {
   const DEMO_MODE = true;
   const { authFetch, user } = useAuth();
+
+  const isModelAllowed = (modelId, plan = 'Free') => {
+    const userPlan = plan?.toLowerCase() || 'free';
+    if (userPlan === 'pro' || userPlan === 'admin') {
+      return true;
+    }
+    return modelId === 'qwen3-vl:4b-instruct';
+  };
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -98,7 +113,14 @@ export default function ChatInterface({
   const [selectedModel, setSelectedModel] = useState(AVAILABLE_MODELS[0].id);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [aiStyle, setAiStyle] = useState('formal');
   const pendingInputRef = useRef('');
+
+  useEffect(() => {
+    if (!isModelAllowed(selectedModel, user?.plan)) {
+      setSelectedModel('qwen3-vl:4b-instruct');
+    }
+  }, [user?.plan]);
 
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -157,12 +179,14 @@ export default function ChatInterface({
       }));
       setMessages(loaded);
       setCurrentChatId(filename);
-      const ts = filename.match(/\d+/)?.[0];
-      if (ts) pushUrl(`/chat/${ts}`);
+      const uuid = filename.match(/chat_([a-f0-9-]+)\.json/)?.[1];
+      if (uuid) pushUrl(`/chat/${uuid}`);
     } catch (err) {
       console.error('Failed to load chat:', err);
     }
   }, [authFetch]);
+
+  useEffect(() => { onLoadChatRef?.(loadChat); }, [loadChat]);
 
   const saveChat = useCallback(async (msgs, chatIdToUse, generateTitle = false) => {
     if (!msgs.length) return;
@@ -181,8 +205,8 @@ export default function ChatInterface({
       if (saved.filename && !chatIdToUse) {
         setCurrentChatId(saved.filename);
         currentChatRef.current = saved.filename;
-        const ts = saved.filename.match(/\d+/)?.[0];
-        if (ts) pushUrl(`/chat/${ts}`);
+        const uuid = saved.filename.match(/chat_([a-f0-9-]+)\.json/)?.[1];
+        if (uuid) pushUrl(`/chat/${uuid}`);
       }
       window.dispatchEvent(new CustomEvent('chatHistoryUpdated'));
     } catch (err) {
@@ -233,8 +257,8 @@ export default function ChatInterface({
       }
     }
 
-    const userContent = imageUrl ? `![Bild](${imageUrl})\n\n${text}` : text;
-    const userMsg = { content: userContent, isUser: true, id: uid() };
+    const userContext = imageUrl ? `![Bild](${imageUrl})\n\n${text}` : text;
+    const userMsg = { content: userContext, isUser: true, id: uid() };
 
     const contextSnap = messages.map(m => ({
       role: m.isUser ? 'user' : 'assistant',
@@ -244,8 +268,8 @@ export default function ChatInterface({
     const withUser = [...messages, userMsg];
     setMessages(withUser);
 
-    await runStream(text, fileCopy, contextSnap, withUser, selectedModel);
-  }, [input, imageFile, imagePreview, isSending, messages, user, clearImage, selectedModel, uploadImage]);
+    await runStream(text, fileCopy, contextSnap, withUser, selectedModel, aiStyle);
+  }, [input, imageFile, imagePreview, isSending, messages, user, clearImage, selectedModel, aiStyle, uploadImage]);
 
   const handleAuthSuccess = useCallback(() => {
     if (pendingInputRef.current) {
@@ -256,7 +280,7 @@ export default function ChatInterface({
     }
   }, []);
 
-  const runStream = useCallback(async (userText, file, contextSnap, baseMessages, model = AVAILABLE_MODELS[0].id) => {
+  const runStream = useCallback(async (userText, file, contextSnap, baseMessages, model = AVAILABLE_MODELS[0].id, style = 'formal') => {
     const aiId = uid();
     setMessages(prev => [...prev, { content: '', isUser: false, id: aiId }]);
 
@@ -269,6 +293,7 @@ export default function ChatInterface({
       fd.append('message', userText);
       fd.append('context', JSON.stringify(contextSnap));
       fd.append('model', model);
+      fd.append('aiStyle', style);
       if (file) fd.append('image', file);
 
       const token = localStorage.getItem('wieland_token');
@@ -376,7 +401,7 @@ export default function ChatInterface({
           refile = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' });
         } catch { }
       }
-      await runStream(editingText, refile, ctx, truncated, selectedModel);
+      await runStream(editingText, refile, ctx, truncated, selectedModel, aiStyle);
     } else {
       if (currentChatRef.current) await saveChat(truncated, currentChatRef.current, false);
     }
@@ -405,8 +430,8 @@ export default function ChatInterface({
         refile = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' });
       } catch { }
     }
-    await runStream(stripImg(uMsg.content), refile, ctx, truncated, selectedModel);
-  }, [messages, isSending, runStream, selectedModel]);
+    await runStream(stripImg(uMsg.content), refile, ctx, truncated, selectedModel, aiStyle);
+  }, [messages, isSending, runStream, selectedModel, aiStyle]);
 
   const copyText = (content) => navigator.clipboard.writeText(stripImg(content)).catch(console.error);
 
@@ -477,9 +502,16 @@ export default function ChatInterface({
                 <ImageIcon /> Bild hochladen
               </button>
               <div className="plus-popup-divider" />
-              <button className="plus-popup-item" onClick={() => setShowPlusMenu(false)}><BotIcon /> KI-Stil: Formell</button>
-              <button className="plus-popup-item" onClick={() => setShowPlusMenu(false)}><BotIcon /> KI-Stil: Freundlich</button>
-              <button className="plus-popup-item" onClick={() => setShowPlusMenu(false)}><SparkIcon /> KI-Stil: Präzise</button>
+              {AI_STYLES.map(style => (
+                <button
+                  key={style.id}
+                  className={`plus-popup-item ${aiStyle === style.id ? 'active' : ''}`}
+                  onClick={() => { setAiStyle(style.id); setShowPlusMenu(false); }}
+                >
+                  {style.icon} KI-Stil: {style.label}
+                  {aiStyle === style.id}
+                </button>
+              ))}
             </div>
           )}
 
@@ -527,15 +559,25 @@ export default function ChatInterface({
 
               {showModelDropdown && (
                 <div className="model-dropdown">
-                  {AVAILABLE_MODELS.map(m => (
-                    <button
-                      key={m.id}
-                      className={`model-dropdown-item ${selectedModel === m.id ? 'active' : ''}`}
-                      onClick={() => { setSelectedModel(m.id); setShowModelDropdown(false); }}
-                    >
-                      <span>{m.icon}</span> {m.label}
-                    </button>
-                  ))}
+                  {AVAILABLE_MODELS.map(m => {
+                    const allowed = isModelAllowed(m.id, user?.plan);
+                    return (
+                      <button
+                        key={m.id}
+                        className={`model-dropdown-item ${selectedModel === m.id ? 'active' : ''} ${!allowed ? 'disabled' : ''}`}
+                        onClick={() => {
+                          if (allowed) {
+                            setSelectedModel(m.id);
+                            setShowModelDropdown(false);
+                          }
+                        }}
+                        disabled={!allowed}
+                        title={!allowed ? `Nur verfügbar mit Pro Plan` : ''}
+                      >
+                        <span>{m.icon}</span> {m.label}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

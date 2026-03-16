@@ -102,11 +102,6 @@
   color: rgba(255, 255, 255, 0.32);
 }
 
-.dl-badge-size {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  color: rgba(255, 255, 255, 0.32);
-}
 
 .dl-main-desc {
   font-size: 13px;
@@ -272,30 +267,6 @@
   margin-top: 1px;
 }
 
-.dl-integrity {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  padding: 14px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.dl-integrity-label {
-  font-size: 10px;
-  letter-spacing: 1.5px;
-  color: rgba(255, 255, 255, 0.2);
-}
-
-.dl-integrity-hash {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.28);
-  letter-spacing: 0.5px;
-}
-
 .dl-notice {
   display: flex;
   align-items: flex-start;
@@ -329,13 +300,16 @@
     flex-direction: column;
     align-items: flex-start;
   }
+
   .dl-btn-primary {
     width: 100%;
     justify-content: center;
   }
+
   .dl-changelog-entry {
     grid-template-columns: 1fr;
   }
+
   .dl-changelog-ver {
     border-right: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
