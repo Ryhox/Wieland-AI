@@ -92,8 +92,8 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
             <span className="pricing-eyebrow">Preise</span>
             <h1 className="pricing-h1">Einfach.<br /><span>Transparent.</span></h1>
             <p className="pricing-lead">
-              Wieland AI ist für alle nutzbar, Anmelden und los geht es.
-              Wenn du aber noch mehr willst, kannst du mit einem Pro-Upgrade die Entwicklung unterstützen und von zusätzlichen Vorteilen profitieren.
+              Wieland AI ist für alle nutzbar, Anmelden und los geht es.<br></br>
+              Wenn du aber noch mehr willst, upgrade zur Pro-Version
             </p>
           </div>
 
