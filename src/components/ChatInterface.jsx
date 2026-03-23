@@ -357,7 +357,7 @@ export default function ChatInterface({
       }
       console.error('Stream error:', err);
       const fallback = DEMO_MODE
-        ? '**Hallo! Ich bin Wieland** – dein lokaler KI-Assistent.\n\nDies ist eine **Demo-Vorschau**. Im echten Betrieb läuft hier ein lokales Sprachmodell (Qwen3-VL) vollständig offline auf deinem Gerät.\n\n*Um Ressourcen zu schonen läuft hier keine wirkliche AI*'
+        ? '**Hallo! Ich bin Wieland** – dein lokaler KI-Assistent.\n\nDies ist eine **Demo-Vorschau**. Im echten Betrieb läuft hier ein lokales Sprachmodell (Wieland AI).\n\n*Um Ressourcen zu schonen läuft hier keine wirkliche AI*'
         : 'Fehler bei der Kommunikation mit dem Server.';
       setMessages(prev => prev.map(m => m.id === aiId ? { ...m, content: fallback } : m));
     } finally {

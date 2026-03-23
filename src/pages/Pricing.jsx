@@ -17,13 +17,13 @@ const CHECK = '✦';
 const CROSS = '✕';
 
 const FREE_FEATURES = [
-  { text: 'Lokales Ollama-Modell (Qwen3-VL 2B)', enabled: true },
+  { text: 'Wieland 2B Modell', enabled: true },
   { text: 'Unbegrenzte Gespräche', enabled: true },
   { text: 'Bild-Upload & Analyse', enabled: true },
   { text: 'Gesprächsverlauf', enabled: true },
   { text: 'Prioritäts-Support', enabled: false },
-  { text: 'Lokales Ollama-Modell (Qwen3-VL 4B)', enabled: false },
-  { text: 'Lokales Ollama-Modell (Qwen3-VL 8B)', enabled: false },
+  { text: 'Wieland 4B Modell', enabled: false },
+  { text: 'Wieland 8B Modell', enabled: false },
 ];
 
 const PRO_FEATURES = [
@@ -31,13 +31,13 @@ const PRO_FEATURES = [
   { text: 'Unterstützt die Entwicklung von Wieland AI', enabled: true },
   { text: 'Prioritäts-Support', enabled: true },
   { text: 'Frühzeitiger Zugang zu neuen Releases', enabled: true },
-  { text: 'Lokales Ollama-Modell (Qwen3-VL 4B)', enabled: true },
-  { text: 'Lokales Ollama-Modell (Qwen3-VL 8B)', enabled: false },
+  { text: 'Wieland4B Modell', enabled: true },
+  { text: 'Wieland 8B Modell', enabled: false },
 ];
 
 const MAX_FEATURES = [
   { text: 'Alles aus Pro', enabled: true },
-  { text: 'Beste Modellqualität mit Qwen3-VL 8B', enabled: true },
+  { text: 'Beste Modellqualität mit Wieland 8B Modell ', enabled: true },
   { text: 'Prioritäts-Support', enabled: true },
   { text: 'Frühzeitiger Zugang zu neuen Releases', enabled: true },
 ];
@@ -63,7 +63,7 @@ const FAQ = [
   },
   {
     q: 'Gibt es einen Unterschied bei der Modellqualität?',
-    a: 'Ja, Nutzer mit Pro können Zugang zu leistungsstärkeren Modellen haben.',
+    a: 'Ja, Nutzer mit Pro oder Max können Zugang zu leistungsstärkeren Modellen haben. Wobei Max die beste Qualität mit Wieland 8B bietet, ideal für komplexe Anfragen und detaillierte Antworten.',
   },
 ];
 
@@ -310,7 +310,7 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
                 <span className="pricing-price-period">/ Monat</span>
               </div>
               <p className="pricing-price-sub">
-                Maximale Qualität mit Qwen3-VL 8B.
+                Maximale Qualität mit Wieland 8B.
               </p>
 
               <ul className="pricing-features">
