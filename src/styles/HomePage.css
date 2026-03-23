@@ -1,14 +1,28 @@
-#stars-canvas {
+.home-container #stars-canvas {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
-#three-canvas {
+.home-container #three-canvas {
   position: fixed;
   inset: 0;
-  z-index: 1;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.home-ambient-glow {
+  position: fixed;
+  inset: auto;
+  width: 58vmin;
+  height: 58vmin;
+  right: -12vmin;
+  top: 8vmin;
+  z-index: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(232, 35, 250, 0.151), rgba(76, 221, 255, 0.05) 58%, transparent 74%);
+  filter: blur(14px);
   pointer-events: none;
 }
 
@@ -16,8 +30,24 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  background: #0a0a0a;
+  background:
+    radial-gradient(1200px 700px at 80% 0%, rgba(232, 35, 250, 0.12), transparent 60%),
+    radial-gradient(900px 600px at 0% 40%, rgba(31, 196, 255, 0.08), transparent 58%),
+    #0b0d13;
   overflow: hidden;
   height: 100vh;
   display: flex;
+}
+
+@media (max-width: 640px) {
+  #three-canvas {
+    opacity: 0.26;
+  }
+
+  .home-ambient-glow {
+    width: 72vmin;
+    height: 72vmin;
+    right: -20vmin;
+    top: 4vmin;
+  }
 }

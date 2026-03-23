@@ -22,7 +22,7 @@ function makeSpring(stiffness = 100, damping = 16) {
   };
 }
 
-export default function Scene3D({ hasMessages, onReady }) {
+export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', sceneProgress = 0, sceneSpin = 0, hidePlanet = false }) {
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
@@ -42,6 +42,10 @@ export default function Scene3D({ hasMessages, onReady }) {
 
   const charBaseY = useRef(-1.0);
   const planBaseY = useRef(0);
+  const sceneProgressRef = useRef(0);
+  const sceneSpinRef = useRef(0);
+  const waveBoneRef = useRef(null);
+  const waveRestQuatRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -82,7 +86,7 @@ export default function Scene3D({ hasMessages, onReady }) {
 
     scene.add(new THREE.AmbientLight(0x404060, 2.2));
 
-    const planetGlow = new THREE.PointLight(0x88aaff, 2.8, 15);
+    const planetGlow = new THREE.PointLight(0x88aaff, hidePlanet ? 1.0 : 2.8, 15);
     planetGlow.position.set(0, 0.8, 0);
     scene.add(planetGlow);
 
@@ -126,56 +130,59 @@ export default function Scene3D({ hasMessages, onReady }) {
 
     const texLoader = new THREE.TextureLoader();
     const fbxLoader = new FBXLoader();
+    let cloudMesh = null;
 
-    const planetTex = texLoader.load('/Texture_Planet.png');
-    planetTex.encoding = THREE.sRGBEncoding;
-    planetTex.wrapS = THREE.RepeatWrapping;
-    planetTex.wrapT = THREE.RepeatWrapping;
+    if (!hidePlanet) {
+      const planetTex = texLoader.load('/Texture_Planet.png');
+      planetTex.encoding = THREE.sRGBEncoding;
+      planetTex.wrapS = THREE.RepeatWrapping;
+      planetTex.wrapT = THREE.RepeatWrapping;
 
-    fbxLoader.load('/Planet.fbx', (fbx) => {
-      const box = new THREE.Box3().setFromObject(fbx);
-      const size = new THREE.Vector3();
-      box.getSize(size);
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const scale = (ER * 2) / maxDim;
-      fbx.scale.setScalar(scale);
-      const center = new THREE.Vector3();
-      box.getCenter(center);
-      fbx.position.sub(center.multiplyScalar(scale));
-      fbx.traverse((child) => {
-        if (child.isMesh) {
-          child.castShadow = child.receiveShadow = true;
-          child.material = new THREE.MeshStandardMaterial({
-            map: planetTex, roughness: 0.25, metalness: 0.6,
-            emissive: new THREE.Color(0x112233), emissiveIntensity: 0.5, color: 0xffffff,
-          });
-        }
-      });
-      const pivot = new THREE.Group();
-      pivot.rotation.x = PLANET_ROTATION_X;
-      pivot.rotation.y = PLANET_ROTATION_Y;
-      pivot.rotation.z = PLANET_ROTATION_Z;
-      pivot.add(fbx);
-      planetGroup.add(pivot);
-    }, undefined, (err) => console.error('Planet FBX error:', err));
+      fbxLoader.load('/Planet.fbx', (fbx) => {
+        const box = new THREE.Box3().setFromObject(fbx);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = (ER * 2) / maxDim;
+        fbx.scale.setScalar(scale);
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+        fbx.position.sub(center.multiplyScalar(scale));
+        fbx.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = child.receiveShadow = true;
+            child.material = new THREE.MeshStandardMaterial({
+              map: planetTex, roughness: 0.25, metalness: 0.6,
+              emissive: new THREE.Color(0x112233), emissiveIntensity: 0.5, color: 0xffffff,
+            });
+          }
+        });
+        const pivot = new THREE.Group();
+        pivot.rotation.x = PLANET_ROTATION_X;
+        pivot.rotation.y = PLANET_ROTATION_Y;
+        pivot.rotation.z = PLANET_ROTATION_Z;
+        pivot.add(fbx);
+        planetGroup.add(pivot);
+      }, undefined, (err) => console.error('Planet FBX error:', err));
 
-    const cloudMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(ER + 0.04, 64, 64),
-      new THREE.MeshStandardMaterial({
-        map: makeCloudTex(), transparent: true, opacity: 0.5, roughness: 0.4,
-        emissive: new THREE.Color(0x88aaff), emissiveIntensity: 0.3,
-        depthWrite: false, blending: THREE.AdditiveBlending,
-      })
-    );
-    planetGroup.add(cloudMesh);
+      cloudMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(ER + 0.04, 64, 64),
+        new THREE.MeshStandardMaterial({
+          map: makeCloudTex(), transparent: true, opacity: 0.5, roughness: 0.4,
+          emissive: new THREE.Color(0x88aaff), emissiveIntensity: 0.3,
+          depthWrite: false, blending: THREE.AdditiveBlending,
+        })
+      );
+      planetGroup.add(cloudMesh);
 
-    planetGroup.add(new THREE.Mesh(
-      new THREE.SphereGeometry(ER + 0.15, 48, 48),
-      new THREE.MeshStandardMaterial({
-        color: 0x1500ff, transparent: true, opacity: 0.10, side: THREE.BackSide,
-        emissive: new THREE.Color(0x0013e3), emissiveIntensity: 0.3,
-      })
-    ));
+      planetGroup.add(new THREE.Mesh(
+        new THREE.SphereGeometry(ER + 0.15, 48, 48),
+        new THREE.MeshStandardMaterial({
+          color: 0x1500ff, transparent: true, opacity: 0.10, side: THREE.BackSide,
+          emissive: new THREE.Color(0x0013e3), emissiveIntensity: 0.3,
+        })
+      ));
+    }
 
     const NPART = 180;
     const pPh = new Float32Array(NPART);
@@ -250,6 +257,9 @@ export default function Scene3D({ hasMessages, onReady }) {
     fbxLoader.load('/character.fbx', (fbx) => {
       fbx.scale.setScalar(0.026);
       fbx.position.set(0, charBaseY.current, 0);
+      if (sceneMode === 'about') {
+        fbx.visible = false;
+      }
 
       fbx.traverse((child) => {
         if (child.isMesh) {
@@ -274,12 +284,17 @@ export default function Scene3D({ hasMessages, onReady }) {
 
       scene.add(fbx);
       characterRef.current = fbx;
-      objectsToRotateRef.current.push(fbx);
+      if (sceneMode !== 'about') {
+        objectsToRotateRef.current.push(fbx);
+      }
 
       fbx.traverse((child) => {
         if (!child.isBone) return;
         const p = ARM_POSE[child.name];
         if (p) child.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(p.ax, p.ag));
+        if (child.name === 'LowerArml' || child.name === 'LowerArmr') {
+          waveBoneRef.current = child;
+        }
       });
 
       if (headBone) {
@@ -287,6 +302,9 @@ export default function Scene3D({ hasMessages, onReady }) {
         origHeadQ = new THREE.Quaternion()
           .setFromAxisAngle(new THREE.Vector3(1, 0, 0), DEF_DOWN)
           .multiply(origHeadQ);
+      }
+      if (waveBoneRef.current) {
+        waveRestQuatRef.current = waveBoneRef.current.quaternion.clone();
       }
       for (const e of breathBones) e.restQ = e.bone.quaternion.clone();
       fbx.traverse((child) => {
@@ -323,10 +341,12 @@ export default function Scene3D({ hasMessages, onReady }) {
       const dt = Math.min(el - prevTime, 0.05);
       prevTime = el;
 
-      cloudMesh.rotation.y = el * 0.1;
-      cloudMesh.rotation.x = el * 0.02;
+      if (cloudMesh) {
+        cloudMesh.rotation.y = el * 0.1;
+        cloudMesh.rotation.x = el * 0.02;
+      }
       particles.rotation.y += 0.001;
-      planetGlow.intensity = 2.4 + 0.6 * Math.sin(el * 0.8);
+      planetGlow.intensity = (hidePlanet ? 0.8 : 2.4) + 0.25 * Math.sin(el * 0.8);
 
       const pp = pGeo.attributes.position;
       for (let i = 0; i < NPART; i++) {
@@ -351,7 +371,7 @@ export default function Scene3D({ hasMessages, onReady }) {
 
       scene.updateMatrixWorld();
 
-      if (headBone && origHeadQ) {
+      if (sceneMode !== 'about' && headBone && origHeadQ) {
         const hp = headBone.getWorldPosition(new THREE.Vector3());
         const hs = w2s(hp);
         const dist = mousePx.distanceTo(hs);
@@ -388,12 +408,20 @@ export default function Scene3D({ hasMessages, onReady }) {
 
       if (cameraRef.current) {
         cameraRef.current.position.x = camSpringX.current.step(dt);
+        if (sceneMode === 'about') {
+          const p = sceneProgressRef.current;
+          cameraRef.current.position.y = 3.2 + Math.sin(p * Math.PI * 1.1) * 0.1;
+          cameraRef.current.position.z = 8.1 - p * 0.18;
+          cameraRef.current.lookAt(0, -0.55 + p * 0.12, 0);
+        }
       }
 
 
       if (characterRef.current) {
-        characterRef.current.position.x = charSpringX.current.step(dt);
-        characterRef.current.position.y = charBaseY.current + charSpringY.current.step(dt);
+        if (sceneMode !== 'about') {
+          characterRef.current.position.x = charSpringX.current.step(dt);
+          characterRef.current.position.y = charBaseY.current + charSpringY.current.step(dt);
+        }
       }
 
       if (planetGroupRef.current) {
@@ -442,6 +470,19 @@ export default function Scene3D({ hasMessages, onReady }) {
     charSpringY.current.target = 0;
     planSpringY.current.target = 0;
   }, [hasMessages]);
+
+  useEffect(() => {
+    sceneProgressRef.current = sceneProgress;
+    sceneSpinRef.current = sceneSpin;
+
+    if (sceneMode !== 'about') return;
+
+    camSpringX.current.target = 0;
+    rotSpring.current.target = sceneSpinRef.current * Math.PI;
+
+    planSpringX.current.target = 0;
+    planSpringY.current.target = 2.6;
+  }, [sceneMode, sceneProgress, sceneSpin]);
 
   return <canvas ref={canvasRef} id="three-canvas" />;
 }

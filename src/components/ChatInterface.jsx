@@ -37,9 +37,38 @@ const SparkIcon = () => (
 );
 
 const AVAILABLE_MODELS = [
+  { id: 'qwen3-vl:2b-instruct', label: '2B · Free', icon: <BotIcon /> },
+  { id: 'qwen3-vl:4b-instruct', label: '4B · Pro', icon: <LightningIcon /> },
   { id: 'qwen3-vl:8b-instruct', label: '8B · Präzise', icon: <TargetIcon /> },
-  { id: 'qwen3-vl:4b-instruct', label: '4B · Schnell', icon: <LightningIcon /> },
 ];
+
+const normalizePlan = (plan) => {
+  const value = String(plan || 'Free').toLowerCase();
+  if (value === 'admin') return 'admin';
+  if (value === 'max') return 'max';
+  if (value === 'pro') return 'pro';
+  return 'free';
+};
+
+const getPlanRank = (plan) => {
+  const normalized = normalizePlan(plan);
+  if (normalized === 'admin' || normalized === 'max') return 2;
+  if (normalized === 'pro') return 1;
+  return 0;
+};
+
+const getModelRank = (modelId) => {
+  if (modelId === 'qwen3-vl:8b-instruct') return 2;
+  if (modelId === 'qwen3-vl:4b-instruct') return 1;
+  return 0;
+};
+
+const getPlanModel = (plan) => {
+  const normalized = normalizePlan(plan);
+  if (normalized === 'admin' || normalized === 'max') return 'qwen3-vl:8b-instruct';
+  if (normalized === 'pro') return 'qwen3-vl:4b-instruct';
+  return 'qwen3-vl:2b-instruct';
+};
 
 const AI_STYLES = [
   { id: 'formal', label: 'Formell', icon: <BotIcon /> },
@@ -94,11 +123,7 @@ export default function ChatInterface({
   const { authFetch, user } = useAuth();
 
   const isModelAllowed = (modelId, plan = 'Free') => {
-    const userPlan = plan?.toLowerCase() || 'free';
-    if (userPlan === 'pro' || userPlan === 'admin') {
-      return true;
-    }
-    return modelId === 'qwen3-vl:4b-instruct';
+    return getModelRank(modelId) <= getPlanRank(plan);
   };
 
   const [messages, setMessages] = useState([]);
@@ -110,16 +135,14 @@ export default function ChatInterface({
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editingText, setEditingText] = useState('');
-  const [selectedModel, setSelectedModel] = useState(AVAILABLE_MODELS[0].id);
+  const [selectedModel, setSelectedModel] = useState(getPlanModel(user?.plan));
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [aiStyle, setAiStyle] = useState('formal');
   const pendingInputRef = useRef('');
 
   useEffect(() => {
-    if (!isModelAllowed(selectedModel, user?.plan)) {
-      setSelectedModel('qwen3-vl:4b-instruct');
-    }
+    setSelectedModel(getPlanModel(user?.plan));
   }, [user?.plan]);
 
   const messagesEndRef = useRef(null);
@@ -436,7 +459,10 @@ export default function ChatInterface({
   const copyText = (content) => navigator.clipboard.writeText(stripImg(content)).catch(console.error);
 
   return (
-    <div className={`chat-interface-wrapper ${isLoading ? 'loading' : ''}`}>
+    <div
+      className={`chat-interface-wrapper ${isLoading ? 'loading' : ''}`}
+      style={{ '--chat-input-offset': `${inputOffset}px` }}
+    >
       {user && (
         <Sidebar
           onNewChat={handleNewChat}
@@ -572,7 +598,7 @@ export default function ChatInterface({
                           }
                         }}
                         disabled={!allowed}
-                        title={!allowed ? `Nur verfügbar mit Pro Plan` : ''}
+                        title={!allowed ? 'Dieses Modell wird automatisch durch deinen Plan festgelegt.' : ''}
                       >
                         <span>{m.icon}</span> {m.label}
                       </button>

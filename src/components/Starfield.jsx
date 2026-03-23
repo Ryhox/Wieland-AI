@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-export default function Starfield() {
+export default function Starfield({ mode = 'twinkle' }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -16,8 +16,8 @@ export default function Starfield() {
       build();
     }
 
-    function build() {
-      stars = Array.from({ length: 320 }, () => ({
+    function buildTwinkle() {
+      return Array.from({ length: 320 }, () => ({
         x: Math.random() * W,
         y: Math.random() * H,
         r: Math.random() * 1.3 + 0.12,
@@ -27,16 +27,51 @@ export default function Starfield() {
       }));
     }
 
+    function buildOrbitCenter() {
+      const maxRadius = Math.min(W, H) * 0.34;
+      const minRadius = Math.min(W, H) * 0.12;
+
+      return Array.from({ length: 280 }, () => ({
+        d: minRadius + Math.random() * (maxRadius - minRadius),
+        a: Math.random() * Math.PI * 2,
+        v: (Math.random() * 0.42 + 0.08) * (Math.random() > 0.55 ? 1 : -1),
+        r: Math.random() * 1.4 + 0.15,
+        o: Math.random() * 0.85 + 0.12,
+        t: Math.random() * Math.PI * 2,
+      }));
+    }
+
+    function build() {
+      stars = mode === 'orbit-center' ? buildOrbitCenter() : buildTwinkle();
+    }
+
     function draw() {
       ctx.clearRect(0, 0, W, H);
       const now = performance.now() / 1000;
-      for (const s of stars) {
-        const a = s.a * (0.4 + 0.6 * Math.sin(now * Math.abs(s.sp) + s.t));
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(185,215,255,${a})`;
-        ctx.fill();
+
+      if (mode === 'orbit-center') {
+        const cx = W / 2;
+        const cy = H / 2;
+        for (const s of stars) {
+          const angle = s.a + now * s.v;
+          const x = cx + Math.cos(angle) * s.d;
+          const y = cy + Math.sin(angle) * s.d * 0.72;
+          const alpha = s.o * (0.45 + 0.55 * Math.sin(now * (Math.abs(s.v) + 0.35) + s.t));
+          ctx.beginPath();
+          ctx.arc(x, y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(185,215,255,${alpha})`;
+          ctx.fill();
+        }
+      } else {
+        for (const s of stars) {
+          const alpha = s.a * (0.4 + 0.6 * Math.sin(now * Math.abs(s.sp) + s.t));
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(185,215,255,${alpha})`;
+          ctx.fill();
+        }
       }
+
       requestAnimationFrame(draw);
     }
 
@@ -47,7 +82,7 @@ export default function Starfield() {
     return () => {
       window.removeEventListener('resize', resize);
     };
-  }, []);
+  }, [mode]);
 
   return <canvas ref={canvasRef} id="stars-canvas" />;
 }

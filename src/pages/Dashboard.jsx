@@ -189,6 +189,18 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
             <main className={`db-main-area ${isOpen ? 'sidebar-open' : ''}`}>
 
                 <header className={`header no-sidebar ${isOpen ? 'sidebar-open' : ''}`}>
+                    <button
+                        className="db-header-sidebar-toggle"
+                        onClick={() => setIsOpen(v => !v)}
+                        aria-label="Sidebar umschalten"
+                        title="Sidebar umschalten"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <line x1="3" y1="12" x2="21" y2="12" />
+                            <line x1="3" y1="18" x2="21" y2="18" />
+                        </svg>
+                    </button>
                     <a href="/" className="header-logo">
                         <span className="header-logo-name">Wieland</span>
                     </a>
@@ -209,7 +221,7 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
                         )}
                         {activeTab === 'users' && (
                             <>
-                                {['all', 'Free', 'Pro', 'Admin'].map(p => (
+                                {['all', 'Free', 'Pro', 'MAX', 'Admin'].map(p => (
                                     <button key={p} className={`db-filter-pill ${userFilter === p ? 'active' : ''}`}
                                         onClick={() => { setUserFilter(p); setUserPage(1); }}>
                                         {p === 'all' ? 'Alle' : p}

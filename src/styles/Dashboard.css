@@ -262,6 +262,10 @@ a {
 }
 
 .db-btn-primary {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #fff;
@@ -286,6 +290,10 @@ a {
 }
 
 .db-btn-ghost {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.45);
@@ -681,6 +689,12 @@ a {
   background: rgba(251, 191, 36, .1);
   border-color: rgba(251, 191, 36, .2);
   color: #fbbf24;
+}
+
+.db-plan-badge.max {
+  background: rgba(244, 114, 182, 0.1);
+  border-color: rgba(244, 114, 182, 0.25);
+  color: #f472b6;
 }
 
 .db-table-empty {
@@ -1202,6 +1216,10 @@ a {
 }
 
 .db-filter-pill {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 5px 12px;
   border-radius: 100px;
   background: rgba(255, 255, 255, 0.05);
@@ -1482,4 +1500,34 @@ a {
 .db-main-area .db-content {
   flex: 1;
   overflow-y: auto;
+}
+
+.db-header-sidebar-toggle {
+  display: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.8);
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.db-header-sidebar-toggle:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+@media (max-width: 1280px) {
+  .db-header-sidebar-toggle {
+    display: inline-flex;
+  }
+
+  .db-main-area,
+  .db-main-area.sidebar-open {
+    left: 0;
+  }
 }

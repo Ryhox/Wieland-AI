@@ -21,13 +21,13 @@ function Home({ isSidebarOpen, onSidebarToggle }) {
     <div className={`home-container ${isSidebarOpen ? 'sidebar-open' : ''}`}>
       <Header
         isSidebarOpen={isSidebarOpen}
+        onSidebarToggle={onSidebarToggle}
         onNewChat={() => newChatRef.current?.()}
       />
       <LoadingAnimation isVisible={showLoading} />
 
       <Starfield />
-
-
+      <div className="home-ambient-glow" />
 
       <Scene3D hasMessages={hasMessages} onReady={() => { setIs3DReady(true); isInitialLoadRef.current = false; }} />
       <ChatInterface

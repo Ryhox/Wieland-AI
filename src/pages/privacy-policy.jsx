@@ -9,7 +9,7 @@ function PrivacyPolicy({ isSidebarOpen, onSidebarToggle }) {
   const { user } = useAuth();
   return (
     <div className={`page-wrapper content-page ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-      <Header isSidebarOpen={isSidebarOpen} />
+      <Header isSidebarOpen={isSidebarOpen} onSidebarToggle={onSidebarToggle} />
       {user && <Sidebar isOpen={isSidebarOpen} onOpenChange={onSidebarToggle} />}
 
       <main className="page-content">

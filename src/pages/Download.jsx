@@ -1,55 +1,69 @@
+import { useLayoutEffect, useRef } from 'react';
+import gsap from 'gsap';
 import '../styles/Download.css';
 import '../styles/main.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Sidebar from '../components/Sidebar';
+import Starfield from '../components/Starfield';
+import Scene3D from '../components/Scene3D';
 import { useAuth } from '../context/AuthContext';
 
-const requirements = [
-  ['Node.js', '≥ 18.0'],
-  ['PostgreSQL', '≥ 15'],
-  ['Ollama', '≥ 0.3'],
-  ['RAM', '≥ 8 GB'],
-  ['GPU', 'Optional, CUDA / Metal'],
-];
-
-const changelog = [
-  {
-    version: 'v1.4.0',
-    items: [
-      'Mistral-Fallback bei fehlender Ollama-Verbindung',
-      'Token-Budget-Tracker mit monatlichem Limit',
-      'Admin-Dashboard mit Recharts-Visualisierungen',
-      'Inline AuthModal ersetzt separate Login-Seiten',
-    ],
-  },
-  {
-    version: 'v1.3.0',
-    items: [
-      'SSE-Streaming für alle Modelle',
-      'JWT-Authentifizierung & bcrypt',
-      'Glassmorphism-Redesign der gesamten UI',
-    ],
-  },
-  {
-    version: 'v1.2.0',
-    items: [
-      'PostgreSQL-Migration von SQLite',
-      'Mehrbenutzer-Support & Rollenverwaltung',
-    ],
-  },
-];
 
 const platforms = ['🌐 Chrome'];
 
 function Download({ isSidebarOpen, onSidebarToggle }) {
   const { user } = useAuth();
+  const rootRef = useRef(null);
+
+  useLayoutEffect(() => {
+    if (!rootRef.current) return;
+
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return;
+
+    const ctx = gsap.context(() => {
+      gsap.set('.dl-page-wrapper #three-canvas', { transformOrigin: '50% 50%', opacity: 0 });
+      gsap.set('.dl-page-wrapper #stars-canvas', { opacity: 0 });
+      gsap.set('.dl-hero > *', { opacity: 0, y: 26 });
+      gsap.set('.dl-main-card, .dl-platform-row', { opacity: 0, y: 30 });
+
+      gsap.timeline()
+        .to('.dl-page-wrapper #stars-canvas', { opacity: 0.42, duration: 0.2, ease: 'power2.out' })
+        .to('.dl-page-wrapper #three-canvas', { opacity: 0.14, duration: 0.4, ease: 'power2.out' }, 0)
+        .to('.dl-hero > *', {
+          opacity: 1,
+          y: 0,
+          duration: 0.32,
+          stagger: 0.06,
+          ease: 'power3.out',
+        }, '-=0.1')
+        .to('.dl-main-card, .dl-platform-row', {
+          opacity: 1,
+          y: 0,
+          duration: 0.28,
+          stagger: 0.06,
+          ease: 'power3.out',
+        }, '-=0.08');
+    }, rootRef);
+
+    return () => {
+      ctx.revert();
+    };
+  }, []);
+
   return (
-    <div className={`page-wrapper content-page ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-      <Header isSidebarOpen={isSidebarOpen} />
+    <div className={`page-wrapper content-page dl-page-wrapper ${isSidebarOpen ? 'sidebar-open' : ''}`} ref={rootRef}>
+      <div className="dl-bg-layer" aria-hidden="true">
+        <Starfield />
+        <Scene3D hasMessages={true} sceneMode="about" hidePlanet={true} />
+        <div className="dl-ambient-glow" />
+      </div>
+
+      <Header isSidebarOpen={isSidebarOpen} onSidebarToggle={onSidebarToggle} />
       {user && <Sidebar isOpen={isSidebarOpen} onOpenChange={onSidebarToggle} />}
 
-      <main className="page-content">
+      <main className="page-content dl-content-layer">
         <div className="page-container dl-container">
 
           <div className="dl-hero">

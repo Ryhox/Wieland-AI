@@ -326,3 +326,42 @@
   background: rgba(14, 14, 14, 0.247);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+@media (max-width: 1280px) {
+  .sidebar {
+    z-index: 420;
+    border-right: none;
+
+  }
+
+  .sidebar.collapsed {
+    width: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sidebar.open {
+    width: 100vw;
+    background: rgba(0, 0, 0, 0.39);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    pointer-events: auto;
+  }
+
+  .sidebar.open .sidebar-hamburger,
+  .sidebar.open .sidebar-top,
+  .sidebar.open .sidebar-chats-section,
+  .sidebar.open .sidebar-bottom {
+    width: 100vw;
+    margin-left: 0;
+  }
+
+  .sidebar.open .sidebar-hamburger {
+    justify-content: flex-start;
+    padding-left: 14px;
+  }
+
+  .content-page .sidebar.open {
+    background: rgba(0, 0, 0, 0.84);
+  }
+}

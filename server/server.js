@@ -265,6 +265,12 @@ app.post('/api/auth/update-password', requireAuth, async (req, res) => {
 
 app.post('/api/auth/cancel-subscription', requireAuth, async (req, res) => {
   try {
+    const planRes = await pool.query(`SELECT plan FROM users WHERE id = $1`, [req.userId]);
+    const currentPlan = (planRes.rows[0]?.plan || '').toLowerCase();
+    if (currentPlan === 'admin') {
+      return res.status(403).json({ error: 'Admin subscription cannot be cancelled' });
+    }
+
     const result = await pool.query(
       `UPDATE users SET plan = 'Free' WHERE id = $1
        RETURNING id, username, email, plan`,
@@ -288,14 +294,15 @@ app.post('/api/auth/cancel-subscription', requireAuth, async (req, res) => {
 app.post('/api/auth/upgrade-plan', requireAuth, async (req, res) => {
   try {
     const { plan } = req.body ?? {};
+    const normalizedPlan = String(plan || '').trim();
 
-    if (!plan || !['Pro', 'Admin'].includes(plan))
+    if (!normalizedPlan || !['Free', 'Pro', 'MAX', 'Admin'].includes(normalizedPlan))
       return res.status(400).json({ error: 'Invalid plan' });
 
     const result = await pool.query(
       `UPDATE users SET plan = $1 WHERE id = $2
        RETURNING id, username, email, plan`,
-      [plan, req.userId]
+      [normalizedPlan, req.userId]
     );
 
     if (!result.rows[0])
@@ -303,7 +310,7 @@ app.post('/api/auth/upgrade-plan', requireAuth, async (req, res) => {
 
     res.json({
       success: true,
-      message: `Upgraded to ${plan} plan`,
+      message: `Plan changed to ${normalizedPlan}`,
       user: result.rows[0],
     });
   } catch (err) {
@@ -525,7 +532,46 @@ You may use *italic*, **bold**, and - bullet points. Avoid fluff.`,
 
 const OLLAMA_OPTIONS_8B = { think: false, num_ctx: 2048, num_predict: 1024, temperature: 0.7 };
 const OLLAMA_OPTIONS_4B = { think: false, num_ctx: 1024, num_predict: 512, temperature: 0.7 };
-const ALLOWED_MODELS = new Set(['qwen3-vl:8b-instruct', 'qwen3-vl:4b-instruct']);
+const OLLAMA_OPTIONS_2B = { think: false, num_ctx: 768, num_predict: 384, temperature: 0.7 };
+const ALLOWED_MODELS = new Set(['qwen3-vl:8b-instruct', 'qwen3-vl:4b-instruct', 'qwen3-vl:2b-instruct']);
+
+function normalizePlan(plan) {
+  const value = String(plan || 'Free').toLowerCase();
+  if (value === 'admin') return 'admin';
+  if (value === 'max') return 'max';
+  if (value === 'pro') return 'pro';
+  return 'free';
+}
+
+function getPlanRank(plan) {
+  const normalized = normalizePlan(plan);
+  if (normalized === 'admin' || normalized === 'max') return 2;
+  if (normalized === 'pro') return 1;
+  return 0;
+}
+
+function getModelRank(model) {
+  if (model === 'qwen3-vl:8b-instruct') return 2;
+  if (model === 'qwen3-vl:4b-instruct') return 1;
+  return 0;
+}
+
+function isModelAllowedForPlan(model, plan) {
+  return getModelRank(model) <= getPlanRank(plan);
+}
+
+function getModelForPlan(plan) {
+  const normalized = normalizePlan(plan);
+  if (normalized === 'admin' || normalized === 'max') return 'qwen3-vl:8b-instruct';
+  if (normalized === 'pro') return 'qwen3-vl:4b-instruct';
+  return 'qwen3-vl:2b-instruct';
+}
+
+function getOptionsForModel(model) {
+  if (model === 'qwen3-vl:8b-instruct') return OLLAMA_OPTIONS_8B;
+  if (model === 'qwen3-vl:4b-instruct') return OLLAMA_OPTIONS_4B;
+  return OLLAMA_OPTIONS_2B;
+}
 
 async function pipeOllamaChatStream(ollamaRes, expressRes) {
   const body = ollamaRes.body;
@@ -599,10 +645,20 @@ app.post('/api/chat/stream', requireAuth, upload.single('image'), async (req, re
   const message = req.body.message?.trim() || (imageFile ? 'Describe this image' : '');
   if (!message) return res.status(400).json({ error: 'message or image required' });
 
-  const requestedModel = req.body.model || 'qwen3-vl:8b-instruct';
-  const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : 'qwen3-vl:8b-instruct';
+  let userPlan = 'Free';
+  try {
+    const planResult = await pool.query(`SELECT plan FROM users WHERE id = $1`, [req.userId]);
+    userPlan = planResult.rows[0]?.plan || 'Free';
+  } catch {
+    userPlan = 'Free';
+  }
+
+  const requestedModel = req.body.model || getModelForPlan(userPlan);
+  const requestedSafeModel = ALLOWED_MODELS.has(requestedModel) ? requestedModel : getModelForPlan(userPlan);
+  const defaultModel = getModelForPlan(userPlan);
+  const model = isModelAllowedForPlan(requestedSafeModel, userPlan) ? requestedSafeModel : defaultModel;
   const aiStyle = req.body.aiStyle || 'formal';
-  const options = model === 'qwen3-vl:4b-instruct' ? OLLAMA_OPTIONS_4B : OLLAMA_OPTIONS_8B;
+  const options = getOptionsForModel(model);
 
   let context = [];
   try {

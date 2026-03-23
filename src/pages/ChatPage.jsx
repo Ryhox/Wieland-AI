@@ -60,10 +60,11 @@ function ChatPage() {
       <LoadingAnimation isVisible={showLoading} />
       <Header
         isSidebarOpen={sidebarOpen}
-        onHamburgerClick={() => setSidebarOpen(v => !v)}
+        onSidebarToggle={setSidebarOpen}
         onNewChat={() => newChatRef.current?.()}
       />
       <Starfield />
+      <div className="home-ambient-glow" />
       <Scene3D hasMessages={hasMessages} onReady={() => { setIs3DReady(true); isInitialLoadRef.current = false; }} />
       <ChatInterface
         onMessagesChange={setHasMessages}

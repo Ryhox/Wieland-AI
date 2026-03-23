@@ -69,10 +69,11 @@ function LanguageButton() {
   );
 }
 
-function Header({ isSidebarOpen, onNewChat }) {
+function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   let headerClass = 'header';
   if (!user) {
@@ -91,9 +92,26 @@ function Header({ isSidebarOpen, onNewChat }) {
     }
   };
 
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
   return (
     <>
       <header className={headerClass}>
+        {user && (
+          <button
+            className={`header-sidebar-toggle ${isSidebarOpen ? 'sidebar-open' : ''}`}
+            onClick={() => onSidebarToggle?.(!isSidebarOpen)}
+            aria-label="Sidebar umschalten"
+            title="Sidebar umschalten"
+          >
+            <svg fill="none" viewBox="0 0 50 50" height="28" width="28">
+              <path className="lineTop line" strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 11L44 11" />
+              <path className="lineMid line" strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 24H43" />
+              <path className="lineBottom line" strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 37H43" />
+            </svg>
+          </button>
+        )}
+
         <a
           href="/"
           className="header-logo"
@@ -110,6 +128,17 @@ function Header({ isSidebarOpen, onNewChat }) {
           <a href="/changelogs">Changelogs</a>
           <a href="/pricing">Pricing</a>
         </nav>
+
+        <button
+          className="header-mobile-menu-btn"
+          onClick={() => setMobileMenuOpen((v) => !v)}
+          aria-label="Menü öffnen"
+          title="Menü"
+        >
+          <span className={`mobile-menu-line ${mobileMenuOpen ? 'open' : ''}`} />
+          <span className={`mobile-menu-line ${mobileMenuOpen ? 'open' : ''}`} />
+          <span className={`mobile-menu-line ${mobileMenuOpen ? 'open' : ''}`} />
+        </button>
 
         <div className="header-right">
           <div className="galaxy-button">
@@ -128,6 +157,54 @@ function Header({ isSidebarOpen, onNewChat }) {
           )}
         </div>
       </header>
+
+
+      {mobileMenuOpen && (
+        <div
+          className="header-mobile-overlay"
+          onClick={closeMobileMenu}
+        >
+          <aside
+            className="header-mobile-panel"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <header className="header-mobile-top">
+              <a href="/" className="header-logo-mobile" onClick={closeMobileMenu}>
+                <span>Wieland</span>
+              </a>
+              <button
+                className="header-mobile-close"
+                onClick={closeMobileMenu}
+                aria-label="Menü schließen"
+              >
+                ✕
+              </button>
+            </header>
+
+            <nav className="header-mobile-nav">
+              <a href="/about" onClick={closeMobileMenu}>Über</a>
+              <a href="/faq" onClick={closeMobileMenu}>FAQ</a>
+              <a href="/changelogs" onClick={closeMobileMenu}>Changelogs</a>
+              <a href="/pricing" onClick={closeMobileMenu}>Pricing</a>
+              <a href="/download" onClick={closeMobileMenu}>Download</a>
+            </nav>
+
+            <div className="header-mobile-bottom">
+              {!user && (
+                <button
+                  className="header-mobile-login-btn"
+                  onClick={() => {
+                    closeMobileMenu();
+                    setAuthModalOpen(true);
+                  }}
+                >
+                  Anmelden
+                </button>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
 
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </>

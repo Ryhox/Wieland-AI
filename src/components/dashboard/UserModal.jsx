@@ -57,7 +57,7 @@ export default function UserModal({ data, onSave, onClose, onViewChats, onDelete
           </label>
           <label className="db-form-label">Plan
             <select className="db-form-input db-form-select" value={form.plan} onChange={e => set('plan', e.target.value)}>
-              {['Free', 'Pro', 'Admin'].map(p => <option key={p} value={p}>{p}</option>)}
+              {['Free', 'Pro', 'MAX', 'Admin'].map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </label>
         </div>

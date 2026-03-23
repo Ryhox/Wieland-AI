@@ -370,11 +370,18 @@
 }
 
 .welcome-message-container {
-  margin-top: 40%;
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--chat-input-offset, 50px) + 104px);
+  transform: translateX(-50%);
+  width: min(800px, calc(100% - 40px));
+  margin-top: 0;
   pointer-events: none;
   font-weight: 600;
-  font-size: 30px;
+  font-size: clamp(24px, 3.4vw, 30px);
+  line-height: 1.25;
   text-align: center;
+  z-index: 80;
 }
 
 .chat-input-container {
@@ -786,6 +793,7 @@
 }
 
 .chat-interface-wrapper {
+  --chat-input-offset: 50px;
   transition: opacity 0.3s ease-in-out;
 }
 
@@ -807,6 +815,12 @@
   .chat-input-container {
     width: calc(100% - 20px);
     bottom: 20px;
+  }
+
+  .welcome-message-container {
+    width: calc(100% - 24px);
+    bottom: calc(var(--chat-input-offset, 20px) + 88px);
+    font-size: clamp(20px, 6vw, 26px);
   }
 
   .image-previews-container {

@@ -12,6 +12,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
 function Profile({ isSidebarOpen, onSidebarToggle }) {
   const { user, authFetch, logout } = useAuth();
   const navigate = useNavigate();
+  const isAdmin = (user?.plan || '').toLowerCase() === 'admin';
 
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
@@ -148,7 +149,7 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
 
   return (
     <div className={`page-wrapper content-page ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-      <Header isSidebarOpen={isSidebarOpen} />
+      <Header isSidebarOpen={isSidebarOpen} onSidebarToggle={onSidebarToggle} />
       {user && <Sidebar isOpen={isSidebarOpen} onOpenChange={onSidebarToggle} />}
 
       {alert && (
@@ -296,7 +297,10 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
                 <span className="profile-field-label">Plan</span>
                 <div className="profile-field-display">
                   <span className="profile-plan-badge">{user?.plan || 'Free'}</span>
-                  {user?.plan && user?.plan !== 'Free' && (
+                  {isAdmin && (
+                    <span className="profile-field-label">Als Admin kannst du das Abonnement nicht kündigen.</span>
+                  )}
+                  {user?.plan && user?.plan !== 'Free' && !isAdmin && (
                     <button
                       className="profile-btn-danger"
                       onClick={handleCancelSubscription}
@@ -344,3 +348,4 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
 }
 
 export default Profile;
+
