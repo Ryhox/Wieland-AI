@@ -201,26 +201,26 @@ function FAQ({ isSidebarOpen, onSidebarToggle }) {
       gsap.set('.faq-footer-note', { opacity: 0, y: 20 });
 
       gsap.timeline()
-        .to('.faq-page-wrapper #stars-canvas', { opacity: 0.42, duration: 0.2, ease: 'power2.out' })
-        .to('.faq-page-wrapper #three-canvas', { opacity: 0.14, duration: 0.4, ease: 'power2.out' }, 0)
+        .to('.faq-page-wrapper #stars-canvas', { opacity: 0.42, duration: 0.3, ease: 'power2.out' })
+        .to('.faq-page-wrapper #three-canvas', { opacity: 0.14, duration: 0.5, ease: 'power2.out' }, 0)
         .to('.faq-hero > *', {
           opacity: 1,
           y: 0,
-          duration: 0.32,
-          stagger: 0.06,
+          duration: 0.55,
+          stagger: 0.07,
           ease: 'power3.out',
-        }, '-=0.1')
+        }, '-=0.2')
         .to('.faq-tools', {
           opacity: 1,
           y: 0,
           duration: 0.28,
-          ease: 'power3.out',
+          ease: 'power2.out',
         }, '-=0.06')
         .to('.faq-list', {
           opacity: 1,
           y: 0,
           duration: 0.3,
-          ease: 'power3.out',
+          ease: 'power2.out',
         }, '-=0.06')
         .to('.faq-list .faq-item', {
           opacity: 1,
