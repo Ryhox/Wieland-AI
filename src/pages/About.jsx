@@ -93,34 +93,30 @@ function About({ isSidebarOpen, onSidebarToggle }) {
         scrollTrigger: {
           trigger: '.about-hero',
           start: 'top top+=68',
-          end: '+=140%',
+          end: '+=130%',
           scrub: 1,
           pin: true,
           anticipatePin: 1,
+          pinSpacing: true,
         },
       })
-        .to('.about-hero-left', {
-          y: -84,
-          opacity: 0.34,
-          ease: 'none',
-        }, 0)
-        .to('.about-hero-right', {
-          y: -34,
-          scale: 0.94,
-          opacity: 0.82,
-          ease: 'none',
+        .to('.about-hero-inner', {
+          y: -60,
+          opacity: 0,
+          ease: 'power2.in',
+          duration: 0.8,
         }, 0)
         .to('.about-page-shell #three-canvas', {
-          scale: 1.04,
-          rotation: 3,
-          y: -18,
-          opacity: 0.18,
-          filter: 'saturate(1.08) contrast(0.9)',
-          ease: 'none',
+          scale: 1.05,
+          y: -16,
+          opacity: 0.06,
+          ease: 'power1.inOut',
+          duration: 0.8,
         }, 0)
         .to('.about-page-shell #stars-canvas', {
-          opacity: 0.42,
-          ease: 'none',
+          opacity: 0.1,
+          ease: 'power1.inOut',
+          duration: 0.8,
         }, 0);
 
       ScrollTrigger.create({
@@ -166,33 +162,35 @@ function About({ isSidebarOpen, onSidebarToggle }) {
         <div className="page-container about-container">
 
           <div className="about-hero about-reveal">
-            <div className="about-hero-left">
-              <span className="about-eyebrow">Über Wieland AI</span>
-              <h1 className="about-h1">Entwickelt für, <br /><span>das beste AI erlebnis</span></h1>
-              <p className="about-lead">
-                Wieland AI ist eine moderne AI mit Echtzeit-Antworten, visuellem Verständnis
-                und Intelligenz. Gebaut für ein erstklassiges Online-Erlebnis.
-              </p>
-              <div className="about-hero-pills">
-                <span className="about-pill">Echtzeit Streaming</span>
-                <span className="about-pill">Vision + Text</span>
-                <span className="about-pill">Skalierbare System</span>
+            <div className="about-hero-inner">
+              <div className="about-hero-left">
+                <span className="about-eyebrow">Über Wieland AI</span>
+                <h1 className="about-h1">Entwickelt für, <br /><span>das beste AI erlebnis</span></h1>
+                <p className="about-lead">
+                  Wieland AI ist eine moderne AI mit Echtzeit-Antworten, visuellem Verständnis
+                  und Intelligenz. Gebaut für ein erstklassiges Online-Erlebnis.
+                </p>
+                <div className="about-hero-pills">
+                  <span className="about-pill">Echtzeit Streaming</span>
+                  <span className="about-pill">Vision + Text</span>
+                  <span className="about-pill">Skalierbare System</span>
+                </div>
               </div>
-            </div>
 
-            <div className="about-hero-right">
-              <div className="about-stats">
-                {[
-                  { num: fmt(stats.total_users), label: 'Aktive Nutzer' },
-                  { num: fmt(stats.total_chats), label: 'Chats' },
-                  { num: fmt(stats.total_messages), label: 'Gesendete Nachrichten' },
-                  { num: '24/7', label: 'Online Laufzeit' },
-                ].map(s => (
-                  <div className="about-stat-card" key={s.label}>
-                    <div className="about-stat-num">{s.num}</div>
-                    <div className="about-stat-label">{s.label}</div>
-                  </div>
-                ))}
+              <div className="about-hero-right">
+                <div className="about-stats">
+                  {[
+                    { num: fmt(stats.total_users), label: 'Aktive Nutzer' },
+                    { num: fmt(stats.total_chats), label: 'Chats' },
+                    { num: fmt(stats.total_messages), label: 'Gesendete Nachrichten' },
+                    { num: '24/7', label: 'Online Laufzeit' },
+                  ].map(s => (
+                    <div className="about-stat-card" key={s.label}>
+                      <div className="about-stat-num">{s.num}</div>
+                      <div className="about-stat-label">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

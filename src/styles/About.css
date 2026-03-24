@@ -69,13 +69,19 @@
 
 .about-hero {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
-  align-items: center;
   min-height: min(82vh, 760px);
   margin-top: -60px;
   margin-bottom: 62px;
   padding-top: 8px;
+}
+
+.about-hero-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  width: 100%;
+  will-change: opacity;
 }
 
 .about-hero-left {
@@ -314,7 +320,7 @@
     top: 4vmin;
   }
 
-  .about-hero {
+  .about-hero-inner {
     grid-template-columns: 1fr;
     gap: 32px;
   }

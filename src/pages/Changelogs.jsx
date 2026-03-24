@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import '../styles/Changelogs.css';
@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 gsap.registerPlugin(ScrollTrigger);
 
 const entries = [
-    {
+  {
     version: 'v0.1.6',
     date: '23 März 2026',
     tag: 'purple',
@@ -22,11 +22,10 @@ const entries = [
       'Bugfixes',
       'Design überarbeitet auf allen Seiten schon wieder',
       "Content-Update: Alle Texte überarbeitet, um Wieland AI's Persönlichkeit besser widerzuspiegeln",
-      "GSAP inegration für animationen on scroll und mehr Dynamik",
-      "Noch nicht zu frieden mit Changelogs designs, weitere Verbesserungen folgen in v0.1.7",
-      "Max Plan geaddet und 2B Model",
-      "Responive für Handy verbessert",
-      "FAQ searchbar und filter",
+      'GSAP Integration für Animationen on scroll und mehr Dynamik',
+      'Max Plan geaddet und 2B Model',
+      'Responsive für Handy verbessert',
+      'FAQ Searchbar und Filter',
     ],
   },
   {
@@ -39,7 +38,7 @@ const entries = [
       'Design überarbeitet auf allen Seiten',
       '2 Neue Pages: Profile, Kontakt',
       'Features: Abonnementssystem, Cookies, Email und Passwort bearbeiten, Chat-Search',
-      'Chat links können direkt aufgerufen werden (jetzt UUID statt Timestamp)',
+      'Chat Links können direkt aufgerufen werden (jetzt UUID statt Timestamp)',
     ],
   },
   {
@@ -51,7 +50,6 @@ const entries = [
       '8 Neue Pages: About, Changelogs, Download, FAQ, Legal Notice, Privacy Policy, Terms of Service, Pricing',
       'Language Button im Header',
       'Bugfixes',
-
     ],
   },
   {
@@ -71,7 +69,7 @@ const entries = [
     tag: 'green',
     title: 'Backend',
     changes: [
-      'Backend mit ProstgreSQL',
+      'Backend mit PostgreSQL',
       'Login und Registrierung',
       'Bugfixes',
     ],
@@ -80,10 +78,10 @@ const entries = [
     version: 'v0.1.1',
     date: '03 März 2026',
     tag: 'pink',
-    title: 'Ki verfeinert',
+    title: 'KI verfeinert',
     changes: [
       'Bugfixes',
-      'Ki kann nun Bilder verarbeiten.',
+      'KI kann nun Bilder verarbeiten',
       'Design Header und Sidebar',
     ],
   },
@@ -93,10 +91,10 @@ const entries = [
     tag: 'gray',
     title: 'Pre-Release',
     changes: [
-      'Start des Projects',
+      'Start des Projekts',
       'Design und Entwicklung der Kernfunktionen',
       'Ollama Integration für lokale KI-Verarbeitung',
-      'Design und Integration von 3D characteren',
+      'Design und Integration von 3D Charakteren',
     ],
   },
 ];
@@ -104,183 +102,53 @@ const entries = [
 function Changelogs({ isSidebarOpen, onSidebarToggle }) {
   const { user } = useAuth();
   const rootRef = useRef(null);
-  const introDoneRef = useRef(false);
-  const activeIndexRef = useRef(0);
-  const timelineTriggerRef = useRef(null);
-  const entryRefs = useRef([]);
-  const clickTargetRef = useRef(null);
-  const [activeIndex, setActiveIndex] = useState(0);
 
-  const goToIndex = (index) => {
-    const safeIndex = Math.max(0, Math.min(entries.length - 1, index));
-    setActiveIndex(safeIndex);
-
-    const isDesktop = window.matchMedia('(min-width: 901px)').matches;
-    if (isDesktop && timelineTriggerRef.current) {
-      const st = timelineTriggerRef.current;
-      const steps = Math.max(entries.length - 1, 1);
-      const progress = safeIndex / steps;
-      const target = st.start + (st.end - st.start) * progress;
-      clickTargetRef.current = safeIndex;
-      window.scrollTo({ top: target, behavior: 'auto' });
-      requestAnimationFrame(() => {
-        clickTargetRef.current = null;
-      });
-      return;
-    }
-
-    const targetEntry = entryRefs.current[safeIndex];
-    if (targetEntry) {
-      targetEntry.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  };
-
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!rootRef.current) return;
-
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) return;
 
     const ctx = gsap.context(() => {
-      introDoneRef.current = false;
-      gsap.set('.cl-hero > *', { opacity: 0, y: 24 });
-      gsap.set('.cl-page-wrapper #three-canvas', { transformOrigin: '50% 50%', opacity: 0 });
-      gsap.set('.cl-page-wrapper #stars-canvas', { opacity: 0 });
-      gsap.set('.cl-entry', { autoAlpha: 0, y: 36, scale: 0.96, filter: 'saturate(0.9)' });
-      gsap.set('.cl-pagination-indicators .cl-page-dot, .cl-pagination-title', { opacity: 0, y: 16 });
-
-      const entriesEls = gsap.utils.toArray('.cl-entry');
-      const steps = Math.max(entriesEls.length - 1, 1);
-      const isDesktop = window.matchMedia('(min-width: 901px)').matches;
-
-      const setActiveEntry = (activeIndex) => {
-        if (activeIndexRef.current !== activeIndex) {
-          activeIndexRef.current = activeIndex;
-          setActiveIndex(activeIndex);
-        }
-
-        entriesEls.forEach((entry, index) => {
-          if (index === activeIndex) {
-            gsap.to(entry, {
-              autoAlpha: 1,
-              y: 0,
-              scale: 1,
-              filter: 'saturate(1)',
-              duration: 0.42,
-              ease: 'power2.out',
-              overwrite: true,
-            });
-          } else {
-            gsap.to(entry, {
-              autoAlpha: 0,
-              y: 24,
-              scale: 0.97,
-              filter: 'saturate(0.9)',
-              duration: 0.28,
-              ease: 'power2.out',
-              overwrite: true,
-            });
-          }
-        });
-      };
+      gsap.set('.cl-page-shell #three-canvas', { opacity: 0 });
+      gsap.set('.cl-page-shell #stars-canvas', { opacity: 0 });
+      gsap.set('.cl-hero-left > *', { opacity: 0, y: 22 });
 
       gsap.timeline()
-        .to('.cl-page-wrapper #stars-canvas', {
-          opacity: 0.42,
-          duration: 0.2,
-          ease: 'power2.out',
-        })
-        .to('.cl-page-wrapper #three-canvas', {
-          opacity: 0.14,
-          duration: 0.4,
-          ease: 'power2.out',
-        }, 0)
-        .to('.cl-hero > *', {
-          opacity: 1,
-          y: 0,
-          duration: 0.5,
-          stagger: 0.08,
-          ease: 'power3.out',
-        }, '-=0.1')
-        .to('.cl-entry:first-child', {
-          autoAlpha: 1,
-          y: 0,
-          scale: 1,
-          filter: 'saturate(1)',
-          duration: 0.5,
-          ease: 'power3.out',
-        }, '+=0.10')
-        .to('.cl-pagination-indicators .cl-page-dot', {
-          opacity: 1,
-          y: 0,
-          duration: 0.5,
-          stagger: 0.03,
-          ease: 'power3.out',
-        }, '+=0.1')
-        .to('.cl-pagination-title', {
-          opacity: 1,
-          y: 0,
-          duration: 0.5,
-          ease: 'power3.out',
-        }, '-=0.1')
-        .add(() => {
-          introDoneRef.current = true;
-          setActiveEntry(0);
-        });
+        .to('.cl-page-shell #stars-canvas', { opacity: 0.42, duration: 0.3, ease: 'power2.out' })
+        .to('.cl-page-shell #three-canvas', { opacity: 0.14, duration: 0.5, ease: 'power2.out' }, 0)
+        .to('.cl-hero-left > *', {
+          opacity: 1, y: 0, duration: 0.55, stagger: 0.07, ease: 'power3.out',
+        }, '-=0.2');
 
-      if (isDesktop) {
-        const st = ScrollTrigger.create({
-          trigger: '.cl-timeline',
-          start: 'top top+=300',
-          end: `+=${Math.max(steps * 90, 1)}%`,
-          pin: true,
-          scrub: 1,
-          anticipatePin: 1,
-          snap: steps > 0 ? 1 / steps : false,
-          onUpdate: (self) => {
-            if (!introDoneRef.current) return;
-
-            if (clickTargetRef.current !== null) {
-              setActiveEntry(clickTargetRef.current);
-              return;
-            }
-
-            const raw = self.progress * steps;
-            let idx = activeIndexRef.current;
-
-            while (raw >= idx + 0.6 && idx < steps) idx += 1;
-            while (raw <= idx - 0.6 && idx > 0) idx -= 1;
-
-            setActiveEntry(idx);
-          },
-        });
-        timelineTriggerRef.current = st;
-      } else {
-        gsap.set('.cl-entry', { autoAlpha: 1, scale: 1, filter: 'none' });
-      }
-
-      gsap.to('.cl-ambient-glow', {
-        y: 28,
-        x: -56,
-        scale: 1.1,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.cl-page-wrapper',
-          start: 'top top',
-          end: 'bottom bottom',
-          scrub: 1,
-        },
+      gsap.utils.toArray('.cl-entry').forEach((entry) => {
+        gsap.fromTo(entry,
+          { opacity: 0, y: 44 },
+          {
+            opacity: 1, y: 0, duration: 0.65, ease: 'power3.out',
+            scrollTrigger: { trigger: entry, start: 'top 88%', toggleActions: 'play none none reverse' },
+          }
+        );
       });
+
+      gsap.fromTo('.cl-timeline-line',
+        { scaleY: 0 },
+        {
+          scaleY: 1, ease: 'none',
+          scrollTrigger: {
+            trigger: '.cl-entries',
+            start: 'top 75%',
+            end: 'bottom 55%',
+            scrub: 1.2,
+          },
+        }
+      );
     }, rootRef);
 
-    return () => {
-      timelineTriggerRef.current = null;
-      ctx.revert();
-    };
+    return () => ctx.revert();
   }, []);
 
   return (
-    <div className={`page-wrapper content-page cl-page-wrapper ${isSidebarOpen ? 'sidebar-open' : ''}`} ref={rootRef}>
+    <div className={`page-wrapper content-page cl-page-shell ${isSidebarOpen ? 'sidebar-open' : ''}`} ref={rootRef}>
       <div className="cl-bg-layer" aria-hidden="true">
         <Starfield />
         <Scene3D hasMessages={true} sceneMode="about" hidePlanet={true} />
@@ -294,52 +162,44 @@ function Changelogs({ isSidebarOpen, onSidebarToggle }) {
         <div className="page-container cl-container">
 
           <div className="cl-hero">
-            <span className="cl-eyebrow">Changelogs</span>
-            <h1 className="cl-h1">Was ist<br /><span>neu?</span></h1>
-            <p className="cl-lead">Alle Versionen, Fixes und Features — chronologisch dokumentiert.</p>
+            <div className="cl-hero-left">
+              <span className="cl-eyebrow">Changelogs</span>
+              <h1 className="cl-h1">Was ist<br /><span>neu?</span></h1>
+              <p className="cl-lead">Alle Versionen, Fixes und Features — chronologisch dokumentiert.</p>
+            </div>
           </div>
 
-          <div className="cl-timeline">
-            <div className="cl-entries-track">
-              {entries.map((entry, i) => (
-                <div className="cl-entry" key={i} ref={(el) => { entryRefs.current[i] = el; }}>
+          <div className="cl-divider" />
 
-                  <div className="cl-side">
-                    <span className="cl-version">{entry.version}</span>
-                    <span className="cl-date">{entry.date}</span>
-                  </div>
+          <div className="cl-entries">
+            <div className="cl-timeline-track" aria-hidden="true">
+              <div className="cl-timeline-line" />
+            </div>
 
-                  <div className="cl-connector">
-                    <div className="cl-line" />
-                  </div>
-
-                  <div className="cl-body">
-                    <span className={`cl-tag cl-tag--${entry.tag}`}>{entry.version}</span>
-                    <div className="cl-title">{entry.title}</div>
-                    <ul className="cl-list">
-                      {entry.changes.map((c, j) => <li key={j}>{c}</li>)}
-                    </ul>
-                  </div>
-
+            {entries.map((entry) => (
+              <div className="cl-entry" key={entry.version}>
+                <div className="cl-entry-dot-wrap" aria-hidden="true">
+                  <div className={`cl-entry-dot cl-entry-dot--${entry.tag}`} />
                 </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="cl-pagination" aria-label="Changelog Pagination">
-            <div className="cl-pagination-indicators">
-              {entries.map((entry, i) => (
-                <button
-                  type="button"
-                  key={entry.version + entry.title}
-                  onClick={() => goToIndex(i)}
-                  className={`cl-page-dot ${i === activeIndex ? 'cl-page-dot--active' : ''}`}
-                  aria-label={`Gehe zu ${entry.title}`}
-                  aria-current={i === activeIndex ? 'true' : 'false'}
-                />
-              ))}
-            </div>
-            <p className="cl-pagination-title">{entries[activeIndex]?.title}</p>
+                <div className="cl-entry-meta">
+                  <span className="cl-entry-version">{entry.version}</span>
+                  <span className="cl-entry-date">{entry.date}</span>
+                </div>
+
+                <div className="cl-entry-body" data-version={entry.version} data-date={entry.date}>
+                  <div className="cl-entry-header">
+                    <span className={`cl-tag cl-tag--${entry.tag}`}>
+                      {entry.tag === 'gray' ? 'Initial' : entry.version}
+                    </span>
+                    <h2 className="cl-entry-title">{entry.title}</h2>
+                  </div>
+                  <ul className="cl-list">
+                    {entry.changes.map((c, j) => <li key={j}>{c}</li>)}
+                  </ul>
+                </div>
+              </div>
+            ))}
           </div>
 
         </div>
