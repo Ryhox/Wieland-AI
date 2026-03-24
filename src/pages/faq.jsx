@@ -23,7 +23,7 @@ const faqData = [
   },
   {
     q: 'Welche Modellqualitäten gibt es?',
-    a: 'Free bietet grundlegende Modelle, Pro Zugriff auf leistungsstärkere Modelle, MAX die höchsten Modellqualitäten für komplexe Aufgaben.',
+    a: 'Free bietet grundlegende Modelle, Pro Zugriff auf leistungsstärkere Modelle, Max die höchsten Modellqualitäten für komplexe Aufgaben.',
   },
   {
     q: 'Kann ich Bilder hochladen?',
@@ -50,8 +50,8 @@ const faqData = [
     a: 'Die Nutzung ist praktisch unbegrenzt. Selbst bei hohem Traffic sorgen wir für stabile Leistung.',
   },
   {
-    q: 'Gibt es eine Testversion für Pro oder MAX?',
-    a: 'Nein, du kannst Pro oder MAX nicht für einen begrenzten Zeitraum testen.',
+    q: 'Gibt es eine Testversion für Pro oder Max?',
+    a: 'Nein, du kannst Pro oder Max nicht für einen begrenzten Zeitraum testen.',
   },
   {
     q: 'Kann ich zwischen Plänen jederzeit wechseln?',
@@ -59,11 +59,11 @@ const faqData = [
   },
   {
     q: 'Wie funktioniert der Prioritäts-Support?',
-    a: 'Pro- und MAX-Nutzer erhalten schnellere Antworten auf Anfragen und Hilfestellungen vom Team.',
+    a: 'Pro- und Max-Nutzer erhalten schnellere Antworten auf Anfragen und Hilfestellungen vom Team.',
   },
   {
-    q: 'Welche Funktionen bietet MAX?',
-    a: 'MAX liefert die leistungsstärksten Modelle für präziseste Antworten, schnelle Verarbeitung und komplexe Analysen.',
+    q: 'Welche Funktionen bietet Max?',
+    a: 'Max liefert die leistungsstärksten Modelle für präziseste Antworten, schnelle Verarbeitung und komplexe Analysen.',
   },
   {
     q: 'Kann ich den Chat-Verlauf exportieren?',

@@ -295,14 +295,15 @@ app.post('/api/auth/upgrade-plan', requireAuth, async (req, res) => {
   try {
     const { plan } = req.body ?? {};
     const normalizedPlan = String(plan || '').trim();
+    const canonicalPlan = normalizedPlan.toLowerCase() === 'max' ? 'Max' : normalizedPlan;
 
-    if (!normalizedPlan || !['Free', 'Pro', 'MAX', 'Admin'].includes(normalizedPlan))
+    if (!canonicalPlan || !['Free', 'Pro', 'Max', 'Admin'].includes(canonicalPlan))
       return res.status(400).json({ error: 'Invalid plan' });
 
     const result = await pool.query(
       `UPDATE users SET plan = $1 WHERE id = $2
        RETURNING id, username, email, plan`,
-      [normalizedPlan, req.userId]
+      [canonicalPlan, req.userId]
     );
 
     if (!result.rows[0])
@@ -310,7 +311,7 @@ app.post('/api/auth/upgrade-plan', requireAuth, async (req, res) => {
 
     res.json({
       success: true,
-      message: `Plan changed to ${normalizedPlan}`,
+      message: `Plan changed to ${canonicalPlan}`,
       user: result.rows[0],
     });
   } catch (err) {

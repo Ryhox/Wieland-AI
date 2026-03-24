@@ -103,49 +103,83 @@ function Changelogs({ isSidebarOpen, onSidebarToggle }) {
   const { user } = useAuth();
   const rootRef = useRef(null);
 
-  useEffect(() => {
-    if (!rootRef.current) return;
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReduced) return;
+useEffect(() => {
+  if (!rootRef.current) return;
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReduced) return;
 
-    const ctx = gsap.context(() => {
-      gsap.set('.cl-page-shell #three-canvas', { opacity: 0 });
-      gsap.set('.cl-page-shell #stars-canvas', { opacity: 0 });
-      gsap.set('.cl-hero-left > *', { opacity: 0, y: 22 });
+  const ctx = gsap.context(() => {
+    gsap.set('.cl-page-shell #stars-canvas', { opacity: 0 });
+    gsap.set('.cl-page-shell #three-canvas', { opacity: 0 });
+    gsap.set('.cl-hero-left > *', { opacity: 0, y: 44 });
+    gsap.set('.cl-divider', { opacity: 0, x: -24 });
+    gsap.set('.cl-timeline-line', { scaleY: 0, opacity: 0, transformOrigin: 'top center' });
 
-      gsap.timeline()
-        .to('.cl-page-shell #stars-canvas', { opacity: 0.42, duration: 0.3, ease: 'power2.out' })
-        .to('.cl-page-shell #three-canvas', { opacity: 0.14, duration: 0.5, ease: 'power2.out' }, 0)
-        .to('.cl-hero-left > *', {
-          opacity: 1, y: 0, duration: 0.55, stagger: 0.07, ease: 'power3.out',
-        }, '-=0.2');
+    const allEntries = gsap.utils.toArray('.cl-entry');
+    const firstEntry = allEntries[0];
+    const restEntries = allEntries.slice(1);
 
-      gsap.utils.toArray('.cl-entry').forEach((entry) => {
-        gsap.fromTo(entry,
-          { opacity: 0, y: 44 },
-          {
-            opacity: 1, y: 0, duration: 0.65, ease: 'power3.out',
-            scrollTrigger: { trigger: entry, start: 'top 88%', toggleActions: 'play none none reverse' },
-          }
-        );
-      });
+    if (firstEntry) {
+      gsap.set(firstEntry, { opacity: 0, y: 44, visibility: 'hidden' });
+    }
 
-      gsap.fromTo('.cl-timeline-line',
-        { scaleY: 0 },
+    const tl = gsap.timeline();
+    tl.to('.cl-page-shell #stars-canvas', { opacity: 0.42, duration: 0.3, ease: 'power2.out' })
+      .to('.cl-page-shell #three-canvas', { opacity: 0.14, duration: 0.5, ease: 'power2.out' }, 0)
+      .to('.cl-hero-left > *', { opacity: 1, y: 0, duration: 0.55, stagger: 0.07, ease: 'power3.out' }, '-=0.02')
+      .to('.cl-divider', { opacity: 1, x: 0, duration: 0.15, ease: 'power2.out' }, '-=0.15')
+      .to(firstEntry, {
+        opacity: 1,
+        y: 0,
+        visibility: 'visible',
+        duration: 0.32,
+        ease: 'power2.out',
+      }, '+=0.03')
+      .to('.cl-timeline-line', {
+        scaleY: 0.14,
+        opacity: 1,
+        duration: 0.72,
+        ease: 'power2.out',
+      }, '<');
+
+    restEntries.forEach(entry => {
+      gsap.set(entry, { opacity: 0, y: 44 });
+      gsap.fromTo(entry,
+        { opacity: 0, y: 44 },
         {
-          scaleY: 1, ease: 'none',
+          opacity: 1,
+          y: 0,
+          visibility: 'visible',
+          duration: 0.65,
+          ease: 'power3.out',
           scrollTrigger: {
-            trigger: '.cl-entries',
-            start: 'top 75%',
-            end: 'bottom 55%',
-            scrub: 1.2,
-          },
+            trigger: entry,
+            start: 'top 88%',
+            toggleActions: 'play none none reverse'
+          }
         }
       );
-    }, rootRef);
+    });
 
-    return () => ctx.revert();
-  }, []);
+    gsap.fromTo('.cl-timeline-line',
+      { scaleY: 0.14 },
+      {
+        scaleY: 1,
+        ease: 'none',
+        immediateRender: false,
+        scrollTrigger: {
+          trigger: '.cl-entries',
+          start: 'top 75%',
+          end: 'bottom 55%',
+          scrub: 1.2,
+        },
+      }
+    );
+
+  }, rootRef);
+
+  return () => ctx.revert();
+}, []);
 
   return (
     <div className={`page-wrapper content-page cl-page-shell ${isSidebarOpen ? 'sidebar-open' : ''}`} ref={rootRef}>

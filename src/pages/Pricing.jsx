@@ -189,7 +189,7 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
     return 'Upgrade';
   };
 
-  const planPrice = pendingPlan === 'MAX' ? 9.99 : 4.99;
+  const planPrice = pendingPlan === 'Max' ? 9.99 : 4.99;
 
   return (
     <div className={`page-wrapper content-page pricing-page-wrapper ${isSidebarOpen ? 'sidebar-open' : ''}`} ref={rootRef}>
@@ -238,7 +238,7 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
             <h1 className="pricing-h1">Einfach.<br /><span>Transparent.</span></h1>
             <p className="pricing-lead">
               Wieland AI ist für alle nutzbar, Anmelden und los geht es.<br></br>
-              Wenn du aber noch mehr willst, upgrade zur Pro- oder MAX-Version
+              Wenn du aber noch mehr willst, upgrade zur Pro- oder Max-Version
             </p>
           </div>
 
@@ -303,8 +303,8 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
             </div>
 
             <div className="pricing-card">
-              <span className="pricing-badge">MAX</span>
-              <div className="pricing-plan-name">MAX</div>
+              <span className="pricing-badge">Max</span>
+              <div className="pricing-plan-name">Max</div>
               <div className="pricing-price-row">
                 <span className="pricing-price">9,99 €</span>
                 <span className="pricing-price-period">/ Monat</span>
@@ -324,10 +324,10 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
 
               <button
                 className="pricing-btn btn-pro"
-                onClick={() => handlePlanAction('MAX')}
+                onClick={() => handlePlanAction('Max')}
                 disabled={isPlanUpdating || isAdminPlan}
               >
-                {getButtonLabel('MAX')}
+                {getButtonLabel('Max')}
               </button>
             </div>
 

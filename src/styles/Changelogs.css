@@ -131,6 +131,11 @@
 }
 
 .cl-entries {
+  --cl-meta-col: 120px;
+  --cl-dot-col: 28px;
+  --cl-dot-half: 14px;
+  --cl-entry-gap: 20px;
+  --cl-meta-dot-gap: var(--cl-entry-gap);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -140,10 +145,12 @@
 
 .cl-timeline-track {
   position: absolute;
-  left: 148px;
+  left: calc(var(--cl-meta-col) - var(--cl-meta-dot-gap) - var(--cl-dot-half) - var(--cl-dot-col) + 1.5px);
+
   top: 8px;
   bottom: 0;
   width: 1px;
+  pointer-events: none;
 }
 
 .cl-timeline-line {
@@ -156,15 +163,17 @@
     rgba(255, 255, 255, 0.06)
   );
   transform-origin: top center;
+  opacity: 0;
 }
 
 .cl-entry {
   display: grid;
-  grid-template-columns: 120px 28px 1fr;
-  gap: 0 20px;
+  grid-template-columns: var(--cl-meta-col) var(--cl-dot-col) 1fr;
+  gap: 0 var(--cl-entry-gap);
   padding: 0 0 56px;
   align-items: start;
   position: relative;
+  opacity: 0;
 }
 
 .cl-entry:last-child {
@@ -284,6 +293,14 @@
 }
 
 @media (max-width: 640px) {
+  .cl-entries {
+    --cl-meta-col: 0px;
+    --cl-dot-col: 20px;
+    --cl-dot-half: 10px;
+    --cl-entry-gap: 14px;
+    --cl-meta-dot-gap: 0px;
+  }
+
   .cl-hero {
     min-height: auto;
     margin-bottom: 40px;
@@ -316,10 +333,6 @@
     letter-spacing: 0.5px;
   }
 
-  .cl-timeline-track {
-    left: 9px;
-  }
-
   .cl-entry-dot-wrap {
     padding-top: 5px;
   }
@@ -338,6 +351,10 @@
   .cl-divider {
     margin-bottom: 48px;
   }
+  .cl-timeline-track {
+  left: calc(var(--cl-meta-col) + var(--cl-meta-dot-gap) + var(--cl-dot-half));
+
+}
 }
 
 @media (max-width: 480px) {

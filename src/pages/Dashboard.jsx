@@ -221,7 +221,7 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
                         )}
                         {activeTab === 'users' && (
                             <>
-                                {['all', 'Free', 'Pro', 'MAX', 'Admin'].map(p => (
+                                {['all', 'Free', 'Pro', 'Max', 'Admin'].map(p => (
                                     <button key={p} className={`db-filter-pill ${userFilter === p ? 'active' : ''}`}
                                         onClick={() => { setUserFilter(p); setUserPage(1); }}>
                                         {p === 'all' ? 'Alle' : p}
