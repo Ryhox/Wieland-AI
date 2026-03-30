@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 function Pagination({ page, total, pageSize, onChange }) {
   const totalPages = Math.ceil(total / pageSize);
   if (totalPages <= 1) return null;
@@ -11,6 +13,7 @@ function Pagination({ page, total, pageSize, onChange }) {
 }
 
 export default function UsersTable({ users, total, page, pageSize, loading, onEdit, onDelete, onPageChange, onViewChats }) {
+  const { t } = useTranslation();
   const fmtDate = d => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
   return (
@@ -20,11 +23,11 @@ export default function UsersTable({ users, total, page, pageSize, loading, onEd
           <thead>
             <tr>
               <th>ID</th>
-              <th>Benutzername</th>
-              <th>E-Mail</th>
-              <th>Plan</th>
-              <th>Registriert</th>
-              <th>Aktionen</th>
+              <th>{t('dashboard.table.username')}</th>
+              <th>{t('dashboard.table.email')}</th>
+              <th>{t('dashboard.table.plan')}</th>
+              <th>{t('dashboard.table.registered')}</th>
+              <th>{t('dashboard.table.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -35,7 +38,7 @@ export default function UsersTable({ users, total, page, pageSize, loading, onEd
                 ))}</tr>
               ))
             ) : users.length === 0 ? (
-              <tr><td colSpan={6} className="db-table-empty">Keine Benutzer gefunden</td></tr>
+              <tr><td colSpan={6} className="db-table-empty">{t('dashboard.table.noUsers')}</td></tr>
             ) : (
               users.map(u => (
                 <tr key={u.id} className="db-tr-clickable" onClick={() => onEdit(u)}>
@@ -51,12 +54,12 @@ export default function UsersTable({ users, total, page, pageSize, loading, onEd
                   <td className="db-td-muted">{fmtDate(u.created_at)}</td>
                   <td onClick={e => e.stopPropagation()}>
                     <div className="db-action-btns">
-                      <button className="db-icon-btn chats" onClick={() => onViewChats(u)} title="Chats anzeigen">💬</button>
-                      <button className="db-icon-btn edit" onClick={() => onEdit(u)} title="Bearbeiten">✎</button>
+                      <button className="db-icon-btn chats" onClick={() => onViewChats(u)} title={t('dashboard.table.viewChats')}>💬</button>
+                      <button className="db-icon-btn edit" onClick={() => onEdit(u)} title={t('common.edit')}>✎</button>
                       <button
                         className="db-icon-btn del"
                         onClick={() => onDelete(u)}
-                        title="Löschen"
+                        title={t('common.delete')}
                       >
                         <svg
                           width="16"
@@ -82,7 +85,7 @@ export default function UsersTable({ users, total, page, pageSize, loading, onEd
         </table>
       </div>
       <div className="db-table-footer">
-        <span className="db-table-count">{total} Benutzer gesamt</span>
+        <span className="db-table-count">{t('dashboard.table.totalUsers', { count: total })}</span>
         <Pagination page={page} total={total} pageSize={pageSize} onChange={onPageChange} />
       </div>
     </div>

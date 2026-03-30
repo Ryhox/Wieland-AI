@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 function renderMarkdown(raw = '') {
     return raw
@@ -10,6 +11,7 @@ function renderMarkdown(raw = '') {
 }
 
 export default function ChatViewer({ chat, authFetch, onClose, onUserClick, onDelete }) {
+    const { t } = useTranslation();
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -22,7 +24,7 @@ export default function ChatViewer({ chat, authFetch, onClose, onUserClick, onDe
         authFetch(`/api/admin/chats/${chat.id}/messages`)
             .then(r => r.ok ? r.json() : Promise.reject(r.status))
             .then(d => { setMessages(d.messages ?? []); setLoading(false); })
-            .catch(() => { setError('Nachrichten konnten nicht geladen werden.'); setLoading(false); });
+            .catch(() => { setError(t('dashboard.viewer.loadError')); setLoading(false); });
     }, [chat]);
 
     useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
@@ -47,13 +49,13 @@ export default function ChatViewer({ chat, authFetch, onClose, onUserClick, onDe
                                 </button>
                             )}
                             <span className="db-meta-sep">·</span>
-                            <span className="db-meta-info">{chat.message_count ?? messages.length} Nachrichten</span>
+                            <span className="db-meta-info">{t('dashboard.table.totalMessagesShort', { count: chat.message_count ?? messages.length })}</span>
                             <span className="db-meta-sep">·</span>
                             <span className="db-meta-info">{fmtDate(chat.updated_at)}</span>
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
-                        <button className="db-icon-btn del" onClick={() => onDelete(chat)} title="Chat löschen">    <svg
+                        <button className="db-icon-btn del" onClick={() => onDelete(chat)} title={t('dashboard.viewer.deleteChat')}>    <svg
                             width="16"
                             height="16"
                             viewBox="0 0 24 24"
@@ -78,14 +80,14 @@ export default function ChatViewer({ chat, authFetch, onClose, onUserClick, onDe
                         <div className="db-chat-loading">
                             {Array.from({ length: 5 }).map((_, i) => (
                                 <div key={i} className={`db-chat-skel-row ${i % 2 === 0 ? 'right' : 'left'}`}>
-                                    <div className="db-skeleton" style={{ height: 48, width: `${40 + Math.random() * 30}%`, borderRadius: 12 }} />
+                                    <div className="db-skeleton" style={{ height: 48, width: `${40 + (i * 6)}%`, borderRadius: 12 }} />
                                 </div>
                             ))}
                         </div>
                     )}
                     {error && <div className="db-form-error" style={{ margin: 16 }}>{error}</div>}
                     {!loading && !error && messages.length === 0 && (
-                        <p className="db-chat-empty">Keine Nachrichten in diesem Chat.</p>
+                        <p className="db-chat-empty">{t('dashboard.viewer.noMessages')}</p>
                     )}
                     {!loading && messages.map((m, i) => (
                         <div key={i} className={`db-cv-message ${m.role === 'user' ? 'user' : 'ai'}`}>
@@ -102,7 +104,7 @@ export default function ChatViewer({ chat, authFetch, onClose, onUserClick, onDe
                 </div>
 
                 <div className="db-modal-footer">
-                    <span className="db-table-count">{messages.length} Nachrichten · {chat.filename}</span>
+                    <span className="db-table-count">{t('dashboard.table.totalMessagesShort', { count: messages.length })} · {chat.filename}</span>
                 </div>
             </div>
         </div>

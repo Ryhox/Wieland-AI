@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import '../styles/AlertModal.css';
 
 export default function AlertModal({ type = 'success', title, message, onClose }) {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export default function AlertModal({ type = 'success', title, message, onClose }
             className={type === 'success' ? 'alert-modal-btn-success' : 'alert-modal-btn-error'}
             onClick={() => setIsVisible(false)}
           >
-            Okay
+            {t('alertModal.ok')}
           </button>
         </div>
       </div>

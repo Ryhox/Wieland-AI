@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import '../styles/CookieBanner.css';
 
 export default function CookieBanner() {
+  const { t } = useTranslation();
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -31,18 +33,17 @@ export default function CookieBanner() {
     <div className="cookie-banner">
       <div className="cookie-banner-content">
         <div className="cookie-banner-text">
-          <h3>🍪 Cookie-Einwilligung</h3>
+          <h3>🍪 {t('cookie.title')}</h3>
           <p>
-            Wir verwenden Cookies und lokale Speicherung, um dich angemeldet zu halten und deine Sitzung zu speichern.
-            Deine Daten verlassen dein Gerät nicht.
+            {t('cookie.text')}
           </p>
         </div>
         <div className="cookie-banner-buttons">
           <button className="cookie-btn cookie-btn-accept" onClick={handleAccept}>
-            Akzeptieren
+            {t('cookie.accept')}
           </button>
           <button className="cookie-btn cookie-btn-decline" onClick={handleDecline}>
-            Ablehnen
+            {t('cookie.decline')}
           </button>
         </div>
       </div>

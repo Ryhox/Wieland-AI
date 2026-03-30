@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import '../styles/Dashboard.css';
 import '../styles/Sidebar.css';
 import Header from '../components/Header';
@@ -11,16 +12,19 @@ import UserModal from '../components/dashboard/UserModal';
 import ConfirmModal from '../components/dashboard/ConfirmModal';
 import ChatViewer from '../components/dashboard/ChatViewer';
 import { useAuth } from '../context/AuthContext';
-
-const TABS = [
-    { id: 'overview', label: 'Übersicht', icon: '◈' },
-    { id: 'users', label: 'Benutzer', icon: '◉' },
-    { id: 'chats', label: 'Chats', icon: '◧' },
-];
+import { withLang } from '../utils/i18nRouting';
 
 export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
+    const { t, i18n } = useTranslation();
     const { authFetch, user, logout } = useAuth();
     const navigate = useNavigate();
+    const localPath = (path) => withLang(path, i18n.language);
+
+    const TABS = [
+        { id: 'overview', label: t('dashboard.tabs.overview'), icon: '◈' },
+        { id: 'users', label: t('dashboard.tabs.users'), icon: '◉' },
+        { id: 'chats', label: t('dashboard.tabs.chats'), icon: '◧' },
+    ];
 
     const [isOpen, setIsOpen] = useState(false);
     const sidebarRef = useRef(null);
@@ -80,27 +84,27 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData),
         });
-        if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Fehler'); }
+        if (!res.ok) { const e = await res.json(); throw new Error(e.error || t('profile.errors.title')); }
         setUserModal({ open: false, data: null });
         fetchUsers(); fetchStats();
     };
 
     const confirmDeleteUser = (u) => setConfirmModal({
         open: true,
-        label: `Benutzer "${u.username}" wirklich löschen? Alle Chats werden ebenfalls gelöscht.`,
+        label: t('dashboard.confirmDeleteUser', { name: u.username }),
         action: async () => { await authFetch(`/api/admin/users/${u.id}`, { method: 'DELETE' }); fetchUsers(); fetchChats(); fetchStats(); },
     });
 
     const confirmDeleteChat = (c) => setConfirmModal({
         open: true,
-        label: `Chat "${c.title || c.filename}" wirklich löschen?`,
+        label: t('dashboard.confirmDeleteChat', { title: c.title || c.filename }),
         action: async () => { await authFetch(`/api/admin/chats/${c.id}`, { method: 'DELETE' }); fetchChats(); fetchStats(); },
     });
 
     const switchTab = (id) => { setActiveTab(id); setSearch(''); setUserFilter('all'); setIsOpen(false); };
     const goToUser = (u) => { setActiveTab('users'); setSearch(u.username ?? ''); setUserPage(1); };
     const goToUserChats = (u) => { setActiveTab('chats'); setSearch(u.username ?? ''); setChatPage(1); };
-    const handleLogout = () => { setIsOpen(false); logout(); navigate('/'); };
+    const handleLogout = () => { setIsOpen(false); logout(); navigate(localPath('/')); };
 
     const filteredUsers = users.filter(u => {
         const s = search.toLowerCase();
@@ -125,7 +129,7 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
                 <div
                     className={`sidebar-hamburger ${isOpen ? 'sidebar-open' : ''}`}
                     onClick={() => setIsOpen(v => !v)}
-                    title="Menü"
+                    title={t('sidebar.menu')}
                 >
                     <svg fill="none" viewBox="0 0 50 50" height="28" width="28">
                         <path className="lineTop line" strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 11L44 11" />
@@ -150,7 +154,7 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
 
                 {isOpen && (
                     <div className="sidebar-chats-section">
-                        <p className="sidebar-section-label">Admin Panel</p>
+                        <p className="sidebar-section-label">{t('dashboard.adminPanel')}</p>
                     </div>
                 )}
 
@@ -158,11 +162,11 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
 
                 <div className="sidebar-bottom">
                     {isOpen && (
-                        <a href="/" className="db-back-link">
+                        <a href={localPath('/')} className="db-back-link">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M19 12H5" /><polyline points="12 19 5 12 12 5" />
                             </svg>
-                            Zur Website
+                            {t('dashboard.backToSite')}
                         </a>
                     )}
                     <div className="sidebar-profile">
@@ -173,7 +177,7 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
                                     <span className="sidebar-profile-name">{user?.username ?? '—'}</span>
                                     <span className="sidebar-profile-plan">{user?.plan ?? 'Free'}</span>
                                 </div>
-                                <button className="sidebar-logout-btn" onClick={handleLogout} title="Abmelden">
+                                <button className="sidebar-logout-btn" onClick={handleLogout} title={t('sidebar.logout')}>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                                         <polyline points="16 17 21 12 16 7" />
@@ -192,8 +196,8 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
                     <button
                         className="db-header-sidebar-toggle"
                         onClick={() => setIsOpen(v => !v)}
-                        aria-label="Sidebar umschalten"
-                        title="Sidebar umschalten"
+                        aria-label={t('dashboard.toggleSidebar')}
+                        title={t('dashboard.toggleSidebar')}
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <line x1="3" y1="6" x2="21" y2="6" />
@@ -201,7 +205,7 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
                             <line x1="3" y1="18" x2="21" y2="18" />
                         </svg>
                     </button>
-                    <a href="/" className="header-logo">
+                    <a href={localPath('/')} className="header-logo">
                         <span className="header-logo-name">Wieland</span>
                     </a>
                     <span className="db-header-sep">/</span>
@@ -213,7 +217,7 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
                                 <span className="db-search-icon">⌕</span>
                                 <input
                                     className="db-search"
-                                    placeholder="Suchen…"
+                                    placeholder={t('dashboard.search')}
                                     value={search}
                                     onChange={e => { setSearch(e.target.value); setUserPage(1); setChatPage(1); }}
                                 />
@@ -224,13 +228,13 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
                                 {['all', 'Free', 'Pro', 'Max', 'Admin'].map(p => (
                                     <button key={p} className={`db-filter-pill ${userFilter === p ? 'active' : ''}`}
                                         onClick={() => { setUserFilter(p); setUserPage(1); }}>
-                                        {p === 'all' ? 'Alle' : p}
+                                        {p === 'all' ? t('dashboard.all') : p}
                                     </button>
                                 ))}
-                                <button className="db-btn-primary" onClick={() => setUserModal({ open: true, data: null })}>+ Benutzer</button>
+                                <button className="db-btn-primary" onClick={() => setUserModal({ open: true, data: null })}>{t('dashboard.addUser')}</button>
                             </>
                         )}
-                        <button className="db-btn-ghost" onClick={() => { fetchStats(); fetchUsers(); fetchChats(); }} title="Aktualisieren">↻</button>
+                        <button className="db-btn-ghost" onClick={() => { fetchStats(); fetchUsers(); fetchChats(); }} title={t('dashboard.refresh')}>↻</button>
                     </div>
                 </header>
 

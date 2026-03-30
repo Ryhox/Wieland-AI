@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 function Pagination({ page, total, pageSize, onChange }) {
   const totalPages = Math.ceil(total / pageSize);
   if (totalPages <= 1) return null;
@@ -11,6 +13,7 @@ function Pagination({ page, total, pageSize, onChange }) {
 }
 
 export default function ChatsTable({ chats, total, page, pageSize, loading, onDelete, onPageChange, onView, onUserClick }) {
+  const { t } = useTranslation();
   const fmtDate = d => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
 
   return (
@@ -20,12 +23,12 @@ export default function ChatsTable({ chats, total, page, pageSize, loading, onDe
           <thead>
             <tr>
               <th>ID</th>
-              <th>Titel</th>
-              <th>Benutzer</th>
-              <th>Nachrichten</th>
-              <th>Erstellt</th>
-              <th>Aktualisiert</th>
-              <th>Aktionen</th>
+              <th>{t('dashboard.table.title')}</th>
+              <th>{t('dashboard.table.user')}</th>
+              <th>{t('dashboard.table.messages')}</th>
+              <th>{t('dashboard.table.created')}</th>
+              <th>{t('dashboard.table.updated')}</th>
+              <th>{t('dashboard.table.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -36,7 +39,7 @@ export default function ChatsTable({ chats, total, page, pageSize, loading, onDe
                 ))}</tr>
               ))
             ) : chats.length === 0 ? (
-              <tr><td colSpan={7} className="db-table-empty">Keine Chats gefunden</td></tr>
+              <tr><td colSpan={7} className="db-table-empty">{t('dashboard.table.noChats')}</td></tr>
             ) : (
               chats.map(c => (
                 <tr key={c.id} className="db-tr-clickable" onClick={() => onView(c)}>
@@ -51,7 +54,7 @@ export default function ChatsTable({ chats, total, page, pageSize, loading, onDe
                     <div
                       className="db-user-cell clickable"
                       onClick={() => onUserClick({ username: c.username, id: c.user_id })}
-                      title="Benutzer anzeigen"
+                      title={t('dashboard.table.viewUser')}
                     >
                       <div className="db-avatar sm">{c.username?.[0]?.toUpperCase() ?? '?'}</div>
                       <span className="db-user-link">{c.username ?? `#${c.user_id}`}</span>
@@ -64,8 +67,8 @@ export default function ChatsTable({ chats, total, page, pageSize, loading, onDe
                   <td className="db-td-muted">{fmtDate(c.updated_at)}</td>
                   <td onClick={e => e.stopPropagation()}>
                     <div className="db-action-btns">
-                      <button className="db-icon-btn view" onClick={() => onView(c)} title="Anzeigen">👁</button>
-                      <button className="db-icon-btn del" onClick={() => onDelete(c)} title="Löschen">  <svg
+                      <button className="db-icon-btn view" onClick={() => onView(c)} title={t('dashboard.table.view')}>👁</button>
+                      <button className="db-icon-btn del" onClick={() => onDelete(c)} title={t('common.delete')}>  <svg
                         width="16"
                         height="16"
                         viewBox="0 0 24 24"
@@ -90,7 +93,7 @@ export default function ChatsTable({ chats, total, page, pageSize, loading, onDe
         </table>
       </div>
       <div className="db-table-footer">
-        <span className="db-table-count">{total} Chats gesamt</span>
+        <span className="db-table-count">{t('dashboard.table.totalChats', { count: total })}</span>
         <Pagination page={page} total={total} pageSize={pageSize} onChange={onPageChange} />
       </div>
     </div>

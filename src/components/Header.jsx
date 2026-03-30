@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Header.css';
 import AuthModal from './AuthModal';
 import ReactCountryFlag from 'react-country-flag';
+import { DEFAULT_LANG, stripLangPrefix, withLang } from '../utils/i18nRouting';
 
 const LANGUAGES = [
   { code: 'de', label: 'Deutsch', flagCode: 'DE' },
@@ -12,8 +14,18 @@ const LANGUAGES = [
 ];
 
 function LanguageButton() {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState(LANGUAGES[0]);
+  const selected = LANGUAGES.find((lang) => lang.code === i18n.language) || LANGUAGES[0];
+
+  const handleLanguageSelect = (lang) => {
+    i18n.changeLanguage(lang.code);
+    const currentPath = stripLangPrefix(location.pathname);
+    navigate(withLang(currentPath, lang.code));
+    setOpen(false);
+  };
 
   return (
     <div
@@ -27,7 +39,7 @@ function LanguageButton() {
           countryCode={selected.flagCode}
           svg
           style={{ width: '1.2em', height: '1.2em', marginRight: '0.3em' }}
-          title={selected.label}
+          title={t(`languages.${selected.code}`)}
         />
         <span className="lang-code">{selected.code.toUpperCase()}</span>
         <span className={`lang-chevron ${open ? 'open' : ''}`}>
@@ -49,18 +61,15 @@ function LanguageButton() {
             <button
               key={lang.code}
               className={`lang-option ${lang.code === selected.code ? 'active' : ''}`}
-              onClick={() => {
-                setSelected(lang);
-                setOpen(false);
-              }}
+              onClick={() => handleLanguageSelect(lang)}
             >
               <ReactCountryFlag
                 countryCode={lang.flagCode}
                 svg
                 style={{ width: '1.2em', height: '1em', marginRight: '0.5em' }}
-                title={lang.label}
+                title={t(`languages.${lang.code}`)}
               />
-              <span>{lang.label}</span>
+              <span>{t(`languages.${lang.code}`)}</span>
             </button>
           ))}
         </div>
@@ -70,10 +79,14 @@ function LanguageButton() {
 }
 
 function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const lang = i18n.language || DEFAULT_LANG;
+  const localPath = (path) => withLang(path, lang);
 
   let headerClass = 'header';
   if (!user) {
@@ -85,9 +98,9 @@ function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
   const handleLogoClick = (e) => {
     e.preventDefault();
     if (!user) {
-      navigate('/');
+      navigate(localPath('/'));
     } else {
-      navigate('/');
+      navigate(localPath('/'));
       onNewChat?.();
     }
   };
@@ -101,8 +114,8 @@ function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
           <button
             className={`header-sidebar-toggle ${isSidebarOpen ? 'sidebar-open' : ''}`}
             onClick={() => onSidebarToggle?.(!isSidebarOpen)}
-            aria-label="Sidebar umschalten"
-            title="Sidebar umschalten"
+            aria-label={t('header.toggleSidebar')}
+            title={t('header.toggleSidebar')}
           >
             <svg fill="none" viewBox="0 0 50 50" height="28" width="28">
               <path className="lineTop line" strokeLinecap="round" strokeWidth="4" stroke="white" d="M6 11L44 11" />
@@ -113,7 +126,7 @@ function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
         )}
 
         <a
-          href="/"
+          href={localPath('/')}
           className="header-logo"
           onClick={handleLogoClick}
         >
@@ -123,17 +136,17 @@ function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
         <LanguageButton />
 
         <nav className="header-nav">
-          <a href="/about">Über</a>
-          <a href="/faq">FAQ</a>
-          <a href="/changelogs">Changelogs</a>
-          <a href="/pricing">Pricing</a>
+          <a href={localPath('/about')}>{t('header.navAbout')}</a>
+          <a href={localPath('/faq')}>{t('header.navFaq')}</a>
+          <a href={localPath('/changelogs')}>{t('header.navChangelogs')}</a>
+          <a href={localPath('/pricing')}>{t('header.navPricing')}</a>
         </nav>
 
         <button
           className="header-mobile-menu-btn"
           onClick={() => setMobileMenuOpen((v) => !v)}
-          aria-label="Menü öffnen"
-          title="Menü"
+          aria-label={t('header.menuOpen')}
+          title={t('header.menu')}
         >
           <span className={`mobile-menu-line ${mobileMenuOpen ? 'open' : ''}`} />
           <span className={`mobile-menu-line ${mobileMenuOpen ? 'open' : ''}`} />
@@ -142,17 +155,17 @@ function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
 
         <div className="header-right">
           <div className="galaxy-button">
-            <a href="/download" className="space-button">
+            <a href={localPath('/download')} className="space-button">
               <span className="backdrop"></span>
               <span className="galaxy"></span>
-              <label className="text">Download Extension</label>
+              <label className="text">{t('header.downloadExtension')}</label>
             </a>
             <div className="bodydrop"></div>
           </div>
 
           {!user && (
             <button className="header-login-btn" onClick={() => setAuthModalOpen(true)}>
-              Anmelden
+              {t('header.login')}
             </button>
           )}
         </div>
@@ -169,24 +182,24 @@ function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
             onClick={(e) => e.stopPropagation()}
           >
             <header className="header-mobile-top">
-              <a href="/" className="header-logo-mobile" onClick={closeMobileMenu}>
+              <a href={localPath('/')} className="header-logo-mobile" onClick={closeMobileMenu}>
                 <span>Wieland</span>
               </a>
               <button
                 className="header-mobile-close"
                 onClick={closeMobileMenu}
-                aria-label="Menü schließen"
+                aria-label={t('header.menuClose')}
               >
                 ✕
               </button>
             </header>
 
             <nav className="header-mobile-nav">
-              <a href="/about" onClick={closeMobileMenu}>Über</a>
-              <a href="/faq" onClick={closeMobileMenu}>FAQ</a>
-              <a href="/changelogs" onClick={closeMobileMenu}>Changelogs</a>
-              <a href="/pricing" onClick={closeMobileMenu}>Pricing</a>
-              <a href="/download" onClick={closeMobileMenu}>Download</a>
+              <a href={localPath('/about')} onClick={closeMobileMenu}>{t('header.navAbout')}</a>
+              <a href={localPath('/faq')} onClick={closeMobileMenu}>{t('header.navFaq')}</a>
+              <a href={localPath('/changelogs')} onClick={closeMobileMenu}>{t('header.navChangelogs')}</a>
+              <a href={localPath('/pricing')} onClick={closeMobileMenu}>{t('header.navPricing')}</a>
+              <a href={localPath('/download')} onClick={closeMobileMenu}>Download</a>
             </nav>
 
             <div className="header-mobile-bottom">
@@ -198,7 +211,7 @@ function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
                     setAuthModalOpen(true);
                   }}
                 >
-                  Anmelden
+                  {t('header.login')}
                 </button>
               )}
             </div>

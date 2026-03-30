@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useTranslation } from 'react-i18next';
 import '../styles/Changelogs.css';
 import '../styles/main.css';
 import Header from '../components/Header';
@@ -12,108 +13,11 @@ import { useAuth } from '../context/AuthContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const entries = [
-  {
-    version: 'v0.1.7',
-    date: '30 März 2026',
-    tag: 'green',
-    title: 'Backend & Auth Update',
-    changes: [
-      'PostgreSQL auf SQLite migriert (inkl. sicherer DB-Initialisierung)',
-      'Admin-CLI Script hinzugefügt, um Nutzer auf Admin zu setzen',
-      'Login-Cookie wird nur gespeichert, wenn Cookie-Einwilligung akzeptiert ist',
-      'Bugfixes',
-    ],
-  },
-  {
-    version: 'v0.1.6',
-    date: '23 März 2026',
-    tag: 'purple',
-    title: 'Design & Content Update',
-    changes: [
-      'Bugfixes',
-      'Design überarbeitet auf allen Seiten schon wieder',
-      "Content-Update: Alle Texte überarbeitet, um Wieland AI's Persönlichkeit besser widerzuspiegeln",
-      'GSAP Integration für Animationen on scroll und mehr Dynamik',
-      'Max Plan geaddet und 2B Model',
-      'Responsive für Handy verbessert',
-      'FAQ Searchbar und Filter',
-    ],
-  },
-  {
-    version: 'v0.1.5',
-    date: '16 März 2026',
-    tag: 'green',
-    title: 'Content v2.0',
-    changes: [
-      'Bugfixes',
-      'Design überarbeitet auf allen Seiten',
-      '2 Neue Pages: Profile, Kontakt',
-      'Features: Abonnementssystem, Cookies, Email und Passwort bearbeiten, Chat-Search',
-      'Chat Links können direkt aufgerufen werden (jetzt UUID statt Timestamp)',
-    ],
-  },
-  {
-    version: 'v0.1.4',
-    date: '10 März 2026',
-    tag: 'pink',
-    title: 'Content',
-    changes: [
-      '8 Neue Pages: About, Changelogs, Download, FAQ, Legal Notice, Privacy Policy, Terms of Service, Pricing',
-      'Language Button im Header',
-      'Bugfixes',
-    ],
-  },
-  {
-    version: 'v0.1.3',
-    date: '10 März 2026',
-    tag: 'purple',
-    title: 'Admin-Dashboard',
-    changes: [
-      'Neues /dashboard mit Recharts-Visualisierungen',
-      'Nutzer- und Modellverwaltung für Admins',
-      'Bugfixes',
-    ],
-  },
-  {
-    version: 'v0.1.2',
-    date: '06 März 2026',
-    tag: 'green',
-    title: 'Backend',
-    changes: [
-      'Backend mit PostgreSQL',
-      'Login und Registrierung',
-      'Bugfixes',
-    ],
-  },
-  {
-    version: 'v0.1.1',
-    date: '03 März 2026',
-    tag: 'pink',
-    title: 'KI verfeinert',
-    changes: [
-      'Bugfixes',
-      'KI kann nun Bilder verarbeiten',
-      'Design Header und Sidebar',
-    ],
-  },
-  {
-    version: 'v0.1.0',
-    date: '01 März 2026',
-    tag: 'gray',
-    title: 'Pre-Release',
-    changes: [
-      'Start des Projekts',
-      'Design und Entwicklung der Kernfunktionen',
-      'Ollama Integration für lokale KI-Verarbeitung',
-      'Design und Integration von 3D Charakteren',
-    ],
-  },
-];
-
 function Changelogs({ isSidebarOpen, onSidebarToggle }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const rootRef = useRef(null);
+  const entries = t('changelogs.entries', { returnObjects: true }) || [];
 
   useEffect(() => {
     if (!rootRef.current) return;
@@ -209,9 +113,9 @@ function Changelogs({ isSidebarOpen, onSidebarToggle }) {
 
           <div className="cl-hero">
             <div className="cl-hero-left">
-              <span className="cl-eyebrow">Changelogs</span>
-              <h1 className="cl-h1">Was ist<br /><span>neu?</span></h1>
-              <p className="cl-lead">Alle Versionen, Fixes und Features — chronologisch dokumentiert.</p>
+              <span className="cl-eyebrow">{t('changelogs.eyebrow')}</span>
+              <h1 className="cl-h1">{t('changelogs.title')}<br /><span>{t('changelogs.titleAccent')}</span></h1>
+              <p className="cl-lead">{t('changelogs.lead')}</p>
             </div>
           </div>
 
@@ -236,7 +140,7 @@ function Changelogs({ isSidebarOpen, onSidebarToggle }) {
                 <div className="cl-entry-body" data-version={entry.version} data-date={entry.date}>
                   <div className="cl-entry-header">
                     <span className={`cl-tag cl-tag--${entry.tag}`}>
-                      {entry.tag === 'gray' ? 'Initial' : entry.version}
+                      {entry.tag === 'gray' ? t('changelogs.initialTag') : entry.version}
                     </span>
                     <h2 className="cl-entry-title">{entry.title}</h2>
                   </div>

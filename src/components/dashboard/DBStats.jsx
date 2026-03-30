@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, Tooltip, CartesianGrid,
@@ -68,6 +69,7 @@ function StatCard({ label, value, accent, loading, onClick, sublabel }) {
 }
 
 export default function DBStats({ stats, loading, users, chats, onUserClick, onUserChats, onChatClick, onTabChange }) {
+  const { t } = useTranslation();
   const [range, setRange] = useState(30);
   const [chartType, setChartType] = useState('both');
 
@@ -93,10 +95,10 @@ export default function DBStats({ stats, loading, users, chats, onUserClick, onU
   return (
     <div className="db-overview">
       <div className="db-stat-grid">
-        <StatCard label="Benutzer gesamt" value={stats?.total_users ?? users.length} accent="pink" loading={loading} onClick={() => onTabChange('users')} sublabel="Alle anzeigen" />
-        <StatCard label="Chats gesamt" value={stats?.total_chats ?? chats.length} accent="violet" loading={loading} onClick={() => onTabChange('chats')} sublabel="Alle anzeigen" />
-        <StatCard label="Nachrichten" value={stats?.total_msgs ?? '—'} accent="blue" loading={loading} />
-        <StatCard label="Ø Msgs/Chat" value={derived.avgMsgs} accent="teal" loading={loading} sublabel="Nachrichten pro Chat" />
+        <StatCard label={t('dashboard.stats.totalUsers')} value={stats?.total_users ?? users.length} accent="pink" loading={loading} onClick={() => onTabChange('users')} sublabel={t('dashboard.stats.showAll')} />
+        <StatCard label={t('dashboard.stats.totalChats')} value={stats?.total_chats ?? chats.length} accent="violet" loading={loading} onClick={() => onTabChange('chats')} sublabel={t('dashboard.stats.showAll')} />
+        <StatCard label={t('dashboard.stats.messages')} value={stats?.total_msgs ?? '—'} accent="blue" loading={loading} />
+        <StatCard label={t('dashboard.stats.avgMsgsPerChat')} value={derived.avgMsgs} accent="teal" loading={loading} sublabel={t('dashboard.stats.messagesPerChat')} />
       </div>
 
       <div className="db-panel db-chart-panel">
@@ -148,9 +150,9 @@ export default function DBStats({ stats, loading, users, chats, onUserClick, onU
       <div className="db-panels-row">
         <div className="db-panel">
           <div className="db-panel-header">
-            <span className="db-panel-title">Plan-Verteilung</span>
+            <span className="db-panel-title">{t('dashboard.stats.planDistribution')}</span>
             <button className="db-panel-link" onClick={() => onTabChange('users')}>
-              Anzeigen <ArrowRight />
+              {t('dashboard.stats.view')} <ArrowRight />
             </button>
           </div>
           <div className="db-plan-list">
@@ -163,15 +165,15 @@ export default function DBStats({ stats, loading, users, chats, onUserClick, onU
                 <span className="db-plan-count">{count}</span>
               </div>
             ))}
-            {!Object.keys(derived.planCounts).length && !loading && <span className="db-empty-hint">Keine Daten</span>}
+            {!Object.keys(derived.planCounts).length && !loading && <span className="db-empty-hint">{t('dashboard.stats.noData')}</span>}
           </div>
         </div>
 
         <div className="db-panel">
           <div className="db-panel-header">
-            <span className="db-panel-title">Neueste Benutzer</span>
+            <span className="db-panel-title">{t('dashboard.stats.latestUsers')}</span>
             <button className="db-panel-link" onClick={() => onTabChange('users')}>
-              Anzeigen <ArrowRight />
+              {t('dashboard.stats.view')} <ArrowRight />
             </button>
           </div>
           <div className="db-new-users-list">
@@ -184,19 +186,19 @@ export default function DBStats({ stats, loading, users, chats, onUserClick, onU
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
                   <span className="db-new-user-date">{fmtDate(u.created_at)}</span>
-                  <button className="db-mini-link" onClick={e => { e.stopPropagation(); onUserChats(u); }}>Chats</button>
+                  <button className="db-mini-link" onClick={e => { e.stopPropagation(); onUserChats(u); }}>{t('dashboard.tabs.chats')}</button>
                 </div>
               </div>
             ))}
-            {!derived.newest.length && !loading && <span className="db-empty-hint">Keine Benutzer</span>}
+            {!derived.newest.length && !loading && <span className="db-empty-hint">{t('dashboard.table.noUsers')}</span>}
           </div>
         </div>
 
         <div className="db-panel">
           <div className="db-panel-header">
-            <span className="db-panel-title">Aktivste Chats</span>
+            <span className="db-panel-title">{t('dashboard.stats.mostActiveChats')}</span>
             <button className="db-panel-link" onClick={() => onTabChange('chats')}>
-              Anzeigen <ArrowRight />
+              {t('dashboard.stats.view')} <ArrowRight />
             </button>
           </div>
           <div className="db-top-chats-list">
@@ -206,10 +208,10 @@ export default function DBStats({ stats, loading, users, chats, onUserClick, onU
                   <span className="db-top-chat-title">{c.title || c.filename}</span>
                   {c.username && <span className="db-top-chat-user"> · {c.username}</span>}
                 </div>
-                <span className="db-top-chat-msgs">{c.message_count ?? 0} Msgs</span>
+                <span className="db-top-chat-msgs">{c.message_count ?? 0} {t('dashboard.table.messagesShort')}</span>
               </div>
             ))}
-            {!chats.length && !loading && <span className="db-empty-hint">Keine Chats</span>}
+            {!chats.length && !loading && <span className="db-empty-hint">{t('dashboard.table.noChats')}</span>}
           </div>
         </div>
       </div>

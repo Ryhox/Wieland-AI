@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useTranslation } from 'react-i18next';
 import '../styles/About.css';
 import '../styles/main.css';
 import Header from '../components/Header';
@@ -13,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 gsap.registerPlugin(ScrollTrigger);
 
 function About({ isSidebarOpen, onSidebarToggle }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const rootRef = useRef(null);
   const pageProgressRef = useRef(0);
@@ -147,6 +149,8 @@ function About({ isSidebarOpen, onSidebarToggle }) {
 
   const fmt = (n) => n === null ? '…' : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
 
+  const coreItems = t('about.core', { returnObjects: true });
+
   return (
     <div className={`page-wrapper content-page about-page-shell ${isSidebarOpen ? 'sidebar-open' : ''}`} ref={rootRef}>
       <div className="about-bg-layer" aria-hidden="true">
@@ -164,28 +168,27 @@ function About({ isSidebarOpen, onSidebarToggle }) {
           <div className="about-hero about-reveal">
             <div className="about-hero-inner">
               <div className="about-hero-left">
-                <span className="about-eyebrow">Über Wieland AI</span>
-                <h1 className="about-h1">Entwickelt für, <br /><span>das beste AI erlebnis</span></h1>
+                <span className="about-eyebrow">{t('about.eyebrow')}</span>
+                <h1 className="about-h1">{t('about.title')} <br /><span>{t('about.titleAccent')}</span></h1>
                 <p className="about-lead">
-                  Wieland AI ist eine moderne AI mit Echtzeit-Antworten, visuellem Verständnis
-                  und Intelligenz. Gebaut für ein erstklassiges Online-Erlebnis.
+                  {t('about.lead')}
                 </p>
                 <div className="about-hero-pills">
-                  <span className="about-pill">Echtzeit Streaming</span>
-                  <span className="about-pill">Vision + Text</span>
-                  <span className="about-pill">Skalierbare System</span>
+                  {(t('about.pills', { returnObjects: true }) || []).map((pill) => (
+                    <span className="about-pill" key={pill}>{pill}</span>
+                  ))}
                 </div>
               </div>
 
               <div className="about-hero-right">
                 <div className="about-stats">
                   {[
-                    { num: fmt(stats.total_users), label: 'Aktive Nutzer' },
-                    { num: fmt(stats.total_chats), label: 'Chats' },
-                    { num: fmt(stats.total_messages), label: 'Gesendete Nachrichten' },
-                    { num: '24/7', label: 'Online Laufzeit' },
+                    { key: 'activeUsers', num: fmt(stats.total_users), label: t('about.stats.activeUsers') },
+                    { key: 'chats', num: fmt(stats.total_chats), label: t('about.stats.chats') },
+                    { key: 'sentMessages', num: fmt(stats.total_messages), label: t('about.stats.sentMessages') },
+                    { key: 'uptime', num: '24/7', label: t('about.stats.uptime') },
                   ].map(s => (
-                    <div className="about-stat-card" key={s.label}>
+                    <div className="about-stat-card" key={s.key}>
                       <div className="about-stat-num">{s.num}</div>
                       <div className="about-stat-label">{s.label}</div>
                     </div>
@@ -197,49 +200,37 @@ function About({ isSidebarOpen, onSidebarToggle }) {
 
           <div className="about-divider about-reveal" />
 
-          <p className="about-section-label about-reveal">Warum Wieland?</p>
+          <p className="about-section-label about-reveal">{t('about.whyLabel')}</p>
           <div className="about-why-block about-reveal">
             <p className="about-why-lead">
-              Andere AIs sind oft entweder zu simpel und unzuverlässig oder so komplex, dass sie mehr Zeit mit Setup und Fehlersuche als mit echter Produktivität verbringen.
+              {t('about.whyLead')}
             </p>
             <p className="about-why-body">
-              Wieland AI vereint diesen Flow in einem einzigen schnellen Interface mit verlässlichen Outputs,
-              intelligenten Model und einer UX, die sich vertraut anfühlt,
-              als ein reines Tool.
+              {t('about.whyBody')}
             </p>
           </div>
 
           <div className="about-divider about-reveal" />
 
-          <p className="about-section-label about-reveal">Unsere Kernbereiche</p>
+          <p className="about-section-label about-reveal">{t('about.coreLabel')}</p>
           <div className="about-text-grid about-reveal">
-            <div className="about-text-item">
-              <h3>Startklare Erlebnisse</h3>
-              <p>Vom ersten Prompt bis zum fertigen Workflow ist jede Interaktion darauf ausgelegt, sich flüssig, qualitativ hochwertig und sofort reagierend anzufühlen.</p>
-            </div>
-            <div className="about-text-item">
-              <h3>Transparenz & Kontrolle</h3>
-              <p>Transparenz, die Spaß macht: Du siehst, was passiert, und bestimmst, wie dein AI-Flow läuft.</p>
-            </div>
-            <div className="about-text-item">
-              <h3>Echte Multimodalität</h3>
-              <p>Volles Verständnis von Texten und Bildern in einem einzigen Durchlauf. Lade Kontext hoch, analysiere visuelle Inhalte und halte den Flow stetig am Laufen.</p>
-            </div>
-            <div className="about-text-item">
-              <h3>Ohne Ausfälle skalieren</h3>
-              <p>Unsere produktionsstarken Deployments stellen sicher, dass dein AI-Assistent auch unter extremen Last-Spitzen stabil bleibt.</p>
-            </div>
+            {(Array.isArray(coreItems) ? coreItems : []).map((item) => (
+              <div className="about-text-item" key={item.title}>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+              </div>
+            ))}
           </div>
 
           <div className="about-divider about-reveal" />
 
-          <p className="about-section-label about-reveal">Technologie Stack</p>
+          <p className="about-section-label about-reveal">{t('about.stackLabel')}</p>
           <div className="about-stack about-reveal">
             {[
-              { label: 'Frontend', tags: ['React', 'Vite', 'CSS', 'GSAP'] },
-              { label: 'Backend', tags: ['Node.js', 'Express'] },
-              { label: 'Daten', tags: ['PostgreSQL', 'JSON Storage'] },
-              { label: 'AI Engine', tags: ['Qwen3-VL'] },
+              { label: t('about.stack.frontend'), tags: ['React', 'Vite', 'CSS', 'GSAP'] },
+              { label: t('about.stack.backend'), tags: ['Node.js', 'Express'] },
+              { label: t('about.stack.data'), tags: ['PostgreSQL', 'JSON Storage'] },
+              { label: t('about.stack.ai'), tags: ['Qwen3-VL'] },
             ].map(s => (
               <div className="about-stack-card" key={s.label}>
                 <span className="about-stack-label">{s.label}</span>

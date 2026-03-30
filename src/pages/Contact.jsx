@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import gsap from 'gsap';
+import { useTranslation } from 'react-i18next';
 import '../styles/Contact.css';
 import '../styles/main.css';
 import Header from '../components/Header';
@@ -8,6 +9,7 @@ import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
 
 function Contact({ isSidebarOpen, onSidebarToggle }) {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [formData, setFormData] = useState({ 
     name: '', 
@@ -65,8 +67,8 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
   const showSuccessModal = () => {
     setModal({
       show: true,
-      title: 'Nachricht gesendet! ✨',
-      message: 'Deine Nachricht wurde erfolgreich versendet. Wir melden uns bei dir!'
+      title: t('contact.successTitle'),
+      message: t('contact.successMessage')
     });
     
     gsap.fromTo('.contact-form-wrapper',
@@ -99,30 +101,30 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
     
     switch (name) {
       case 'name':
-        if (!value.trim()) error = 'Bitte gib deinen Namen ein.';
+        if (!value.trim()) error = t('contact.validation.name');
         break;
       case 'email':
         if (!value.trim()) {
-          error = 'Bitte gib deine E-Mail-Adresse ein.';
+          error = t('contact.validation.email');
         } else {
           const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
           if (!emailRegex.test(value)) {
-            error = 'Bitte gib eine gültige E-Mail-Adresse ein (z.B. name@example.com).';
+            error = t('contact.validation.emailInvalid');
           }
         }
         break;
       case 'subject':
-        if (!value.trim()) error = 'Bitte gib einen Betreff ein.';
+        if (!value.trim()) error = t('contact.validation.subject');
         break;
       case 'message':
         if (!value.trim()) {
-          error = 'Bitte gib deine Nachricht ein.';
+          error = t('contact.validation.message');
         } else if (value.trim().length < 10) {
-          error = 'Bitte schreibe mindestens 10 Zeichen.';
+          error = t('contact.validation.messageMin');
         }
         break;
       case 'agreeToTerms':
-        if (!value) error = 'Bitte stimme den Datenschutzbestimmungen zu.';
+        if (!value) error = t('contact.validation.agree');
         break;
       default:
         break;
@@ -215,7 +217,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
         const errorData = await response.json();
         const formError = document.querySelector('.contact-form-error');
         if (formError) {
-          formError.textContent = errorData.message || 'Es gab ein Problem beim Senden deiner Nachricht.';
+          formError.textContent = errorData.message || t('contact.errorSend');
           formError.style.display = 'block';
           gsap.fromTo(formError,
             { y: -20, opacity: 0 },
@@ -233,7 +235,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
       console.error('Fehler beim Senden:', err);
       const formError = document.querySelector('.contact-form-error');
       if (formError) {
-        formError.textContent = 'Verbindungsfehler. Bitte überprüfe deine Internetverbindung und versuche es erneut.';
+        formError.textContent = t('contact.errorNetwork');
         formError.style.display = 'block';
         gsap.fromTo(formError,
           { y: -20, opacity: 0 },
@@ -260,11 +262,10 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
         <div className="page-container contact-container">
 
           <div className="contact-hero" ref={heroRef}>
-            <span className="contact-eyebrow">Kontakt</span>
-            <h1 className="contact-h1">Lass uns<br /><span>zusammenarbeiten.</span></h1>
+            <span className="contact-eyebrow">{t('contact.eyebrow')}</span>
+            <h1 className="contact-h1">{t('contact.title')}<br /><span>{t('contact.titleAccent')}</span></h1>
             <p className="contact-lead">
-              Hast du Fragen, Vorschläge oder möchtest du mit uns in Kontakt treten? 
-              Schreib uns eine Nachricht – das Team hilft gern weiter.
+              {t('contact.lead')}
             </p>
           </div>
 
@@ -272,14 +273,14 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
 
           <div className="contact-content" ref={formRef}>
             <div className="contact-form-wrapper">
-              <h2 className="contact-form-title">Schreib uns eine Nachricht</h2>
+              <h2 className="contact-form-title">{t('contact.formTitle')}</h2>
               
               <div className="contact-form-error" style={{ display: 'none' }}></div>
               
               <form onSubmit={handleSubmit} className="contact-form" noValidate>
                 <div className="contact-form-row">
                   <div className="contact-form-group">
-                    <label htmlFor="name">Name *</label>
+                    <label htmlFor="name">{t('contact.name')} *</label>
                     <input
                       type="text"
                       id="name"
@@ -287,7 +288,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                       value={formData.name}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      placeholder="Dein Name"
+                      placeholder={t('contact.namePlaceholder')}
                       disabled={isSubmitting}
                       className={errors.name ? 'error' : ''}
                     />
@@ -299,7 +300,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                   </div>
 
                   <div className="contact-form-group">
-                    <label htmlFor="email">E-Mail *</label>
+                    <label htmlFor="email">{t('contact.email')} *</label>
                     <input
                       type="email"
                       id="email"
@@ -307,7 +308,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                       value={formData.email}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      placeholder="deine@email.de"
+                      placeholder={t('contact.emailPlaceholder')}
                       disabled={isSubmitting}
                       className={errors.email ? 'error' : ''}
                     />
@@ -320,7 +321,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                 </div>
 
                 <div className="contact-form-group">
-                  <label htmlFor="subject">Betreff *</label>
+                  <label htmlFor="subject">{t('contact.subject')} *</label>
                   <input
                     type="text"
                     id="subject"
@@ -328,7 +329,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                     value={formData.subject}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    placeholder="Worum geht es?"
+                    placeholder={t('contact.subjectPlaceholder')}
                     disabled={isSubmitting}
                     className={errors.subject ? 'error' : ''}
                   />
@@ -340,20 +341,20 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                 </div>
 
                 <div className="contact-form-group">
-                  <label htmlFor="message">Nachricht *</label>
+                  <label htmlFor="message">{t('contact.message')} *</label>
                   <textarea
                     id="message"
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    placeholder="Deine Nachricht..."
+                    placeholder={t('contact.messagePlaceholder')}
                     rows="7"
                     disabled={isSubmitting}
                     className={errors.message ? 'error' : ''}
                   />
                   <span className="contact-char-count">
-                    {formData.message.length} Zeichen {formData.message.length < 10 && formData.message.length > 0 && '(mind. 10)'}
+                    {formData.message.length} {t('contact.chars')} {formData.message.length < 10 && formData.message.length > 0 && t('contact.min10')}
                   </span>
                   {errors.message && (
                     <div className={`contact-error contact-error-message`}>
@@ -374,7 +375,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                       className={errors.agreeToTerms ? 'error' : ''}
                     />
                     <span className="checkbox-text">
-                      Ich stimme den <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Datenschutzbestimmungen</a> zu.
+                      {t('contact.agree')} <a href={`/${i18n.language}/privacy-policy`} target="_blank" rel="noopener noreferrer">{t('contact.privacy')}</a> {t('contact.agreeEnd')}
                     </span>
                   </label>
                   {errors.agreeToTerms && (
@@ -392,10 +393,10 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                   {isSubmitting ? (
                     <>
                       <span className="spinner"></span>
-                      Wird gesendet...
+                      {t('contact.sending')}
                     </>
                   ) : (
-                    'Submit Form'
+                    t('contact.submit')
                   )}
                 </button>
               </form>
@@ -405,10 +406,10 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
           <div className="contact-divider" />
 
           <div className="contact-info-section" ref={infoRef}>
-            <h2 className="contact-info-title">Kontaktieren Sie uns</h2>
+            <h2 className="contact-info-title">{t('contact.infoTitle')}</h2>
             <div className="contact-info-grid">
               <div className="contact-info-card">
-                <span className="contact-info-label">📍 Standort</span>
+                <span className="contact-info-label">📍 {t('contact.location')}</span>
                 <p>Wieland Headquarters<br />Italy</p>
               </div>
               <div className="contact-info-card">
@@ -416,8 +417,8 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                 <p><a href="mailto:info@wieland.ai">info@wieland.ai</a></p>
               </div>
               <div className="contact-info-card">
-                <span className="contact-info-label">📞 Support</span>
-                <p>Kontakt per Formular – <br />wir melden uns schnell!</p>
+                <span className="contact-info-label">📞 {t('contact.support')}</span>
+                <p>{t('contact.supportText')}</p>
               </div>
             </div>
           </div>
@@ -438,7 +439,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
               <h2 className="contact-success-title">{modal.title}</h2>
               <p className="contact-success-message">{modal.message}</p>
               <button className="contact-success-btn" onClick={closeModal}>
-                Weiter
+                {t('common.continue')}
               </button>
             </div>
           </div>

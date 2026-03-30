@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
+import { useTranslation } from 'react-i18next';
 import '../styles/Download.css';
 import '../styles/main.css';
 import Header from '../components/Header';
@@ -13,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 const platforms = ['🌐 Chrome'];
 
 function Download({ isSidebarOpen, onSidebarToggle }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const rootRef = useRef(null);
 
@@ -67,23 +69,22 @@ function Download({ isSidebarOpen, onSidebarToggle }) {
         <div className="page-container dl-container">
 
           <div className="dl-hero">
-            <span className="dl-eyebrow">Download</span>
-            <h1 className="dl-h1">Wieland AI<br /><span>herunterladen.</span></h1>
+            <span className="dl-eyebrow">{t('download.eyebrow')}</span>
+            <h1 className="dl-h1">{t('download.title')}<br /><span>{t('download.titleAccent')}</span></h1>
             <p className="dl-lead">
-              Lokal, offline, ohne Telemetrie. Läuft vollständig auf deiner Hardware —
-              keine Cloud, keine Abhängigkeiten von Drittservern.
+              {t('download.lead')}
             </p>
           </div>
 
           <div className="dl-main-card">
             <div className="dl-main-left">
-              <div className="dl-main-title">Wieland AI Chrome Extension</div>
+              <div className="dl-main-title">{t('download.extensionTitle')}</div>
               <div className="dl-main-meta">
                 <span className="dl-badge dl-badge-version">v1.4.0</span>
                 <span className="dl-badge dl-badge-date">Jun 2025</span>
               </div>
               <div className="dl-main-desc">
-                Nutze Wieland AI überall im Browser.
+                {t('download.desc')}
               </div>
             </div>
 
@@ -93,12 +94,12 @@ function Download({ isSidebarOpen, onSidebarToggle }) {
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              Download
+              {t('download.button')}
             </a>
           </div>
 
           <div className="dl-platform-row">
-            <span className="dl-platform-label">Läuft auf</span>
+            <span className="dl-platform-label">{t('download.runsOn')}</span>
             {platforms.map(p => (
               <span className="dl-platform-pill" key={p}>{p}</span>
             ))}

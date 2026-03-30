@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Profile.css';
 import '../styles/main.css';
@@ -8,10 +9,14 @@ import Footer from '../components/Footer';
 import Sidebar from '../components/Sidebar';
 import AlertModal from '../components/AlertModal';
 import ConfirmationModal from '../components/ConfirmationModal';
+import { withLang } from '../utils/i18nRouting';
 
 function Profile({ isSidebarOpen, onSidebarToggle }) {
+  const { t, i18n } = useTranslation();
   const { user, authFetch, logout } = useAuth();
   const navigate = useNavigate();
+  const localPath = (path) => withLang(path, i18n.language);
+
   const isAdmin = (user?.plan || '').toLowerCase() === 'admin';
 
   const [isEditingEmail, setIsEditingEmail] = useState(false);
@@ -28,7 +33,7 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
     setAlert(null);
 
     if (!newEmail.trim() || newEmail === user?.email) {
-      setAlert({ type: 'error', title: 'Fehler', message: 'E-Mail ist identisch oder leer' });
+      setAlert({ type: 'error', title: t('profile.errors.title'), message: t('profile.errors.emailSame') });
       return;
     }
 
@@ -40,14 +45,14 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
       });
 
       if (response.ok) {
-        setAlert({ type: 'success', title: 'Erfolg', message: 'E-Mail erfolgreich aktualisiert!' });
+        setAlert({ type: 'success', title: t('profile.errors.success'), message: t('profile.success.emailUpdated') });
         setIsEditingEmail(false);
       } else {
         const data = await response.json();
-        setAlert({ type: 'error', title: 'Fehler', message: data.error || 'Fehler beim Aktualisieren der E-Mail' });
+        setAlert({ type: 'error', title: t('profile.errors.title'), message: data.error || t('profile.errors.emailUpdate') });
       }
     } catch (err) {
-      setAlert({ type: 'error', title: 'Fehler', message: 'Fehler beim Aktualisieren der E-Mail' });
+      setAlert({ type: 'error', title: t('profile.errors.title'), message: t('profile.errors.emailUpdate') });
     }
   };
 
@@ -56,17 +61,17 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
     setAlert(null);
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setAlert({ type: 'error', title: 'Fehler', message: 'Alle Felder sind erforderlich' });
+      setAlert({ type: 'error', title: t('profile.errors.title'), message: t('profile.errors.passwordFields') });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setAlert({ type: 'error', title: 'Fehler', message: 'Neue Passwörter stimmen nicht überein' });
+      setAlert({ type: 'error', title: t('profile.errors.title'), message: t('profile.errors.passwordMismatch') });
       return;
     }
 
     if (newPassword.length < 8) {
-      setAlert({ type: 'error', title: 'Fehler', message: 'Passwort muss mindestens 8 Zeichen lang sein' });
+      setAlert({ type: 'error', title: t('profile.errors.title'), message: t('profile.errors.passwordLength') });
       return;
     }
 
@@ -81,24 +86,24 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
       });
 
       if (response.ok) {
-        setAlert({ type: 'success', title: 'Erfolg', message: 'Passwort erfolgreich aktualisiert!' });
+        setAlert({ type: 'success', title: t('profile.errors.success'), message: t('profile.success.passwordUpdated') });
         setIsEditingPassword(false);
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
       } else {
         const data = await response.json();
-        setAlert({ type: 'error', title: 'Fehler', message: data.error || 'Fehler beim Aktualisieren des Passworts' });
+        setAlert({ type: 'error', title: t('profile.errors.title'), message: data.error || t('profile.errors.passwordUpdate') });
       }
     } catch (err) {
-      setAlert({ type: 'error', title: 'Fehler', message: 'Fehler beim Aktualisieren des Passworts' });
+      setAlert({ type: 'error', title: t('profile.errors.title'), message: t('profile.errors.passwordUpdate') });
     }
   };
 
   const handleDeleteAccount = async () => {
     setConfirmModal({
-      title: 'Konto löschen?',
-      message: 'Dies wird dein Konto und alle zugehörigen Daten dauerhaft löschen. Diese Aktion kann nicht rückgängig gemacht werden.',
+      title: t('profile.confirm.deleteTitle'),
+      message: t('profile.confirm.deleteText'),
       onConfirm: async () => {
         try {
           const response = await authFetch('/api/auth/delete-account', {
@@ -107,13 +112,13 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
 
           if (response.ok) {
             logout();
-            navigate('/');
+            navigate(localPath('/'));
           } else {
             const data = await response.json();
-            setAlert({ type: 'error', title: 'Fehler', message: data.error || 'Fehler beim Löschen des Kontos' });
+            setAlert({ type: 'error', title: t('profile.errors.title'), message: data.error || t('profile.errors.accountDelete') });
           }
         } catch (err) {
-          setAlert({ type: 'error', title: 'Fehler', message: 'Fehler beim Löschen des Kontos' });
+          setAlert({ type: 'error', title: t('profile.errors.title'), message: t('profile.errors.accountDelete') });
         }
         setConfirmModal(null);
       }
@@ -122,8 +127,8 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
 
   const handleCancelSubscription = async () => {
     setConfirmModal({
-      title: 'Abonnement kündigen?',
-      message: 'Bist du sicher, dass du kündigen möchtest? Du wirst auf den Free-Plan zurückgestuft.',
+      title: t('profile.confirm.cancelTitle'),
+      message: t('profile.confirm.cancelText'),
       onConfirm: async () => {
         try {
           const response = await authFetch('/api/auth/cancel-subscription', {
@@ -131,16 +136,16 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
           });
 
           if (response.ok) {
-            setAlert({ type: 'success', title: 'Erfolg', message: 'Abonnement erfolgreich gekündigt. Du wirst auf Free-Plan zurückgestuft.' });
+            setAlert({ type: 'success', title: t('profile.errors.success'), message: t('profile.success.subscriptionCanceled') });
             setTimeout(() => {
               window.location.reload();
             }, 2000);
           } else {
             const data = await response.json();
-            setAlert({ type: 'error', title: 'Fehler', message: data.error || 'Fehler beim Kündigen des Abonnements' });
+            setAlert({ type: 'error', title: t('profile.errors.title'), message: data.error || t('profile.errors.subscriptionCancel') });
           }
         } catch (err) {
-          setAlert({ type: 'error', title: 'Fehler', message: 'Fehler beim Kündigen des Abonnements' });
+          setAlert({ type: 'error', title: t('profile.errors.title'), message: t('profile.errors.subscriptionCancel') });
         }
         setConfirmModal(null);
       }
@@ -174,10 +179,10 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
         <div className="page-container profile-container">
 
           <div className="profile-hero">
-            <span className="profile-eyebrow">Profil</span>
-            <h1 className="profile-h1">Dein Account<br /><span>verwalten.</span></h1>
+            <span className="profile-eyebrow">{t('profile.eyebrow')}</span>
+            <h1 className="profile-h1">{t('profile.title')}<br /><span>{t('profile.titleAccent')}</span></h1>
             <p className="profile-lead">
-              E-Mail, Passwort, Abonnement – alles an einem Ort.
+              {t('profile.lead')}
             </p>
           </div>
 
@@ -185,42 +190,42 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
 
           <div className="profile-content">
             <div className="profile-section">
-              <h2 className="profile-section-title">E-Mail</h2>
+              <h2 className="profile-section-title">{t('profile.emailSection')}</h2>
               {!isEditingEmail ? (
                 <div className="profile-field">
-                  <span className="profile-field-label">Deine E-Mail</span>
+                  <span className="profile-field-label">{t('profile.yourEmail')}</span>
                   <div className="profile-field-display">
                     <span>{user?.email || '—'}</span>
                     <button
                       className="profile-btn-secondary"
                       onClick={() => setIsEditingEmail(true)}
                     >
-                      Ändern
+                      {t('profile.change')}
                     </button>
                   </div>
                 </div>
               ) : (
                 <form onSubmit={handleEmailChange} className="profile-form">
                   <div className="profile-form-group">
-                    <label>Neue E-Mail</label>
+                    <label>{t('profile.newEmail')}</label>
                     <input
                       type="email"
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
-                      placeholder="neue@email.de"
+                      placeholder={t('auth.placeholderEmail')}
                       required
                     />
                   </div>
                   <div className="profile-form-buttons">
                     <button type="submit" className="profile-btn-primary">
-                      Speichern
+                      {t('common.save')}
                     </button>
                     <button
                       type="button"
                       className="profile-btn-secondary"
                       onClick={() => setIsEditingEmail(false)}
                     >
-                      Abbrechen
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </form>
@@ -230,21 +235,21 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
             <div className="profile-divider-thin" />
 
             <div className="profile-section">
-              <h2 className="profile-section-title">Passwort</h2>
+              <h2 className="profile-section-title">{t('profile.passwordSection')}</h2>
               {!isEditingPassword ? (
                 <div className="profile-field">
-                  <span className="profile-field-label">Passwort ändern</span>
+                  <span className="profile-field-label">{t('profile.changePassword')}</span>
                   <button
                     className="profile-btn-secondary"
                     onClick={() => setIsEditingPassword(true)}
                   >
-                    Passwort ändern
+                    {t('profile.changePassword')}
                   </button>
                 </div>
               ) : (
                 <form onSubmit={handlePasswordChange} className="profile-form">
                   <div className="profile-form-group">
-                    <label>Aktuelles Passwort</label>
+                    <label>{t('profile.currentPassword')}</label>
                     <input
                       type="password"
                       value={currentPassword}
@@ -254,7 +259,7 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
                     />
                   </div>
                   <div className="profile-form-group">
-                    <label>Neues Passwort</label>
+                    <label>{t('profile.newPassword')}</label>
                     <input
                       type="password"
                       value={newPassword}
@@ -264,7 +269,7 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
                     />
                   </div>
                   <div className="profile-form-group">
-                    <label>Passwort bestätigen</label>
+                    <label>{t('profile.confirmPassword')}</label>
                     <input
                       type="password"
                       value={confirmPassword}
@@ -275,14 +280,14 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
                   </div>
                   <div className="profile-form-buttons">
                     <button type="submit" className="profile-btn-primary">
-                      Speichern
+                      {t('common.save')}
                     </button>
                     <button
                       type="button"
                       className="profile-btn-secondary"
                       onClick={() => setIsEditingPassword(false)}
                     >
-                      Abbrechen
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </form>
@@ -292,28 +297,28 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
             <div className="profile-divider-thin" />
 
             <div className="profile-section">
-              <h2 className="profile-section-title">Abonnement</h2>
+              <h2 className="profile-section-title">{t('profile.subscription')}</h2>
               <div className="profile-field">
-                <span className="profile-field-label">Plan</span>
+                <span className="profile-field-label">{t('profile.plan')}</span>
                 <div className="profile-field-display">
                   <span className="profile-plan-badge">{user?.plan || 'Free'}</span>
                   {isAdmin && (
-                    <span className="profile-field-label">Als Admin kannst du das Abonnement nicht kündigen.</span>
+                    <span className="profile-field-label">{t('profile.adminNoCancel')}</span>
                   )}
                   {user?.plan && user?.plan !== 'Free' && !isAdmin && (
                     <button
                       className="profile-btn-danger"
                       onClick={handleCancelSubscription}
                     >
-                      Abonnement kündigen
+                      {t('profile.cancelSubscription')}
                     </button>
                   )}
                   {(!user?.plan || user?.plan === 'Free') && (
                     <button
                       className="profile-btn-secondary"
-                      onClick={() => navigate('/pricing')}
+                      onClick={() => navigate(localPath('/pricing'))}
                     >
-                      Plan upgraden
+                      {t('profile.upgradePlan')}
                     </button>
                   )}
                 </div>
@@ -323,17 +328,17 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
             <div className="profile-divider-thin" />
 
             <div className="profile-section profile-section-danger">
-              <h2 className="profile-section-title">Gefahrenzone</h2>
+              <h2 className="profile-section-title">{t('profile.dangerZone')}</h2>
               <div className="profile-field">
-                <span className="profile-field-label">Konto löschen</span>
+                <span className="profile-field-label">{t('profile.deleteAccount')}</span>
                 <p className="profile-field-description">
-                  Dies werden dein Konto und alle zugehörigen Daten dauerhaft löschen.
+                  {t('profile.deleteDescription')}
                 </p>
                 <button
                   className="profile-btn-danger"
                   onClick={handleDeleteAccount}
                 >
-                  Konto löschen
+                  {t('profile.deleteAccount')}
                 </button>
               </div>
             </div>

@@ -372,7 +372,7 @@
 .welcome-message-container {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--chat-input-offset, 50px) + 104px);
+  bottom: calc(50px + 104px);
   transform: translateX(-50%);
   width: min(800px, calc(100% - 40px));
   margin-top: 0;
@@ -793,8 +793,7 @@
 }
 
 .chat-interface-wrapper {
-  --chat-input-offset: 50px;
-  transition: opacity 0.3s ease-in-out;
+transition: opacity 0.3s ease-in-out;
 }
 
 @media (max-width: 768px) {
@@ -819,7 +818,7 @@
 
   .welcome-message-container {
     width: calc(100% - 24px);
-    bottom: calc(var(--chat-input-offset, 20px) + 88px);
+    bottom: calc(50px + 88px);
     font-size: clamp(20px, 6vw, 26px);
   }
 

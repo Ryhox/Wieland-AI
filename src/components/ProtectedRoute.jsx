@@ -1,7 +1,10 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { withLang } from '../utils/i18nRouting';
 
 export default function ProtectedRoute({ children, requiredPlan = null }) {
+  const { t, i18n } = useTranslation();
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -12,17 +15,17 @@ export default function ProtectedRoute({ children, requiredPlan = null }) {
         height: '100vh', color: 'rgba(255,255,255,0.6)', fontSize: 14,
         background: '#0a0b0f',
       }}>
-        Laden…
+        {t('protectedRoute.loading')}
       </div>
     );
   }
 
   if (!user) {
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return <Navigate to={withLang('/', i18n.language)} state={{ from: location }} replace />;
   }
 
   if (requiredPlan && user.plan !== requiredPlan) {
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return <Navigate to={withLang('/', i18n.language)} state={{ from: location }} replace />;
   }
 
   return children;

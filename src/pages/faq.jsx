@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import '../styles/FAQ.css';
 import '../styles/main.css';
 import Header from '../components/Header';
@@ -9,135 +10,7 @@ import Sidebar from '../components/Sidebar';
 import Starfield from '../components/Starfield';
 import Scene3D from '../components/Scene3D';
 import { useAuth } from '../context/AuthContext';
-
-const FAQ_FILTERS = ['Alle', 'Abo', 'Model', 'About'];
-
-const faqData = [
-  {
-    q: 'Werden meine Daten sicher gespeichert?',
-    a: 'Ja, alle Chats und Nutzerdaten werden verschlüsselt in der Cloud gespeichert, sodass du von jedem Gerät darauf zugreifen kannst.',
-  },
-  {
-    q: 'Kann ich jederzeit kündigen?',
-    a: 'Ja, alle Pläne sind monatlich kündbar, ohne versteckte Gebühren oder Mindestlaufzeit.',
-  },
-  {
-    q: 'Welche Modellqualitäten gibt es?',
-    a: 'Free bietet grundlegende Modelle, Pro Zugriff auf leistungsstärkere Modelle, Max die höchsten Modellqualitäten für komplexe Aufgaben.',
-  },
-  {
-    q: 'Kann ich Bilder hochladen?',
-    a: 'Ja, Wieland AI kann Bilder analysieren und direkt Fragen dazu beantworten.',
-  },
-  {
-    q: 'Auf welchen Geräten funktioniert Wieland AI?',
-    a: 'Alle modernen Browser auf Desktop- und mobilen Geräten werden unterstützt.',
-  },
-  {
-    q: 'Wie schnell werden Antworten geliefert?',
-    a: 'Antworten erfolgen in Echtzeit, auch bei komplexen Anfragen oder großen Datenmengen.',
-  },
-  {
-    q: 'Kann ich Wieland AI im Team nutzen?',
-    a: 'Nein, gerade ist Wieland AI für Einzelpersonen konzipiert. Teamfunktionen sind jedoch in Planung.',
-  },
-  {
-    q: 'Wie aktuell ist das Wissen der AI?',
-    a: 'Wieland AI hat kein aktuelles wissen jedoch ist eine Internetanbindung in Planung, um auch aktuelle Informationen bereitstellen zu können.',
-  },
-  {
-    q: 'Gibt es Nutzungsgrenzen?',
-    a: 'Die Nutzung ist praktisch unbegrenzt. Selbst bei hohem Traffic sorgen wir für stabile Leistung.',
-  },
-  {
-    q: 'Gibt es eine Testversion für Pro oder Max?',
-    a: 'Nein, du kannst Pro oder Max nicht für einen begrenzten Zeitraum testen.',
-  },
-  {
-    q: 'Kann ich zwischen Plänen jederzeit wechseln?',
-    a: 'Ja, Upgrades oder Downgrades erfolgen jederzeit nahtlos. ',
-  },
-  {
-    q: 'Wie funktioniert der Prioritäts-Support?',
-    a: 'Pro- und Max-Nutzer erhalten schnellere Antworten auf Anfragen und Hilfestellungen vom Team.',
-  },
-  {
-    q: 'Welche Funktionen bietet Max?',
-    a: 'Max liefert die leistungsstärksten Modelle für präziseste Antworten, schnelle Verarbeitung und komplexe Analysen.',
-  },
-  {
-    q: 'Kann ich den Chat-Verlauf exportieren?',
-    a: 'Nein, derzeit gibt es keine Exportfunktion für Chat-Verläufe.',
-  },
-  {
-    q: 'Gibt es eine Obergrenze für Bilder?',
-    a: 'Ja, maximal ein Bild pro Anfrage kann hochgeladen und analysiert werden.',
-  },
-  {
-    q: 'Welche Sprachen unterstützt Wieland AI?',
-    a: 'Wieland AI unterstützt mehrere Sprachen und kann nahtlos zwischen ihnen wechseln.',
-  },
-  {
-    q: 'Wie oft werden Modelle aktualisiert?',
-    a: 'Regelmäßig: Neue Versionen und Verbesserungen werden kontinuierlich ausgerollt.',
-  },
-  {
-    q: 'Kann ich Wieland AI auf Smartphones nutzen?',
-    a: 'Ja, die Plattform funktioniert auf allen modernen Smartphones und Tablets.',
-  },
-  {
-    q: 'Unterstützt Wieland AI Text- und Bildanalyse gleichzeitig?',
-    a: 'Ja, unsere Multimodal-Funktion analysiert Text und Bilder in einem einzigen Durchlauf.',
-  },
-  {
-    q: 'Kann ich meine Daten löschen lassen?',
-    a: 'Ja, du kannst jederzeit alle gespeicherten Daten löschen lassen – wir respektieren deine Privatsphäre.',
-  },
-  {
-    q: 'Wie zuverlässig ist die AI?',
-    a: 'Wieland AI liefert konsistente Ergebnisse, selbst bei komplexen Fragen oder größeren Projekten.',
-  },
-  {
-    q: 'Kann ich mehrere Projekte gleichzeitig bearbeiten?',
-    a: 'Ja, Wieland AI unterstützt parallele Chats und Projekte ohne Einschränkungen.',
-  },
-  {
-    q: 'Wie schnell werden Updates eingespielt?',
-    a: 'Updates werden automatisch ausgerollt, ohne dass du etwas installieren musst.',
-  },
-  {
-    q: 'Kann ich AI-Antworten anpassen?',
-    a: 'Ja, du kannst Ton, Detailgrad und Stil der Antworten nach Bedarf einstellen.',
-  },
-  {
-    q: 'Ist die Plattform immer online verfügbar?',
-    a: 'Ja, unsere Infrastruktur garantiert 24/7 Verfügbarkeit mit stabiler Performance.',
-  },
-  {
-    q: 'Kann ich Benachrichtigungen erhalten?',
-    a: 'Nein, derzeit gibt es keine Benachrichtigungsfunktion für neue Antworten oder Updates.',
-  },
-  {
-    q: 'Unterstützt Wieland AI API-Zugriff?',
-    a: 'Nein da Wieland AI selbst auf einer basiert.',
-  },
-  {
-    q: 'Gibt es eine Limitierung für gleichzeitige Anfragen?',
-    a: 'Nein, die Plattform ist skalierbar und verarbeitet viele Anfragen gleichzeitig.',
-  },
-  {
-    q: 'Wie einfach ist der Einstieg für neue Nutzer?',
-    a: 'Sehr einfach: Keine Installation nötig, direkt im Browser starten und loslegen.',
-  },
-  {
-    q: 'Gibt es Anleitungen oder Tutorials?',
-    a: 'Nein, es gibt keine offiziellen Anleitungen oder Tutorials, aber unser Support-Team hilft gerne weiter.',
-  },
-  {
-    q: 'Wie sicher ist die Plattform vor Hackerangriffen?',
-    a: 'Unsere Systeme nutzen moderne Sicherheitsstandards inklusive Verschlüsselung und Monitoring rund um die Uhr.',
-  },
-];
+import { withLang } from '../utils/i18nRouting';
 
 function FAQItem({ q, a, open, onToggle }) {
   return (
@@ -161,23 +34,34 @@ function FAQItem({ q, a, open, onToggle }) {
 }
 
 function FAQ({ isSidebarOpen, onSidebarToggle }) {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const rootRef = useRef(null);
   const [openQuestion, setOpenQuestion] = useState(null);
-  const [activeFilter, setActiveFilter] = useState('Alle');
+  const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
+  const faqData = t('faqPage.items', { returnObjects: true }) || [];
+  const faqFilters = [
+    { id: 'all', label: t('faqPage.filters.all') },
+    { id: 'subscription', label: t('faqPage.filters.subscription') },
+    { id: 'model', label: t('faqPage.filters.model') },
+    { id: 'about', label: t('faqPage.filters.about') },
+  ];
+
+  const localPath = (path) => withLang(path, i18n.language);
+
   const getCategory = (item) => {
     const source = `${item.q} ${item.a}`.toLowerCase();
-    if (/abo|kündig|upgrade|downgrade|plan|preis|max|pro|free/.test(source)) return 'Abo';
-    if (/modell|model|2b|4b|8b|multimodal/.test(source)) return 'Model';
-    return 'About';
+    if (/abo|subscript|kuendig|cancel|upgrade|downgrade|plan|price|preis|max|pro|free|abbon/.test(source)) return 'subscription';
+    if (/modell|model|2b|4b|8b|multimodal|modello/.test(source)) return 'model';
+    return 'about';
   };
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const filteredFaq = faqData.filter((item) => {
-    const categoryOk = activeFilter === 'Alle' || getCategory(item) === activeFilter;
+    const categoryOk = activeFilter === 'all' || getCategory(item) === activeFilter;
     const searchOk = !normalizedQuery
       || item.q.toLowerCase().includes(normalizedQuery)
       || item.a.toLowerCase().includes(normalizedQuery);
@@ -263,9 +147,9 @@ function FAQ({ isSidebarOpen, onSidebarToggle }) {
         <div className="page-container faq-container">
 
           <div className="faq-hero">
-            <span className="faq-eyebrow">Häufige Fragen</span>
-            <h1 className="faq-h1">Alles, was du<br /><span>wissen musst.</span></h1>
-            <p className="faq-lead">Fragen zu Wieland AI? Hier findest du Antworten auf die häufigsten Themen.</p>
+            <span className="faq-eyebrow">{t('faqPage.eyebrow')}</span>
+            <h1 className="faq-h1">{t('faqPage.title')}<br /><span>{t('faqPage.titleAccent')}</span></h1>
+            <p className="faq-lead">{t('faqPage.lead')}</p>
           </div>
 
           <div className="faq-tools" role="search">
@@ -273,27 +157,27 @@ function FAQ({ isSidebarOpen, onSidebarToggle }) {
               <input
                 type="text"
                 className="faq-search"
-                placeholder="Frage suchen..."
+                placeholder={t('faqPage.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setOpenQuestion(null);
                 }}
-                aria-label="FAQ Suche"
+                aria-label={t('faqPage.searchAria')}
               />
             </div>
-            <div className="faq-filter-row" aria-label="FAQ Filter">
-              {FAQ_FILTERS.map((filter) => (
+            <div className="faq-filter-row" aria-label={t('faqPage.filterAria')}>
+              {faqFilters.map((filter) => (
                 <button
-                  key={filter}
+                  key={filter.id}
                   type="button"
-                  className={`faq-filter-pill ${activeFilter === filter ? 'active' : ''}`}
+                  className={`faq-filter-pill ${activeFilter === filter.id ? 'active' : ''}`}
                   onClick={() => {
-                    setActiveFilter(filter);
+                    setActiveFilter(filter.id);
                     setOpenQuestion(null);
                   }}
                 >
-                  {filter}
+                  {filter.label}
                 </button>
               ))}
             </div>
@@ -311,13 +195,13 @@ function FAQ({ isSidebarOpen, onSidebarToggle }) {
             ))}
             {filteredFaq.length === 0 && (
               <div className="faq-empty-state">
-                Keine Ergebnisse gefunden. Probiere andere Suchbegriffe oder einen anderen Filter.
+                {t('faqPage.empty')}
               </div>
             )}
           </div>
 
           <p className="faq-footer-note">
-            Noch Fragen? <button onClick={() => navigate('/contact')} className="faq-contact-link">Schreib uns</button> — das Team hilft gern weiter.
+            {t('faqPage.more')} <button onClick={() => navigate(localPath('/contact'))} className="faq-contact-link">{t('faqPage.contact')}</button> {t('faqPage.moreEnd')}
           </p>
 
         </div>

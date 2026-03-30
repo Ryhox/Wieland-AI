@@ -1,0 +1,635 @@
+﻿{
+  "common": {
+    "ok": "Okay",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "close": "Schließen",
+    "loading": "Laden...",
+    "continue": "Weiter",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "copy": "Kopieren",
+    "send": "Senden",
+    "stop": "Stoppen"
+  },
+  "languages": {
+    "de": "Deutsch",
+    "en": "English",
+    "it": "Italiano"
+  },
+  "routes": {
+    "home": "/",
+    "about": "/about",
+    "faq": "/faq",
+    "changelogs": "/changelogs",
+    "pricing": "/pricing",
+    "download": "/download",
+    "contact": "/contact",
+    "legalNotice": "/legal-notice",
+    "privacy": "/privacy-policy",
+    "terms": "/terms-of-service",
+    "profile": "/profile",
+    "chat": "/chat",
+    "dashboard": "/dashboard"
+  },
+  "header": {
+    "toggleSidebar": "Sidebar umschalten",
+    "menuOpen": "Menü öffnen",
+    "menu": "Menü",
+    "menuClose": "Menü schließen",
+    "navAbout": "Über",
+    "navFaq": "FAQ",
+    "navChangelogs": "Changelogs",
+    "navPricing": "Pricing",
+    "downloadExtension": "Download Extension",
+    "login": "Anmelden"
+  },
+  "footer": {
+    "contact": "Kontakt",
+    "legalNotice": "Impressum",
+    "privacy": "Datenschutz",
+    "terms": "Nutzungsbedingungen",
+    "copyright": "Â© {{year}} Wieland. Alle Rechte vorbehalten."
+  },
+  "cookie": {
+    "title": "Cookie-Einwilligung",
+    "text": "Wir verwenden Cookies und lokale Speicherung, um dich angemeldet zu halten und deine Sitzung zu speichern. Deine Daten verlassen dein Gerät nicht.",
+    "accept": "Akzeptieren",
+    "decline": "Ablehnen"
+  },
+  "auth": {
+    "welcomeBack": "Willkommen zurück",
+    "createAccount": "Konto erstellen",
+    "loginSubtitle": "Melde dich an, um Nachrichten zu senden",
+    "registerSubtitle": "Kostenlos starten - läuft vollständig offline",
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "username": "Benutzername",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "placeholderUsername": "wieland_user",
+    "placeholderEmail": "deine@email.de",
+    "placeholderPassword": "Mindestens 8 Zeichen",
+    "placeholderSecret": "........",
+    "switchNoAccount": "Noch kein Konto?",
+    "switchHasAccount": "Bereits ein Konto?",
+    "errors": {
+      "fillAll": "Bitte alle Felder ausfüllen.",
+      "username": "Benutzername: 3-32 Zeichen (Buchstaben, Ziffern, _ -)",
+      "invalidEmail": "Ungültige E-Mail-Adresse.",
+      "passwordLength": "Passwort muss mindestens 8 Zeichen lang sein.",
+      "passwordMatch": "Passwörter stimmen nicht überein.",
+      "generic": "Fehler aufgetreten.",
+      "server": "Server nicht erreichbar."
+    }
+  },
+  "loadingAnimation": {
+    "text": "Laden..."
+  },
+  "protectedRoute": {
+    "loading": "Laden..."
+  },
+  "chat": {
+    "welcome": [
+      "Was geht dir heute durch den Kopf?",
+      "Was liegt heute an?",
+      "Wobei kann ich dir heute helfen?",
+      "Schön, dass du hier bist!",
+      "Worüber möchtest du sprechen?"
+    ],
+    "models": {
+      "free": "2B - Free",
+      "pro": "4B - Pro",
+      "precise": "8B - Präzise"
+    },
+    "styles": {
+      "formal": "Formell",
+      "friendly": "Freundlich",
+      "precise": "Präzise"
+    },
+    "errors": {
+      "notImage": "\"{{name}}\" ist kein Bild.",
+      "tooLarge": "Bild zu groß (max. {{max}} MB).",
+      "server": "Fehler bei der Kommunikation mit dem Server."
+    },
+    "placeholderLogin": "Anmelden zum Schreiben...",
+    "placeholderImage": "Schreibe eine Nachricht zum Bild...",
+    "placeholderMessage": "Schreibe eine Nachricht...",
+    "describeImage": "Beschreibe dieses Bild",
+    "image": "Bild",
+    "imageAlt": "Hochgeladenes Bild",
+    "imageUpload": "Bild hochladen",
+    "removeImage": "Bild entfernen",
+    "options": "Optionen",
+    "regenerate": "Neu generieren",
+    "planModelLocked": "Dieses Modell wird automatisch durch deinen Plan festgelegt.",
+    "demoFallback": "**Hallo! Ich bin Wieland** - dein lokaler KI-Assistent.\n\nDies ist eine **Demo-Vorschau**. Im echten Betrieb läuft hier ein lokales Sprachmodell (Wieland AI).\n\n*Um Ressourcen zu schonen läuft hier keine wirkliche AI*",
+    "aiStyle": "KI-Stil"
+  },
+  "sidebar": {
+    "menu": "Menü",
+    "newChat": "Neuer Chat",
+    "searchChats": "Chats suchen",
+    "searchPlaceholder": "Chat suchen...",
+    "yourChats": "Deine Chats",
+    "noChats": "Keine Chats vorhanden",
+    "noChatsFound": "Keine Chats gefunden",
+    "deleteConfirm": "Chat wirklich löschen?",
+    "deleteError": "Fehler beim Löschen des Chats",
+    "delete": "Löschen",
+    "openProfile": "Profil öffnen",
+    "goToPlan": "Zum Plan wechseln",
+    "logout": "Abmelden",
+    "chatLabel": "Chat {{id}}"
+  },
+  "about": {
+    "eyebrow": "Über Wieland AI",
+    "title": "Entwickelt für,",
+    "titleAccent": "das beste AI Erlebnis",
+    "lead": "Wieland AI ist eine moderne AI mit Echtzeit-Antworten, visuellem Verständnis und Intelligenz. Gebaut für ein erstklassiges Online-Erlebnis.",
+    "pills": ["Echtzeit Streaming", "Vision + Text", "Skalierbare Systeme"],
+    "stats": {
+      "activeUsers": "Aktive Nutzer",
+      "chats": "Chats",
+      "sentMessages": "Gesendete Nachrichten",
+      "uptime": "Online Laufzeit"
+    },
+    "whyLabel": "Warum Wieland?",
+    "whyLead": "Andere AIs sind oft entweder zu simpel und unzuverlässig oder so komplex, dass sie mehr Zeit mit Setup und Fehlersuche als mit echter Produktivität verbringen.",
+    "whyBody": "Wieland AI vereint diesen Flow in einem einzigen schnellen Interface mit verlässlichen Outputs, intelligenten Modellen und einer UX, die sich vertraut anfühlt.",
+    "coreLabel": "Unsere Kernbereiche",
+    "core": [
+      { "title": "Startklare Erlebnisse", "text": "Vom ersten Prompt bis zum fertigen Workflow ist jede Interaktion darauf ausgelegt, sich flüssig, hochwertig und sofort reagierend anzufühlen." },
+      { "title": "Transparenz & Kontrolle", "text": "Transparenz, die Spaß macht: Du siehst, was passiert, und bestimmst, wie dein AI-Flow läuft." },
+      { "title": "Echte Multimodalität", "text": "Volles Verständnis von Texten und Bildern in einem einzigen Durchlauf. Lade Kontext hoch, analysiere visuelle Inhalte und halte den Flow am Laufen." },
+      { "title": "Ohne Ausfälle skalieren", "text": "Unsere produktionsstarken Deployments stellen sicher, dass dein AI-Assistent auch unter Last stabil bleibt." }
+    ],
+    "stackLabel": "Technologie Stack",
+    "stack": {
+      "frontend": "Frontend",
+      "backend": "Backend",
+      "data": "Daten",
+      "ai": "AI Engine"
+    }
+  },
+  "contact": {
+    "eyebrow": "Kontakt",
+    "title": "Lass uns",
+    "titleAccent": "zusammenarbeiten.",
+    "lead": "Hast du Fragen, Vorschläge oder möchtest du mit uns in Kontakt treten? Schreib uns eine Nachricht - das Team hilft gern weiter.",
+    "formTitle": "Schreib uns eine Nachricht",
+    "name": "Name",
+    "email": "E-Mail",
+    "subject": "Betreff",
+    "message": "Nachricht",
+    "namePlaceholder": "Dein Name",
+    "emailPlaceholder": "deine@email.de",
+    "subjectPlaceholder": "Worum geht es?",
+    "messagePlaceholder": "Deine Nachricht...",
+    "chars": "Zeichen",
+    "min10": "(mind. 10)",
+    "agree": "Ich stimme den",
+    "privacy": "Datenschutzbestimmungen",
+    "agreeEnd": "zu.",
+    "sending": "Wird gesendet...",
+    "submit": "Formular absenden",
+    "infoTitle": "Kontaktiere uns",
+    "location": "Standort",
+    "support": "Support",
+    "supportText": "Kontakt per Formular - wir melden uns schnell!",
+    "successTitle": "Nachricht gesendet!",
+    "successMessage": "Deine Nachricht wurde erfolgreich versendet. Wir melden uns bei dir!",
+    "errorSend": "Es gab ein Problem beim Senden deiner Nachricht.",
+    "errorNetwork": "Verbindungsfehler. Bitte überprüfe deine Internetverbindung und versuche es erneut.",
+    "validation": {
+      "name": "Bitte gib deinen Namen ein.",
+      "email": "Bitte gib deine E-Mail-Adresse ein.",
+      "emailInvalid": "Bitte gib eine gültige E-Mail-Adresse ein (z.B. name@example.com).",
+      "subject": "Bitte gib einen Betreff ein.",
+      "message": "Bitte gib deine Nachricht ein.",
+      "messageMin": "Bitte schreibe mindestens 10 Zeichen.",
+      "agree": "Bitte stimme den Datenschutzbestimmungen zu."
+    }
+  },
+  "faqPage": {
+    "eyebrow": "Häufige Fragen",
+    "title": "Alles, was du",
+    "titleAccent": "wissen musst.",
+    "lead": "Fragen zu Wieland AI? Hier findest du Antworten auf die häufigsten Themen.",
+    "searchPlaceholder": "Frage suchen...",
+    "searchAria": "FAQ Suche",
+    "filterAria": "FAQ Filter",
+    "filters": {
+      "all": "Alle",
+      "subscription": "Abo",
+      "model": "Model",
+      "about": "About"
+    },
+    "empty": "Keine Ergebnisse gefunden. Probiere andere Suchbegriffe oder einen anderen Filter.",
+    "more": "Noch Fragen?",
+    "contact": "Schreib uns",
+    "moreEnd": "- das Team hilft gern weiter.",
+    "items": [
+      { "q": "Werden meine Daten sicher gespeichert?", "a": "Ja, alle Chats und Nutzerdaten werden verschlüsselt in der Cloud gespeichert, sodass du von jedem Gerät darauf zugreifen kannst." },
+      { "q": "Kann ich jederzeit kündigen?", "a": "Ja, alle Pläne sind monatlich kündbar, ohne versteckte Gebühren oder Mindestlaufzeit." },
+      { "q": "Welche Modellqualitäten gibt es?", "a": "Free bietet grundlegende Modelle, Pro Zugriff auf leistungsstärkere Modelle, Max die höchsten Modellqualitäten für komplexe Aufgaben." },
+      { "q": "Kann ich Bilder hochladen?", "a": "Ja, Wieland AI kann Bilder analysieren und direkt Fragen dazu beantworten." },
+      { "q": "Auf welchen Geräten funktioniert Wieland AI?", "a": "Alle modernen Browser auf Desktop- und mobilen Geräten werden unterstützt." },
+      { "q": "Wie schnell werden Antworten geliefert?", "a": "Antworten erfolgen in Echtzeit, auch bei komplexen Anfragen oder großen Datenmengen." },
+      { "q": "Kann ich Wieland AI im Team nutzen?", "a": "Aktuell ist Wieland AI für Einzelpersonen konzipiert. Teamfunktionen sind in Planung." },
+      { "q": "Wie aktuell ist das Wissen der AI?", "a": "Wieland AI hat aktuell kein Live-Wissen. Eine Internetanbindung ist in Planung." },
+      { "q": "Gibt es Nutzungsgrenzen?", "a": "Die Nutzung ist praktisch unbegrenzt. Selbst bei hohem Traffic sorgen wir für stabile Leistung." },
+      { "q": "Gibt es eine Testversion für Pro oder Max?", "a": "Nein, Pro oder Max können nicht als Testzeitraum freigeschaltet werden." },
+      { "q": "Kann ich zwischen Plänen jederzeit wechseln?", "a": "Ja, Upgrades oder Downgrades erfolgen jederzeit nahtlos." },
+      { "q": "Wie funktioniert der Prioritäts-Support?", "a": "Pro- und Max-Nutzer erhalten schnellere Antworten auf Anfragen." },
+      { "q": "Welche Funktionen bietet Max?", "a": "Max liefert die leistungsstärksten Modelle für präzise Antworten und komplexe Analysen." },
+      { "q": "Kann ich den Chat-Verlauf exportieren?", "a": "Derzeit gibt es keine Exportfunktion für Chat-Verläufe." },
+      { "q": "Gibt es eine Obergrenze für Bilder?", "a": "Ja, maximal ein Bild pro Anfrage kann hochgeladen und analysiert werden." },
+      { "q": "Welche Sprachen unterstützt Wieland AI?", "a": "Wieland AI unterstützt mehrere Sprachen und kann nahtlos wechseln." },
+      { "q": "Wie oft werden Modelle aktualisiert?", "a": "Regelmäßig: Neue Versionen und Verbesserungen werden kontinuierlich ausgerollt." },
+      { "q": "Kann ich Wieland AI auf Smartphones nutzen?", "a": "Ja, die Plattform funktioniert auf modernen Smartphones und Tablets." },
+      { "q": "Unterstützt Wieland AI Text- und Bildanalyse gleichzeitig?", "a": "Ja, unsere Multimodal-Funktion analysiert Text und Bilder in einem Durchlauf." },
+      { "q": "Kann ich meine Daten löschen lassen?", "a": "Ja, du kannst jederzeit alle gespeicherten Daten löschen lassen." },
+      { "q": "Wie zuverlässig ist die AI?", "a": "Wieland AI liefert konsistente Ergebnisse, auch bei komplexen Fragen." },
+      { "q": "Kann ich mehrere Projekte gleichzeitig bearbeiten?", "a": "Ja, Wieland AI unterstützt parallele Chats und Projekte ohne Einschränkungen." },
+      { "q": "Wie schnell werden Updates eingespielt?", "a": "Updates werden automatisch ausgerollt, ohne dass du etwas installieren musst." },
+      { "q": "Kann ich AI-Antworten anpassen?", "a": "Ja, du kannst Ton, Detailgrad und Stil der Antworten einstellen." },
+      { "q": "Ist die Plattform immer online verfügbar?", "a": "Ja, unsere Infrastruktur garantiert 24/7 Verfügbarkeit." },
+      { "q": "Kann ich Benachrichtigungen erhalten?", "a": "Derzeit gibt es keine Benachrichtigungsfunktion für neue Antworten oder Updates." },
+      { "q": "Unterstützt Wieland AI API-Zugriff?", "a": "Aktuell ist kein öffentlicher API-Zugriff verfügbar." },
+      { "q": "Gibt es eine Limitierung für gleichzeitige Anfragen?", "a": "Nein, die Plattform ist skalierbar und verarbeitet viele Anfragen gleichzeitig." },
+      { "q": "Wie einfach ist der Einstieg für neue Nutzer?", "a": "Sehr einfach: Keine Installation nötig, direkt im Browser starten." },
+      { "q": "Gibt es Anleitungen oder Tutorials?", "a": "Offizielle Tutorials gibt es derzeit nicht, unser Support-Team hilft aber gern weiter." },
+      { "q": "Wie sicher ist die Plattform vor Hackerangriffen?", "a": "Unsere Systeme nutzen moderne Sicherheitsstandards inklusive Verschlüsselung und Monitoring." }
+    ]
+  },
+  "pricing": {
+    "eyebrow": "Preise",
+    "title": "Einfach.",
+    "titleAccent": "Transparent.",
+    "lead": "Wieland AI ist für alle nutzbar, anmelden und los geht es. Wenn du aber noch mehr willst, upgrade zur Pro- oder Max-Version.",
+    "plansLabel": "Pläne",
+    "recommended": "Empfohlen",
+    "perMonth": "/ Monat",
+    "freeForever": "Für immer kostenlos.",
+    "supportDev": "Unterstütze die Entwicklung von Wieland AI.",
+    "maxQuality": "Maximale Qualität mit Wieland 8B.",
+    "manage": "Verwalten",
+    "upgrade": "Upgrade",
+    "downgrade": "Downgrade",
+    "adminLocked": "Nicht möglich (Admin)",
+    "switchConfirm": "Möchtest du wirklich auf {{plan}} wechseln?",
+    "planUpdateError": "Plan konnte nicht aktualisiert werden.",
+    "faqLabel": "Häufige Fragen",
+    "features": {
+      "free": [
+        { "text": "Wieland 2B Modell", "enabled": true },
+        { "text": "Unbegrenzte Gespräche", "enabled": true },
+        { "text": "Bild-Upload & Analyse", "enabled": true },
+        { "text": "Gesprächsverlauf", "enabled": true },
+        { "text": "Prioritäts-Support", "enabled": false },
+        { "text": "Wieland 4B Modell", "enabled": false },
+        { "text": "Wieland 8B Modell", "enabled": false }
+      ],
+      "pro": [
+        { "text": "Alles aus Kostenlos", "enabled": true },
+        { "text": "Unterstützt die Entwicklung von Wieland AI", "enabled": true },
+        { "text": "Prioritäts-Support", "enabled": true },
+        { "text": "Frühzeitiger Zugang zu neuen Releases", "enabled": true },
+        { "text": "Wieland 4B Modell", "enabled": true },
+        { "text": "Wieland 8B Modell", "enabled": false }
+      ],
+      "max": [
+        { "text": "Alles aus Pro", "enabled": true },
+        { "text": "Beste Modellqualität mit Wieland 8B Modell", "enabled": true },
+        { "text": "Prioritäts-Support", "enabled": true },
+        { "text": "Frühzeitiger Zugang zu neuen Releases", "enabled": true }
+      ]
+    },
+    "faqItems": [
+      { "q": "Werden meine Daten in der Cloud gespeichert?", "a": "Ja. Chats und Nutzerdaten werden in unserer Datenbank verschlüsselt gespeichert." },
+      { "q": "Kann ich jederzeit kündigen?", "a": "Ja. Die Unterstützung ist monatlich kündbar, ohne Mindestlaufzeit." },
+      { "q": "Gibt es einen Unterschied bei der Modellqualität?", "a": "Ja. Pro und Max nutzen leistungsstärkere Modelle, Max liefert die beste Qualität." }
+    ]
+  },
+  "download": {
+    "eyebrow": "Download",
+    "title": "Wieland AI",
+    "titleAccent": "herunterladen.",
+    "lead": "Lokal, offline, ohne Telemetrie. Läuft vollständig auf deiner Hardware - keine Cloud, keine Abhängigkeiten von Drittservern.",
+    "extensionTitle": "Wieland AI Chrome Extension",
+    "desc": "Nutze Wieland AI überall im Browser.",
+    "button": "Download",
+    "runsOn": "Läuft auf"
+  },
+  "changelogs": {
+    "eyebrow": "Changelogs",
+    "title": "Was ist",
+    "titleAccent": "neu?",
+    "lead": "Alle Versionen, Fixes und Features - chronologisch dokumentiert.",
+    "initialTag": "Initial",
+    "entries": [
+      {
+        "version": "v0.1.8",
+        "date": "30 März 2026",
+        "tag": "purple",
+        "title": "Language UPDATEEEE (i18n)",
+        "changes": [
+          "i18next mit de/en/it für alle Seiten integriert",
+          "Sprachbasiertes Routing mit /de/, /en/, /it/ eingeführt",
+          "Sprachumschaltung im Header vollständig angebunden",
+          "Übersetzungen für Seiten, Modals und Dashboard ergänzt",
+          "Language-Switch-Bugs behoben (Home Welcome-Text live, About-Stats stabil)"
+        ]
+      },
+      {
+        "version": "v0.1.7",
+        "date": "30 März 2026",
+        "tag": "green",
+        "title": "Backend & Auth Update",
+        "changes": [
+          "PostgreSQL auf SQLite migriert (inkl. sicherer DB-Initialisierung)",
+          "Admin-CLI Script hinzugefügt, um Nutzer auf Admin zu setzen",
+          "Login-Cookie wird nur gespeichert, wenn Cookie-Einwilligung akzeptiert ist",
+          "Bugfixes"
+        ]
+      },
+      {
+        "version": "v0.1.6",
+        "date": "23 März 2026",
+        "tag": "purple",
+        "title": "Design & Content Update",
+        "changes": [
+          "Bugfixes",
+          "Design überarbeitet auf allen Seiten",
+          "Content-Update: Texte überarbeitet, um Wieland AI besser widerzuspiegeln",
+          "GSAP Integration für Animationen on scroll",
+          "Max Plan und 2B Model hinzugefügt",
+          "Responsive für Handy verbessert",
+          "FAQ Searchbar und Filter"
+        ]
+      },
+      {
+        "version": "v0.1.5",
+        "date": "16 März 2026",
+        "tag": "green",
+        "title": "Content v2.0",
+        "changes": [
+          "Bugfixes",
+          "Design überarbeitet auf allen Seiten",
+          "2 neue Seiten: Profile, Kontakt",
+          "Features: Abonnement, Cookies, E-Mail/Passwort bearbeiten, Chat-Search",
+          "Chat Links direkt aufrufbar (UUID statt Timestamp)"
+        ]
+      },
+      {
+        "version": "v0.1.4",
+        "date": "10 März 2026",
+        "tag": "pink",
+        "title": "Content",
+        "changes": [
+          "8 neue Seiten: About, Changelogs, Download, FAQ, Legal Notice, Privacy Policy, Terms of Service, Pricing",
+          "Language Button im Header",
+          "Bugfixes"
+        ]
+      },
+      {
+        "version": "v0.1.3",
+        "date": "10 März 2026",
+        "tag": "purple",
+        "title": "Admin-Dashboard",
+        "changes": [
+          "Neues /dashboard mit Recharts-Visualisierungen",
+          "Nutzer- und Modellverwaltung für Admins",
+          "Bugfixes"
+        ]
+      },
+      {
+        "version": "v0.1.2",
+        "date": "06 März 2026",
+        "tag": "green",
+        "title": "Backend",
+        "changes": ["Backend mit PostgreSQL", "Login und Registrierung", "Bugfixes"]
+      },
+      {
+        "version": "v0.1.1",
+        "date": "03 März 2026",
+        "tag": "pink",
+        "title": "KI verfeinert",
+        "changes": ["Bugfixes", "KI kann nun Bilder verarbeiten", "Design Header und Sidebar"]
+      },
+      {
+        "version": "v0.1.0",
+        "date": "01 März 2026",
+        "tag": "gray",
+        "title": "Pre-Release",
+        "changes": [
+          "Start des Projekts",
+          "Design und Entwicklung der Kernfunktionen",
+          "Ollama Integration für lokale KI-Verarbeitung",
+          "Design und Integration von 3D Charakteren"
+        ]
+      }
+    ]
+  },
+  "profile": {
+    "eyebrow": "Profil",
+    "title": "Dein Account",
+    "titleAccent": "verwalten.",
+    "lead": "E-Mail, Passwort, Abonnement - alles an einem Ort.",
+    "emailSection": "E-Mail",
+    "yourEmail": "Deine E-Mail",
+    "change": "Ändern",
+    "newEmail": "Neue E-Mail",
+    "passwordSection": "Passwort",
+    "changePassword": "Passwort ändern",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "subscription": "Abonnement",
+    "plan": "Plan",
+    "cancelSubscription": "Abonnement kündigen",
+    "upgradePlan": "Plan upgraden",
+    "adminNoCancel": "Als Admin kannst du das Abonnement nicht kündigen.",
+    "dangerZone": "Gefahrenzone",
+    "deleteAccount": "Konto löschen",
+    "deleteDescription": "Dies wird dein Konto und alle zugehörigen Daten dauerhaft löschen.",
+    "errors": {
+      "title": "Fehler",
+      "success": "Erfolg",
+      "emailSame": "E-Mail ist identisch oder leer",
+      "emailUpdate": "Fehler beim Aktualisieren der E-Mail",
+      "passwordFields": "Alle Felder sind erforderlich",
+      "passwordMismatch": "Neue Passwörter stimmen nicht überein",
+      "passwordLength": "Passwort muss mindestens 8 Zeichen lang sein",
+      "passwordUpdate": "Fehler beim Aktualisieren des Passworts",
+      "accountDelete": "Fehler beim Löschen des Kontos",
+      "subscriptionCancel": "Fehler beim Kündigen des Abonnements"
+    },
+    "success": {
+      "emailUpdated": "E-Mail erfolgreich aktualisiert!",
+      "passwordUpdated": "Passwort erfolgreich aktualisiert!",
+      "subscriptionCanceled": "Abonnement erfolgreich gekündigt. Du wirst auf Free-Plan zurückgestuft."
+    },
+    "confirm": {
+      "deleteTitle": "Konto löschen?",
+      "deleteText": "Dies wird dein Konto und alle zugehörigen Daten dauerhaft löschen. Diese Aktion kann nicht rückgängig gemacht werden.",
+      "cancelTitle": "Abonnement kündigen?",
+      "cancelText": "Bist du sicher, dass du kündigen möchtest? Du wirst auf den Free-Plan zurückgestuft."
+    }
+  },
+  "legal": {
+    "noticeEyebrow": "Rechtliches",
+    "noticeTitle": "Impressum",
+    "noticeLead": "Angaben gemäß Art. 7 des italienischen Gesetzesdekrets Nr. 70/2003.",
+    "privacyEyebrow": "Datenschutz",
+    "privacyTitle": "Datenschutzerklärung",
+    "privacyLead": "Wir nehmen den Schutz deiner Daten ernst. Hier erfährst du, wie wir damit umgehen.",
+    "termsEyebrow": "Nutzungsbedingungen",
+    "termsTitle": "Terms of Service",
+    "termsLead": "Bitte lies diese Bedingungen sorgfältig, bevor du Wieland AI verwendest.",
+    "lastUpdated": "Zuletzt aktualisiert: März 2026",
+    "status": "Stand: März 2025",
+    "noticeSections": [
+      { "title": "Anbieter", "paragraphs": ["Wieland AI Project", "c/o Wieland AI, Wielandstraße 11, 39042 Brixen (BZ), Italien"] },
+      { "title": "Kontakt", "paragraphs": ["E-Mail: kontakt@wieland.ai"] },
+      { "title": "Verantwortlich für den Inhalt", "paragraphs": ["Wieland, Wielandstraße 11, 39042 Brixen (BZ), Italien"] },
+      { "title": "Haftungsausschluss", "paragraphs": ["Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für Richtigkeit, Vollständigkeit und Aktualität können wir jedoch keine Gewähr übernehmen."] },
+      { "title": "Online-Streitbeilegung", "paragraphs": ["Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung bereit: https://ec.europa.eu/consumers/odr/", "Wir sind nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen."] }
+    ],
+    "privacySections": [
+      { "title": "1. Datenschutz auf einen Blick", "paragraphs": ["Wieland AI ist eine lokal betriebene Anwendung. Standardmäßig verlassen keine Nutzerdaten das Gerät."] },
+      { "title": "2. Erhobene Daten", "list": ["Lokale Anwendung: Chats und Nutzerkonten werden lokal gespeichert.", "Website: Standard-Webserver-Logs (IP, Zeitstempel, URL)."] },
+      { "title": "3. Cookies", "paragraphs": ["Diese Website verwendet keine Marketing- oder Tracking-Cookies."] },
+      { "title": "4. Datenweitergabe", "paragraphs": ["Deine Daten werden nicht verkauft oder zu Werbezwecken weitergegeben."] },
+      { "title": "5. Deine Rechte", "list": ["Auskunft über gespeicherte Daten (Art. 15 DSGVO)", "Berichtigung unrichtiger Daten (Art. 16 DSGVO)", "Löschung deiner Daten (Art. 17 DSGVO)", "Widerspruch gegen die Verarbeitung (Art. 21 DSGVO)"] },
+      { "title": "6. Kontakt", "paragraphs": ["Bei Fragen zum Datenschutz: kontakt@wieland.ai"] }
+    ],
+    "termsSections": [
+      { "title": "1. Geltungsbereich", "paragraphs": ["Diese Nutzungsbedingungen gelten für die Nutzung der Wieland AI Software sowie der zugehörigen Website."] },
+      { "title": "2. Nutzungsrechte", "paragraphs": ["Wieland AI wird unter der MIT-Lizenz bereitgestellt."] },
+      { "title": "3. Verbotene Nutzung", "list": ["Einsatz für illegale Zwecke", "Automatisierter Missbrauch von Online-Diensten", "Manipulation von Sicherheitsmechanismen", "Weitergabe von Admin-Zugangsdaten an Unbefugte"] },
+      { "title": "4. Haftungsbeschränkung", "paragraphs": ["Wieland AI wird ohne Garantien bereitgestellt."] },
+      { "title": "5. KI-generierte Inhalte", "paragraphs": ["Inhalte werden durch KI-Modelle erzeugt und können ungenau sein."] },
+      { "title": "6. Änderungen der Bedingungen", "paragraphs": ["Wir behalten uns vor, diese Bedingungen jederzeit zu ändern."] },
+      { "title": "7. Anwendbares Recht", "paragraphs": ["Es gilt das Recht der Italienischen Republik."] }
+    ]
+  },
+  "notFound": {
+    "title": "404 - Seite nicht gefunden"
+  },
+  "alertModal": {
+    "ok": "Okay"
+  },
+  "confirmModal": {
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen"
+  },
+  "payment": {
+    "title": "Zahlungsmethode & Bestätigung",
+    "method": "Zahlungsmethode",
+    "security": "Alle Zahlungen werden sicher verarbeitet.",
+    "upgradeAccount": "Du wirst dieses Konto upgraden.",
+    "plan": "Plan:",
+    "duration": "Laufzeit:",
+    "monthlyCancelable": "Monatlich kündbar",
+    "perMonth": "/Monat",
+    "tax": "Zzgl. Steuern",
+    "confirmUpgrade": "Upgrade bestätigen",
+    "methods": {
+      "card": "Kreditkarte",
+      "paypal": "PayPal",
+      "apple": "Apple Pay",
+      "google": "Google Pay",
+      "paypalAccount": "PayPal Konto",
+      "appleCard": "Apple Card",
+      "googleAccount": "Google Konto"
+    }
+  },
+  "purchase": {
+    "processing": "Zahlung wird bearbeitet...",
+    "upgrading": "Upgrade auf {{plan}} Plan",
+    "success": "Upgrade erfolgreich!",
+    "welcome": "Willkommen im {{plan}} Plan. Viel Spaß!",
+    "close": "Schließen"
+  },
+  "dashboard": {
+    "tabs": {
+      "overview": "Übersicht",
+      "users": "Benutzer",
+      "chats": "Chats"
+    },
+    "adminPanel": "Admin Panel",
+    "backToSite": "Zur Website",
+    "toggleSidebar": "Sidebar umschalten",
+    "search": "Suchen...",
+    "all": "Alle",
+    "addUser": "+ Benutzer",
+    "refresh": "Aktualisieren",
+    "confirmDeleteUser": "Benutzer \"{{name}}\" wirklich löschen? Alle Chats werden ebenfalls gelöscht.",
+    "confirmDeleteChat": "Chat \"{{title}}\" wirklich löschen?",
+    "stats": {
+      "totalUsers": "Benutzer gesamt",
+      "totalChats": "Chats gesamt",
+      "messages": "Nachrichten",
+      "avgMsgsPerChat": "Durchschn. Msgs/Chat",
+      "messagesPerChat": "Nachrichten pro Chat",
+      "showAll": "Alle anzeigen",
+      "planDistribution": "Plan-Verteilung",
+      "latestUsers": "Neueste Benutzer",
+      "mostActiveChats": "Aktivste Chats",
+      "view": "Anzeigen",
+      "noData": "Keine Daten"
+    },
+    "table": {
+      "username": "Benutzername",
+      "email": "E-Mail",
+      "plan": "Plan",
+      "registered": "Registriert",
+      "actions": "Aktionen",
+      "noUsers": "Keine Benutzer gefunden",
+      "viewChats": "Chats anzeigen",
+      "totalUsers": "{{count}} Benutzer gesamt",
+      "title": "Titel",
+      "user": "Benutzer",
+      "messages": "Nachrichten",
+      "created": "Erstellt",
+      "updated": "Aktualisiert",
+      "noChats": "Keine Chats gefunden",
+      "viewUser": "Benutzer anzeigen",
+      "view": "Anzeigen",
+      "totalChats": "{{count}} Chats gesamt",
+      "messagesShort": "Msgs",
+      "totalMessagesShort": "{{count}} Nachrichten"
+    },
+    "viewer": {
+      "loadError": "Nachrichten konnten nicht geladen werden.",
+      "deleteChat": "Chat löschen",
+      "noMessages": "Keine Nachrichten in diesem Chat."
+    },
+    "userModal": {
+      "requiredUserMail": "Benutzername und E-Mail sind Pflichtfelder.",
+      "requiredPassword": "Passwort ist bei Neuanlage Pflichtfeld.",
+      "saveError": "Fehler beim Speichern.",
+      "editUser": "Benutzer bearbeiten",
+      "newUser": "Neuer Benutzer",
+      "since": "seit",
+      "usernamePlaceholder": "max_mustermann",
+      "emailPlaceholder": "max@example.com",
+      "newPasswordOptional": "Neues Passwort (leer = unverändert)",
+      "keepPassword": "Leer lassen zum Beibehalten",
+      "saving": "Speichern...",
+      "update": "Aktualisieren",
+      "create": "Erstellen"
+    },
+    "confirmModal": {
+      "title": "Bestätigen",
+      "deleting": "Löschen...",
+      "deleteForever": "Endgültig löschen"
+    }
+  }
+}
+
+

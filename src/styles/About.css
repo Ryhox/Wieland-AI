@@ -239,14 +239,14 @@
   grid-template-columns: 1fr 1fr;
   gap: 3rem 6rem;
   margin: 3rem 0;
-  color: var(--text-color);
+  color: rgba(255, 255, 255, 0.68);
 }
 
 .about-text-item h3 {
   font-size: 1.2rem;
   font-weight: 500;
   margin-bottom: 0.75rem;
-  color: var(--heading-color, #fff);
+  color: #fff;
   letter-spacing: -0.01em;
 }
 

@@ -1,12 +1,16 @@
 import '../styles/LegalPage.css';
 import '../styles/main.css';
+import { useTranslation } from 'react-i18next';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
 
 function LegalNotice({ isSidebarOpen, onSidebarToggle }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
+  const sections = t('legal.noticeSections', { returnObjects: true }) || [];
+
   return (
     <div className={`page-wrapper content-page ${isSidebarOpen ? 'sidebar-open' : ''}`}>
       <Header isSidebarOpen={isSidebarOpen} onSidebarToggle={onSidebarToggle} />
@@ -16,71 +20,29 @@ function LegalNotice({ isSidebarOpen, onSidebarToggle }) {
         <div className="page-container legal-container">
 
           <div className="legal-hero">
-            <span className="legal-eyebrow">Rechtliches</span>
-            <h1 className="legal-h1"><span>Impressum</span></h1>
+            <span className="legal-eyebrow">{t('legal.noticeEyebrow')}</span>
+            <h1 className="legal-h1"><span>{t('legal.noticeTitle')}</span></h1>
             <p className="legal-lead">
-              Angaben gemäß Art. 7 des italienischen Gesetzesdekrets Nr. 70/2003.
+              {t('legal.noticeLead')}
             </p>
           </div>
 
           <div className="legal-card">
 
-            <div className="legal-section">
-              <div className="legal-section-h">Anbieter</div>
-              <div className="legal-section-divider" />
-              <p className="legal-p">Wieland AI Project</p>
-              <p className="legal-p">
-                c/o Wieland AI<br />
-                Wielandstraße 11<br />
-                39042 Brixen (BZ)<br />
-                Italien
-              </p>
-            </div>
-
-            <div className="legal-section">
-              <div className="legal-section-h">Kontakt</div>
-              <div className="legal-section-divider" />
-              <p className="legal-p">
-                E-Mail: <a href="mailto:kontakt@wieland.ai">kontakt@wieland.ai</a>
-              </p>
-            </div>
-
-            <div className="legal-section">
-              <div className="legal-section-h">Verantwortlich für den Inhalt</div>
-              <div className="legal-section-divider" />
-              <p className="legal-p">
-                Wieland<br />
-                Wielandstraße 11<br />
-                39042 Brixen (BZ)<br />
-                Italien </p>
-            </div>
-
-            <div className="legal-section">
-              <div className="legal-section-h">Haftungsausschluss</div>
-              <div className="legal-section-divider" />
-              <p className="legal-p">
-                Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt.
-                Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte
-                können wir jedoch keine Gewähr übernehmen.
-                Als Diensteanbieter sind wir gemäß den geltenden italienischen
-                Rechtsvorschriften, insbesondere dem Gesetzesdekret Nr. 70/2003,
-                für eigene Inhalte auf diesen Seiten verantwortlich.
-              </p>
-            </div>
-
-            <div className="legal-section">
-              <div className="legal-section-h">Online-Streitbeilegung</div>
-              <div className="legal-section-divider" />
-              <p className="legal-p">
-                Die Europäische Kommission stellt eine Plattform zur
-                Online-Streitbeilegung (OS) bereit:
-                https://ec.europa.eu/consumers/odr/
-                <br /><br />
-                Wir sind nicht verpflichtet und nicht bereit,
-                an Streitbeilegungsverfahren vor einer
-                Verbraucherschlichtungsstelle teilzunehmen.
-              </p>
-            </div>
+            {sections.map((section) => (
+              <div className="legal-section" key={section.title}>
+                <div className="legal-section-h">{section.title}</div>
+                <div className="legal-section-divider" />
+                {Array.isArray(section.paragraphs) && section.paragraphs.map((paragraph, idx) => (
+                  <p className="legal-p" key={`${section.title}-p-${idx}`}>{paragraph}</p>
+                ))}
+                {Array.isArray(section.list) && (
+                  <ul className="legal-ul">
+                    {section.list.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                )}
+              </div>
+            ))}
 
           </div>
 

@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import '../styles/AuthModal.css';
 
 export default function AuthModal({ isOpen, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ username: '', email: '', password: '', confirm: '' });
@@ -19,18 +21,18 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
   const validate = () => {
     if (mode === 'register') {
       if (!form.username || !form.email || !form.password || !form.confirm)
-        return 'Bitte alle Felder ausfüllen.';
+        return t('auth.errors.fillAll');
       if (!/^[a-zA-Z0-9_-]{3,32}$/.test(form.username))
-        return 'Benutzername: 3–32 Zeichen (Buchstaben, Ziffern, _ -)';
+        return t('auth.errors.username');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-        return 'Ungültige E-Mail-Adresse.';
+        return t('auth.errors.invalidEmail');
       if (form.password.length < 8)
-        return 'Passwort muss mindestens 8 Zeichen lang sein.';
+        return t('auth.errors.passwordLength');
       if (form.password !== form.confirm)
-        return 'Passwörter stimmen nicht überein.';
+        return t('auth.errors.passwordMatch');
     } else {
       if (!form.email || !form.password)
-        return 'Bitte alle Felder ausfüllen.';
+        return t('auth.errors.fillAll');
     }
     return null;
   };
@@ -56,13 +58,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
       });
       const data = await res.json();
 
-      if (!res.ok) { setError(data.error || 'Fehler aufgetreten.'); return; }
+      if (!res.ok) { setError(data.error || t('auth.errors.generic')); return; }
 
       login(data.token, data.user);
       onSuccess?.();
       onClose();
     } catch {
-      setError('Server nicht erreichbar.');
+      setError(t('auth.errors.server'));
     } finally {
       setLoading(false);
     }
@@ -82,17 +84,17 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
     <div className="auth-modal-overlay" onClick={handleOverlayClick}>
       <div className="auth-modal-card">
 
-        <button className="auth-modal-close" onClick={onClose} aria-label="Schließen">✕</button>
+        <button className="auth-modal-close" onClick={onClose} aria-label={t('common.close')}>✕</button>
 
         <div className="auth-modal-header">
           <div className="auth-modal-brand">Wieland</div>
           <h2 className="auth-modal-title">
-            {mode === 'login' ? 'Willkommen zurück' : 'Konto erstellen'}
+            {mode === 'login' ? t('auth.welcomeBack') : t('auth.createAccount')}
           </h2>
           <p className="auth-modal-subtitle">
             {mode === 'login'
-              ? 'Melde dich an, um Nachrichten zu senden'
-              : 'Kostenlos starten — läuft vollständig offline'}
+              ? t('auth.loginSubtitle')
+              : t('auth.registerSubtitle')}
           </p>
         </div>
 
@@ -102,14 +104,14 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
             onClick={() => switchMode('login')}
             type="button"
           >
-            Anmelden
+            {t('auth.login')}
           </button>
           <button
             className={`auth-modal-tab ${mode === 'register' ? 'active' : ''}`}
             onClick={() => switchMode('register')}
             type="button"
           >
-            Registrieren
+            {t('auth.register')}
           </button>
         </div>
 
@@ -117,13 +119,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
 
           {mode === 'register' && (
             <div className="auth-modal-field">
-              <label htmlFor="modal-username">Benutzername</label>
+              <label htmlFor="modal-username">{t('auth.username')}</label>
               <input
                 id="modal-username"
                 name="username"
                 type="text"
                 autoComplete="username"
-                placeholder="wieland_user"
+                placeholder={t('auth.placeholderUsername')}
                 value={form.username}
                 onChange={handleChange}
                 disabled={loading}
@@ -133,13 +135,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
           )}
 
           <div className="auth-modal-field">
-            <label htmlFor="modal-email">E-Mail</label>
+            <label htmlFor="modal-email">{t('auth.email')}</label>
             <input
               id="modal-email"
               name="email"
               type="email"
               autoComplete="email"
-              placeholder="deine@email.de"
+              placeholder={t('auth.placeholderEmail')}
               value={form.email}
               onChange={handleChange}
               disabled={loading}
@@ -148,13 +150,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
           </div>
 
           <div className="auth-modal-field">
-            <label htmlFor="modal-password">Passwort</label>
+            <label htmlFor="modal-password">{t('auth.password')}</label>
             <input
               id="modal-password"
               name="password"
               type="password"
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              placeholder="Mindestens 8 Zeichen"
+              placeholder={t('auth.placeholderPassword')}
               value={form.password}
               onChange={handleChange}
               disabled={loading}
@@ -164,13 +166,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
 
           {mode === 'register' && (
             <div className="auth-modal-field">
-              <label htmlFor="modal-confirm">Passwort bestätigen</label>
+              <label htmlFor="modal-confirm">{t('auth.confirmPassword')}</label>
               <input
                 id="modal-confirm"
                 name="confirm"
                 type="password"
                 autoComplete="new-password"
-                placeholder="••••••••"
+                placeholder={t('auth.placeholderSecret')}
                 value={form.confirm}
                 onChange={handleChange}
                 disabled={loading}
@@ -184,17 +186,17 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
           <button className="auth-modal-submit" type="submit" disabled={loading}>
             {loading
               ? <span className="auth-modal-spinner" />
-              : mode === 'login' ? 'Anmelden' : 'Registrieren'}
+              : mode === 'login' ? t('auth.login') : t('auth.register')}
           </button>
         </form>
 
         <p className="auth-modal-switch">
-          {mode === 'login' ? 'Noch kein Konto?' : 'Bereits ein Konto?'}{' '}
+          {mode === 'login' ? t('auth.switchNoAccount') : t('auth.switchHasAccount')}{' '}
           <a
             href="#"
             onClick={(e) => { e.preventDefault(); switchMode(mode === 'login' ? 'register' : 'login'); }}
           >
-            {mode === 'login' ? 'Registrieren' : 'Anmelden'}
+            {mode === 'login' ? t('auth.register') : t('auth.login')}
           </a>
         </p>
 

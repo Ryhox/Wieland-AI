@@ -163,12 +163,16 @@
 .text {
   translate: 2% -6%;
   letter-spacing: 0.01ch;
-  color: hsl(0 0% calc(60% + (var(--active, 0) * 26%)));
+  color: hsl(0 0% 60%);
   z-index: 999;
   padding: 0 20px;
   font-weight: 600;
   font-size: 0.85rem;
   pointer-events: none;
+}
+
+.space-button:is(:hover, :focus-visible) .text {
+  color: hsl(0 0% 86%);
 }
 
 .text::before {
@@ -242,8 +246,6 @@
 }
 
 .space-button {
-  --cut: 0.1em;
-  --active: 0;
   background: rgba(255, 255, 255, 0.07);
   font-size: 1rem;
   font-weight: 500;
@@ -257,11 +259,11 @@
   border-radius: 2rem;
   position: relative;
   box-shadow:
-    0 0 calc(var(--active)*6em) calc(var(--active)*3em) hsla(303, 97%, 61%, 0.3),
-    0 0.05em 0 0 hsl(0, calc(var(--active)*97%), calc((var(--active)*50%)+30%)) inset,
-    0 -0.05em 0 0 hsl(0, calc(var(--active)*97%), calc(var(--active)*10%)) inset;
+    0 0 0 0 hsla(303, 97%, 61%, 0.3),
+    0 0.05em 0 0 hsl(0, 0%, 30%) inset,
+    0 -0.05em 0 0 hsl(0, 0%, 0%) inset;
   transition: box-shadow 0.25s ease-out, scale 0.25s, background 0.25s;
-  scale: calc(1 + (var(--active)*0.1));
+  scale: 1;
   transform-style: preserve-3d;
   perspective: 100vmin;
   overflow: hidden;
@@ -271,11 +273,13 @@
 }
 
 .space-button:is(:hover, :focus-visible) {
-  --active: 1;
   background:
-    radial-gradient(120% 120% at 126% 126%, hsl(330 calc(var(--active)*97%) 98% / calc(var(--active)*0.9)) 40%, transparent 50%) calc(100px - (var(--active)*100px)) 0 / 100% 100% no-repeat,
-    radial-gradient(120% 120% at 120% 120%, hsl(330 calc(var(--active)*97%) 70% / 1) 30%, transparent 70%) calc(100px - (var(--active)*100px)) 0 / 100% 100% no-repeat,
-    hsl(300 calc(var(--active)*100%) calc(14% - (var(--active)*8%)));
+    radial-gradient(120% 120% at 126% 126%, hsl(330 97% 98% / 0.9) 40%, transparent 50%) 0 0 / 100% 100% no-repeat,
+    radial-gradient(120% 120% at 120% 120%, hsl(330 97% 70% / 1) 30%, transparent 70%) 0 0 / 100% 100% no-repeat,
+    hsl(300 100% 6%);
+  box-shadow:
+    0 0 1em 1em hsla(303, 97%, 61%, 0.068);
+  scale: 1.1;
 }
 
 .space-button:active {
@@ -290,14 +294,18 @@
   left: 50%;
   translate: -50% -50%;
   overflow: hidden;
-  opacity: var(--active, 0);
+  opacity: 0;
   transition: opacity 0.25s;
+}
+
+.space-button:is(:hover, :focus-visible) .galaxy {
+  opacity: 1;
 }
 
 .backdrop {
   position: absolute;
-  inset: var(--cut);
-  background: var(--bg);
+  inset: 0.1em;
+  background: transparent;
   border-radius: 2rem;
   transition: background 0.25s;
 }

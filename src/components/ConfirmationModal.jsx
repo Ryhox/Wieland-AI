@@ -1,6 +1,8 @@
 import '../styles/AlertModal.css';
+import { useTranslation } from 'react-i18next';
 
 export default function ConfirmationModal({ title, message, onConfirm, onCancel }) {
+  const { t } = useTranslation();
   const handleConfirm = async () => {
     await onConfirm?.();
   };
@@ -24,13 +26,13 @@ export default function ConfirmationModal({ title, message, onConfirm, onCancel 
             style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'rgba(255, 255, 255, 0.6)' }}
             onClick={onCancel}
           >
-            Abbrechen
+            {t('confirmModal.cancel')}
           </button>
           <button
             className="alert-modal-btn-error"
             onClick={handleConfirm}
           >
-            Bestätigen
+            {t('confirmModal.confirm')}
           </button>
         </div>
       </div>

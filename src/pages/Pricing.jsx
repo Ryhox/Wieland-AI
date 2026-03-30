@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import '../styles/Pricing.css';
 import '../styles/main.css';
 import Header from '../components/Header';
@@ -12,35 +13,10 @@ import PurchaseModal from '../components/PurchaseModal';
 import Starfield from '../components/Starfield';
 import Scene3D from '../components/Scene3D';
 import { useAuth } from '../context/AuthContext';
+import { withLang } from '../utils/i18nRouting';
 
 const CHECK = '✦';
 const CROSS = '✕';
-
-const FREE_FEATURES = [
-  { text: 'Wieland 2B Modell', enabled: true },
-  { text: 'Unbegrenzte Gespräche', enabled: true },
-  { text: 'Bild-Upload & Analyse', enabled: true },
-  { text: 'Gesprächsverlauf', enabled: true },
-  { text: 'Prioritäts-Support', enabled: false },
-  { text: 'Wieland 4B Modell', enabled: false },
-  { text: 'Wieland 8B Modell', enabled: false },
-];
-
-const PRO_FEATURES = [
-  { text: 'Alles aus Kostenlos', enabled: true },
-  { text: 'Unterstützt die Entwicklung von Wieland AI', enabled: true },
-  { text: 'Prioritäts-Support', enabled: true },
-  { text: 'Frühzeitiger Zugang zu neuen Releases', enabled: true },
-  { text: 'Wieland4B Modell', enabled: true },
-  { text: 'Wieland 8B Modell', enabled: false },
-];
-
-const MAX_FEATURES = [
-  { text: 'Alles aus Pro', enabled: true },
-  { text: 'Beste Modellqualität mit Wieland 8B Modell ', enabled: true },
-  { text: 'Prioritäts-Support', enabled: true },
-  { text: 'Frühzeitiger Zugang zu neuen Releases', enabled: true },
-];
 
 const PLAN_ORDER = { free: 0, pro: 1, max: 2, admin: 3 };
 
@@ -52,22 +28,8 @@ const normalizePlan = (plan) => {
   return 'free';
 };
 
-const FAQ = [
-  {
-    q: 'Werden meine Daten in der Cloud gespeichert?',
-    a: 'Ja deine Chats sowie deine Nutzerdaten werden in unserer Datenbank gespeichert, damit du von all deinen Geräten auf deine Daten zugreifen kannst. Alle Daten werden jedoch verschlüsselt und sicher gespeichert.',
-  },
-  {
-    q: 'Kann ich jederzeit kündigen?',
-    a: 'Ja. Die Unterstützung ist monatlich kündbar, ohne Mindestlaufzeit oder versteckte Gebühren.',
-  },
-  {
-    q: 'Gibt es einen Unterschied bei der Modellqualität?',
-    a: 'Ja, Nutzer mit Pro oder Max können Zugang zu leistungsstärkeren Modellen haben. Wobei Max die beste Qualität mit Wieland 8B bietet, ideal für komplexe Anfragen und detaillierte Antworten.',
-  },
-];
-
 function Pricing({ isSidebarOpen, onSidebarToggle }) {
+  const { t, i18n } = useTranslation();
   const { user, authFetch, setUser } = useAuth();
   const navigate = useNavigate();
   const rootRef = useRef(null);
@@ -76,6 +38,12 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
   const [purchaseModal, setPurchaseModal] = useState(null);
   const [pendingPlan, setPendingPlan] = useState(null);
   const [isPlanUpdating, setIsPlanUpdating] = useState(false);
+  const localPath = (path) => withLang(path, i18n.language);
+
+  const FREE_FEATURES = t('pricing.features.free', { returnObjects: true }) || [];
+  const PRO_FEATURES = t('pricing.features.pro', { returnObjects: true }) || [];
+  const MAX_FEATURES = t('pricing.features.max', { returnObjects: true }) || [];
+  const FAQ = t('pricing.faqItems', { returnObjects: true }) || [];
 
   useLayoutEffect(() => {
     if (!rootRef.current) return;
@@ -134,13 +102,13 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        alert(data.error || 'Plan konnte nicht aktualisiert werden.');
+        alert(data.error || t('pricing.planUpdateError'));
         return;
       }
       const data = await res.json();
       setUser(data.user);
     } catch {
-      alert('Plan konnte nicht aktualisiert werden.');
+      alert(t('pricing.planUpdateError'));
     } finally {
       setIsPlanUpdating(false);
     }
@@ -155,7 +123,7 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
     const action = getPlanAction(targetPlan);
 
     if (action === 'manage') {
-      navigate('/profile');
+      navigate(localPath('/profile'));
       return;
     }
 
@@ -164,7 +132,7 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
     }
 
     if (action === 'downgrade') {
-      const confirmed = window.confirm(`Möchtest du wirklich auf ${targetPlan} wechseln?`);
+      const confirmed = window.confirm(t('pricing.switchConfirm', { plan: targetPlan }));
       if (!confirmed) return;
       applyPlanChange(targetPlan);
       return;
@@ -183,10 +151,10 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
 
   const getButtonLabel = (targetPlan) => {
     const action = getPlanAction(targetPlan);
-    if (action === 'admin-locked') return 'Nicht möglich (Admin)';
-    if (action === 'manage') return 'Verwalten';
-    if (action === 'downgrade') return 'Downgrade';
-    return 'Upgrade';
+    if (action === 'admin-locked') return t('pricing.adminLocked');
+    if (action === 'manage') return t('pricing.manage');
+    if (action === 'downgrade') return t('pricing.downgrade');
+    return t('pricing.upgrade');
   };
 
   const planPrice = pendingPlan === 'Max' ? 9.99 : 4.99;
@@ -234,15 +202,14 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
         <div className="page-container pricing-container">
 
           <div className="pricing-hero">
-            <span className="pricing-eyebrow">Preise</span>
-            <h1 className="pricing-h1">Einfach.<br /><span>Transparent.</span></h1>
+            <span className="pricing-eyebrow">{t('pricing.eyebrow')}</span>
+            <h1 className="pricing-h1">{t('pricing.title')}<br /><span>{t('pricing.titleAccent')}</span></h1>
             <p className="pricing-lead">
-              Wieland AI ist für alle nutzbar, Anmelden und los geht es.<br></br>
-              Wenn du aber noch mehr willst, upgrade zur Pro- oder Max-Version
+              {t('pricing.lead')}
             </p>
           </div>
 
-          <p className="pricing-section-label">Pläne</p>
+          <p className="pricing-section-label">{t('pricing.plansLabel')}</p>
           <div className="pricing-plans">
 
             <div className="pricing-card">
@@ -250,9 +217,9 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
               <div className="pricing-plan-name">Kostenlos</div>
               <div className="pricing-price-row">
                 <span className="pricing-price">0 €</span>
-                <span className="pricing-price-period">/ Monat</span>
+                <span className="pricing-price-period">{t('pricing.perMonth')}</span>
               </div>
-              <p className="pricing-price-sub">Für immer kostenlos.</p>
+              <p className="pricing-price-sub">{t('pricing.freeForever')}</p>
 
               <ul className="pricing-features">
                 {FREE_FEATURES.map(f => (
@@ -273,15 +240,15 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
             </div>
 
             <div className="pricing-card featured">
-              <span className="pricing-recommended-badge">Empfohlen</span>
+              <span className="pricing-recommended-badge">{t('pricing.recommended')}</span>
               <span className="pricing-badge">Pro</span>
               <div className="pricing-plan-name">Pro</div>
               <div className="pricing-price-row">
                 <span className="pricing-price">4,99 €</span>
-                <span className="pricing-price-period">/ Monat</span>
+                <span className="pricing-price-period">{t('pricing.perMonth')}</span>
               </div>
               <p className="pricing-price-sub">
-                Unterstütze die Entwicklung von Wieland AI.
+                {t('pricing.supportDev')}
               </p>
 
               <ul className="pricing-features">
@@ -307,10 +274,10 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
               <div className="pricing-plan-name">Max</div>
               <div className="pricing-price-row">
                 <span className="pricing-price">9,99 €</span>
-                <span className="pricing-price-period">/ Monat</span>
+                <span className="pricing-price-period">{t('pricing.perMonth')}</span>
               </div>
               <p className="pricing-price-sub">
-                Maximale Qualität mit Wieland 8B.
+                {t('pricing.maxQuality')}
               </p>
 
               <ul className="pricing-features">
@@ -335,7 +302,7 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
 
           <div className="pricing-divider" />
 
-          <p className="pricing-section-label">Häufige Fragen</p>
+          <p className="pricing-section-label">{t('pricing.faqLabel')}</p>
           <div className="pricing-faq">
             {FAQ.map(item => (
               <div className="pricing-faq-item" key={item.q}>

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import '../styles/PurchaseModal.css';
 
 export default function PurchaseModal({ plan, onComplete, onClose }) {
-    const { user, setUser, authFetch } = useAuth();
+    const { t } = useTranslation();
+    const { setUser, authFetch } = useAuth();
     const [step, setStep] = useState('processing');
 
     useEffect(() => {
@@ -39,8 +41,8 @@ export default function PurchaseModal({ plan, onComplete, onClose }) {
                     <>
                         <div className="purchase-spinner" />
                         <div className="purchase-text">
-                            <h2>Zahlung wird bearbeitet...</h2>
-                            <p>Upgrading auf {plan} Plan</p>
+                            <h2>{t('purchase.processing')}</h2>
+                            <p>{t('purchase.upgrading', { plan })}</p>
                         </div>
                     </>
                 )}
@@ -49,11 +51,11 @@ export default function PurchaseModal({ plan, onComplete, onClose }) {
                     <>
                         <div className="purchase-success-icon">✓</div>
                         <div className="purchase-text">
-                            <h2>Upgrade erfolgreich!</h2>
-                            <p>Willkommen im {plan} Plan. Viel Spaß!</p>
+                            <h2>{t('purchase.success')}</h2>
+                            <p>{t('purchase.welcome', { plan })}</p>
                         </div>
                         <button className="purchase-close-btn" onClick={onClose}>
-                            Schließen
+                            {t('purchase.close')}
                         </button>
                     </>
                 )}
