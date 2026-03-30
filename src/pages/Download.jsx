@@ -85,7 +85,6 @@ function Download({ isSidebarOpen, onSidebarToggle }) {
         try {
           await writable.abort();
         } catch {
-          // Ignore cleanup errors from aborted file writes.
         }
       }
 

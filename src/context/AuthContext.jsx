@@ -119,7 +119,6 @@ export function AuthProvider({ children }) {
         localStorage.setItem(USER_KEY, JSON.stringify(data.data.user));
       })
       .catch(() => {
-        // Keep token/user on transient startup errors (e.g. backend restart).
       })
       .finally(() => setLoading(false));
   }, []);
@@ -165,7 +164,6 @@ export function AuthProvider({ children }) {
         }
 
         if (!isInvalidAuthStatus(response.status)) {
-          // Ignore transient errors and retry on next interval.
           return;
         }
 
@@ -175,7 +173,6 @@ export function AuthProvider({ children }) {
           setUser(null);
         }
       } catch {
-        // Network/backend downtime should not log the user out.
       }
     };
 
