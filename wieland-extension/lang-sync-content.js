@@ -62,7 +62,6 @@
     try {
       persistDetectedLang();
     } catch {
-      // Intentionally ignore page-level access errors.
     }
   }
 

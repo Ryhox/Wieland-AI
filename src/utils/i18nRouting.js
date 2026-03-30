@@ -34,7 +34,6 @@ export function getStoredLang() {
     const local = localStorage.getItem(STORAGE_KEY);
     if (isSupportedLang(local)) return local;
   } catch {
-    // ignore storage read errors
   }
 
   try {
@@ -45,7 +44,6 @@ export function getStoredLang() {
     const value = cookie?.split("=")[1];
     if (isSupportedLang(value)) return value;
   } catch {
-    // ignore cookie read errors
   }
 
   return null;
@@ -63,7 +61,6 @@ export function persistLang(lang) {
   try {
     localStorage.setItem(STORAGE_KEY, lang);
   } catch {
-    // ignore storage write errors
   }
 
   try {
@@ -72,6 +69,5 @@ export function persistLang(lang) {
       document.cookie = `${STORAGE_KEY}=${lang}; path=/; max-age=31536000`;
     }
   } catch {
-    // ignore cookie write errors
   }
 }

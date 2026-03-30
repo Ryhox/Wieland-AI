@@ -1,7 +1,3 @@
-/* ════════════════════════════════════════════
-   Wieland AI · Chrome Extension – App Logic
-   ════════════════════════════════════════════ */
-
 const API_BASE = "http://localhost:3001";
 
 const EXT_LANG_KEY = "wieland_lang";
@@ -569,7 +565,6 @@ async function init() {
         await clearAuthSession();
       }
     } catch {
-      // Keep current session on temporary network/server failures.
     }
   }
 
