@@ -9,7 +9,8 @@ const crypto = require('crypto');
 const { exec } = require('child_process');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { Pool } = require('pg');
+const sqlite3 = require('sqlite3');
+const { open } = require('sqlite');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -17,48 +18,101 @@ const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || (() => { throw new Error('JWT_SECRET env var required'); })();
 const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
+const SQLITE_PATH = process.env.SQLITE_PATH || path.join(__dirname, 'data', 'wieland.sqlite');
 
-const pool = new Pool({
-  host: process.env.PGHOST || 'localhost',
-  port: parseInt(process.env.PGPORT || '5432', 10),
-  database: process.env.PGDATABASE || 'wieland',
-  user: process.env.PGUSER || 'wieland_user',
-  password: process.env.PGPASSWORD || (() => { throw new Error('PGPASSWORD env var required'); })(),
-  max: 20,
-  idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 5_000,
-  ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : false,
-});
+let db;
+
+function toSqliteStatement(sql, params = []) {
+  const indexes = [];
+  const convertedSql = sql.replace(/\$(\d+)/g, (_m, n) => {
+    indexes.push(Number(n) - 1);
+    return '?';
+  });
+  const convertedParams = indexes.length > 0 ? indexes.map(i => params[i]) : params;
+  return { convertedSql, convertedParams };
+}
+
+function normalizeDbError(err) {
+  const message = err?.message || '';
+  if (err?.code === 'SQLITE_CONSTRAINT' || err?.code === 'SQLITE_CONSTRAINT_UNIQUE' || /UNIQUE constraint failed/i.test(message)) {
+    err.code = '23505';
+    const match = message.match(/UNIQUE constraint failed: ([^.\s]+)\.([^\s,]+)/i);
+    if (match) {
+      err.constraint = `${match[1]}_${match[2]}_key`;
+    }
+  }
+  return err;
+}
+
+async function dbQuery(sql, params = []) {
+  const { convertedSql, convertedParams } = toSqliteStatement(sql, params);
+  const normalizedSql = convertedSql.trim();
+
+  try {
+    if (convertedParams.length === 0 && normalizedSql.includes(';') && !/\bRETURNING\b/i.test(normalizedSql)) {
+      await db.exec(convertedSql);
+      return { rows: [], rowCount: 0 };
+    }
+
+    if (/^SELECT\b/i.test(normalizedSql) || /\bRETURNING\b/i.test(normalizedSql)) {
+      const rows = await db.all(convertedSql, convertedParams);
+      return { rows, rowCount: rows.length };
+    }
+
+    const result = await db.run(convertedSql, convertedParams);
+    return {
+      rows: [],
+      rowCount: typeof result?.changes === 'number' ? result.changes : 0,
+      lastID: result?.lastID,
+    };
+  } catch (err) {
+    throw normalizeDbError(err);
+  }
+}
+
+const pool = {
+  query: dbQuery,
+  connect: async () => ({
+    query: dbQuery,
+    release: () => { },
+  }),
+};
 
 async function initDB() {
+  await fs.promises.mkdir(path.dirname(SQLITE_PATH), { recursive: true });
+  db = await open({ filename: SQLITE_PATH, driver: sqlite3.Database });
+  await db.exec('PRAGMA foreign_keys = ON;');
+  await db.exec('PRAGMA journal_mode = WAL;');
+  await db.exec('PRAGMA busy_timeout = 5000;');
+
   const client = await pool.connect();
   try {
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
-        id            SERIAL PRIMARY KEY,
-        username      VARCHAR(32)  NOT NULL UNIQUE,
-        email         VARCHAR(255) NOT NULL UNIQUE,
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        username      TEXT NOT NULL UNIQUE,
+        email         TEXT NOT NULL UNIQUE,
         password_hash TEXT         NOT NULL,
-        plan          VARCHAR(32)  NOT NULL DEFAULT 'Free',
-        created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+        plan          TEXT NOT NULL DEFAULT 'Free',
+        created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
 
       CREATE TABLE IF NOT EXISTS chats (
-        id         SERIAL PRIMARY KEY,
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id    INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        filename   VARCHAR(255) NOT NULL,
+        filename   TEXT NOT NULL,
         title      TEXT,
-        created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id, filename)
       );
 
       CREATE TABLE IF NOT EXISTS chat_messages (
-        id         SERIAL PRIMARY KEY,
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
         chat_id    INTEGER     NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
-        role       VARCHAR(16) NOT NULL CHECK (role IN ('user','assistant','system')),
+        role       TEXT NOT NULL CHECK (role IN ('user','assistant','system')),
         content    TEXT        NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
 
       CREATE INDEX IF NOT EXISTS idx_chats_user_id    ON chats(user_id);
@@ -354,9 +408,9 @@ app.get('/api/admin/stats', requireAuth, requireAdmin, async (_req, res) => {
   try {
     const result = await pool.query(`
       SELECT
-        (SELECT COUNT(*) FROM users)::int         AS total_users,
-        (SELECT COUNT(*) FROM chats)::int          AS total_chats,
-        (SELECT COUNT(*) FROM chat_messages)::int  AS total_msgs
+        CAST((SELECT COUNT(*) FROM users) AS INTEGER)        AS total_users,
+        CAST((SELECT COUNT(*) FROM chats) AS INTEGER)        AS total_chats,
+        CAST((SELECT COUNT(*) FROM chat_messages) AS INTEGER) AS total_msgs
     `);
     res.json(result.rows[0]);
   } catch (err) {
@@ -370,7 +424,7 @@ app.get('/api/admin/users', requireAuth, requireAdmin, async (_req, res) => {
     const result = await pool.query(`
       SELECT
         u.id, u.username, u.email, u.plan, u.created_at,
-        COUNT(c.id)::int AS chat_count
+        CAST(COUNT(c.id) AS INTEGER) AS chat_count
       FROM users u
       LEFT JOIN chats c ON c.user_id = u.id
       GROUP BY u.id
@@ -455,7 +509,7 @@ app.get('/api/admin/chats', requireAuth, requireAdmin, async (_req, res) => {
       SELECT
         c.id, c.filename, c.title, c.created_at, c.updated_at, c.user_id,
         u.username,
-        COUNT(cm.id)::int AS message_count
+        CAST(COUNT(cm.id) AS INTEGER) AS message_count
       FROM chats c
       JOIN users u ON u.id = c.user_id
       LEFT JOIN chat_messages cm ON cm.chat_id = c.id
@@ -486,7 +540,7 @@ app.get('/api/admin/chats/:id/messages', requireAuth, requireAdmin, async (req, 
   try {
     const chatRes = await pool.query(
       `SELECT c.id, c.filename, c.title, c.created_at, c.updated_at, c.user_id, u.username,
-              COUNT(cm.id)::int AS message_count
+              CAST(COUNT(cm.id) AS INTEGER) AS message_count
        FROM chats c
        JOIN users u ON u.id = c.user_id
        LEFT JOIN chat_messages cm ON cm.chat_id = c.id
@@ -732,7 +786,7 @@ app.post('/api/history/save', requireAuth, async (req, res) => {
       chatId = existing.rows[0].id;
       targetFilename = filename;
       await client.query(
-        `UPDATE chats SET updated_at = NOW() WHERE id = $1`,
+        `UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
         [chatId]
       );
       await client.query(`DELETE FROM chat_messages WHERE chat_id = $1`, [chatId]);
@@ -826,7 +880,7 @@ app.get('/api/history', requireAuth, async (req, res) => {
     const result = await pool.query(
       `SELECT
          c.filename, c.title, c.created_at, c.updated_at,
-         COUNT(cm.id)::int AS message_count,
+        CAST(COUNT(cm.id) AS INTEGER) AS message_count,
          (SELECT cm2.content FROM chat_messages cm2
           WHERE cm2.chat_id = c.id AND cm2.role = 'user'
           ORDER BY cm2.created_at ASC, cm2.id ASC LIMIT 1) AS first_user_message
@@ -867,9 +921,9 @@ app.get('/api/stats', async (_req, res) => {
   try {
     const result = await pool.query(`
       SELECT
-        (SELECT COUNT(*) FROM users)::int        AS total_users,
-        (SELECT COUNT(*) FROM chats)::int         AS total_chats,
-        (SELECT COUNT(*) FROM chat_messages)::int AS total_messages
+        CAST((SELECT COUNT(*) FROM users) AS INTEGER)        AS total_users,
+        CAST((SELECT COUNT(*) FROM chats) AS INTEGER)        AS total_chats,
+        CAST((SELECT COUNT(*) FROM chat_messages) AS INTEGER) AS total_messages
     `);
     res.json(result.rows[0]);
   } catch (err) {

@@ -14,6 +14,18 @@ gsap.registerPlugin(ScrollTrigger);
 
 const entries = [
   {
+    version: 'v0.1.7',
+    date: '30 März 2026',
+    tag: 'green',
+    title: 'Backend & Auth Update',
+    changes: [
+      'PostgreSQL auf SQLite migriert (inkl. sicherer DB-Initialisierung)',
+      'Admin-CLI Script hinzugefügt, um Nutzer auf Admin zu setzen',
+      'Login-Cookie wird nur gespeichert, wenn Cookie-Einwilligung akzeptiert ist',
+      'Bugfixes',
+    ],
+  },
+  {
     version: 'v0.1.6',
     date: '23 März 2026',
     tag: 'purple',

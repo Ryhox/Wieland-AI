@@ -14,11 +14,14 @@ export default function CookieBanner() {
   const handleAccept = () => {
     localStorage.setItem('wieland_cookie_consent', 'accepted');
     document.cookie = 'wieland_cookie_consent=accepted; path=/; max-age=31536000';
+    window.dispatchEvent(new Event('wieland-cookie-consent-changed'));
     setShow(false);
   };
 
   const handleDecline = () => {
     localStorage.setItem('wieland_cookie_consent', 'declined');
+    document.cookie = 'wieland_cookie_consent=declined; path=/; max-age=31536000';
+    window.dispatchEvent(new Event('wieland-cookie-consent-changed'));
     setShow(false);
   };
 

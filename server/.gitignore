@@ -6,4 +6,6 @@ contacts/
 *.log
 
 .env
-setup_db.sql
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
