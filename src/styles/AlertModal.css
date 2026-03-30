@@ -145,23 +145,39 @@
 }
 
 .alert-modal-btn-success {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(56, 142, 60, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(76, 175, 80, 0.3),
+    rgba(56, 142, 60, 0.2)
+  );
   color: #4caf50;
   border: 1px solid rgba(76, 175, 80, 0.3);
 }
 
 .alert-modal-btn-success:hover {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.4), rgba(56, 142, 60, 0.3));
+  background: linear-gradient(
+    135deg,
+    rgba(76, 175, 80, 0.4),
+    rgba(56, 142, 60, 0.3)
+  );
   border-color: rgba(76, 175, 80, 0.5);
 }
 
 .alert-modal-btn-error {
-  background: linear-gradient(135deg, rgba(244, 67, 54, 0.3), rgba(211, 47, 47, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(244, 67, 54, 0.3),
+    rgba(211, 47, 47, 0.2)
+  );
   color: #f44336;
   border: 1px solid rgba(244, 67, 54, 0.3);
 }
 
 .alert-modal-btn-error:hover {
-  background: linear-gradient(135deg, rgba(244, 67, 54, 0.4), rgba(211, 47, 47, 0.3));
+  background: linear-gradient(
+    135deg,
+    rgba(244, 67, 54, 0.4),
+    rgba(211, 47, 47, 0.3)
+  );
   border-color: rgba(244, 67, 54, 0.5);
 }

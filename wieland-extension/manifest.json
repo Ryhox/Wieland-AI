@@ -4,7 +4,11 @@
   "version": "1.0.0",
   "description": "Wieland AI – Dein lokaler KI-Assistent direkt im Browser.",
   "permissions": ["sidePanel", "storage", "tabs", "scripting", "cookies"],
-  "host_permissions": ["https://ai.ryhox.dev/*", "http://localhost:*/*", "<all_urls>"],
+  "host_permissions": [
+    "https://ai.ryhox.dev/*",
+    "http://localhost:*/*",
+    "<all_urls>"
+  ],
   "side_panel": {
     "default_path": "sidepanel.html"
   },

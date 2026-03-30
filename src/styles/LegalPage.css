@@ -1,4 +1,3 @@
-
 .legal-container {
   max-width: 760px;
 }
@@ -112,7 +111,7 @@
 }
 
 .legal-ul li::before {
-  content: '·';
+  content: "·";
   position: absolute;
   left: 4px;
   color: rgba(232, 35, 250, 0.45);

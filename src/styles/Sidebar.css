@@ -249,7 +249,11 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(250, 79, 199, 0.3), rgba(180, 50, 160, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(250, 79, 199, 0.3),
+    rgba(180, 50, 160, 0.2)
+  );
   border: 1px solid rgba(250, 79, 199, 0.3);
   display: flex;
   align-items: center;
@@ -331,7 +335,6 @@
   .sidebar {
     z-index: 420;
     border-right: none;
-
   }
 
   .sidebar.collapsed {

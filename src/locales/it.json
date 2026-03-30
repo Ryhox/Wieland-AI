@@ -149,20 +149,46 @@
     "title": "Progettato per",
     "titleAccent": "la migliore esperienza AI",
     "lead": "Wieland AI e una AI moderna con risposte in tempo reale e comprensione visiva.",
-    "pills": ["Streaming in tempo reale", "Visione + testo", "Sistemi scalabili"],
-    "stats": { "activeUsers": "Utenti attivi", "chats": "Chat", "sentMessages": "Messaggi inviati", "uptime": "Operativita" },
+    "pills": [
+      "Streaming in tempo reale",
+      "Visione + testo",
+      "Sistemi scalabili"
+    ],
+    "stats": {
+      "activeUsers": "Utenti attivi",
+      "chats": "Chat",
+      "sentMessages": "Messaggi inviati",
+      "uptime": "Operativita"
+    },
     "whyLabel": "Perche Wieland?",
     "whyLead": "Altre AI sono spesso troppo semplici o troppo complesse.",
     "whyBody": "Wieland AI unisce flusso veloce, risultati affidabili e UX familiare.",
     "coreLabel": "Aree principali",
     "core": [
-      { "title": "Esperienza pronta", "text": "Dalla prima richiesta al workflow completo, tutto e pensato per essere fluido." },
-      { "title": "Trasparenza e controllo", "text": "Vedi cosa succede e controlli il tuo flusso AI." },
-      { "title": "Vera multimodalita", "text": "Comprensione di testo e immagini in un unico passaggio." },
-      { "title": "Scala senza interruzioni", "text": "Distribuzioni robuste anche sotto carico elevato." }
+      {
+        "title": "Esperienza pronta",
+        "text": "Dalla prima richiesta al workflow completo, tutto e pensato per essere fluido."
+      },
+      {
+        "title": "Trasparenza e controllo",
+        "text": "Vedi cosa succede e controlli il tuo flusso AI."
+      },
+      {
+        "title": "Vera multimodalita",
+        "text": "Comprensione di testo e immagini in un unico passaggio."
+      },
+      {
+        "title": "Scala senza interruzioni",
+        "text": "Distribuzioni robuste anche sotto carico elevato."
+      }
     ],
     "stackLabel": "Stack tecnologico",
-    "stack": { "frontend": "Frontend", "backend": "Backend", "data": "Dati", "ai": "Motore AI" }
+    "stack": {
+      "frontend": "Frontend",
+      "backend": "Backend",
+      "data": "Dati",
+      "ai": "Motore AI"
+    }
   },
   "contact": {
     "eyebrow": "Contatto",
@@ -222,37 +248,130 @@
     "contact": "Scrivici",
     "moreEnd": "- il team e felice di aiutarti.",
     "items": [
-      { "q": "I miei dati sono archiviati in modo sicuro?", "a": "Sì, chat e dati utente sono salvati in forma cifrata." },
-      { "q": "Posso annullare in qualsiasi momento?", "a": "Sì, tutti i piani sono disdicibili mensilmente." },
-      { "q": "Quali livelli di modello sono disponibili?", "a": "Free include modelli base, Pro modelli più forti, Max qualità massima." },
-      { "q": "Posso caricare immagini?", "a": "Sì, Wieland AI può analizzare immagini e rispondere." },
-      { "q": "Quali dispositivi sono supportati?", "a": "Tutti i browser moderni desktop e mobile." },
-      { "q": "Quanto sono veloci le risposte?", "a": "Le risposte vengono generate in tempo reale." },
-      { "q": "Posso usare Wieland AI in team?", "a": "Attualmente è pensato per uso individuale." },
-      { "q": "Quanto è aggiornata la conoscenza dell'AI?", "a": "Accesso internet live in pianificazione, non ancora attivo." },
-      { "q": "Ci sono limiti di utilizzo?", "a": "Uso praticamente illimitato in condizioni normali." },
-      { "q": "Esiste una prova per Pro o Max?", "a": "Al momento non è disponibile una prova temporanea." },
-      { "q": "Posso cambiare piano in qualsiasi momento?", "a": "Sì, upgrade e downgrade sono sempre possibili." },
-      { "q": "Come funziona il supporto prioritario?", "a": "Utenti Pro e Max ricevono risposte più rapide." },
-      { "q": "Cosa include Max?", "a": "Max offre la massima qualità modello per compiti complessi." },
-      { "q": "Posso esportare la cronologia chat?", "a": "Esportazione non ancora disponibile." },
-      { "q": "C'è un limite per upload immagini?", "a": "Sì, massimo un'immagine per richiesta." },
-      { "q": "Quali lingue sono supportate?", "a": "Wieland AI supporta diverse lingue." },
-      { "q": "Con quale frequenza vengono aggiornati i modelli?", "a": "Modelli e funzioni vengono aggiornati regolarmente." },
-      { "q": "Posso usarlo su smartphone?", "a": "Sì, smartphone e tablet moderni sono supportati." },
-      { "q": "Testo e analisi immagini possono essere usati insieme?", "a": "Sì, l'analisi multimodale supporta entrambi." },
-      { "q": "Posso richiedere la cancellazione dei miei dati?", "a": "Sì, puoi richiedere la cancellazione completa." },
-      { "q": "Quanto è affidabile l'AI?", "a": "Punta a risultati consistenti anche con prompt complessi." },
-      { "q": "Posso lavorare su più progetti insieme?", "a": "Sì, chat e progetti paralleli sono supportati." },
-      { "q": "Come vengono distribuiti gli aggiornamenti?", "a": "Gli aggiornamenti vengono distribuiti automaticamente." },
-      { "q": "Posso personalizzare le risposte AI?", "a": "Sì, tono e stile possono essere configurati." },
-      { "q": "La piattaforma è sempre disponibile?", "a": "L'infrastruttura è pensata per disponibilità 24/7." },
-      { "q": "Sono disponibili notifiche?", "a": "Le notifiche non sono ancora disponibili." },
-      { "q": "È disponibile un accesso API?", "a": "Un'API pubblica non è ancora disponibile." },
-      { "q": "C'è un limite per richieste simultanee?", "a": "La piattaforma è scalabile per molte richieste." },
-      { "q": "Quanto è semplice l'onboarding per nuovi utenti?", "a": "Molto semplice: apri il browser e inizia." },
-      { "q": "Ci sono tutorial disponibili?", "a": "Non ci sono tutorial ufficiali al momento." },
-      { "q": "Quanto è sicura la piattaforma?", "a": "Sono usati standard moderni con cifratura e monitoraggio." }
+      {
+        "q": "I miei dati sono archiviati in modo sicuro?",
+        "a": "Sì, chat e dati utente sono salvati in forma cifrata."
+      },
+      {
+        "q": "Posso annullare in qualsiasi momento?",
+        "a": "Sì, tutti i piani sono disdicibili mensilmente."
+      },
+      {
+        "q": "Quali livelli di modello sono disponibili?",
+        "a": "Free include modelli base, Pro modelli più forti, Max qualità massima."
+      },
+      {
+        "q": "Posso caricare immagini?",
+        "a": "Sì, Wieland AI può analizzare immagini e rispondere."
+      },
+      {
+        "q": "Quali dispositivi sono supportati?",
+        "a": "Tutti i browser moderni desktop e mobile."
+      },
+      {
+        "q": "Quanto sono veloci le risposte?",
+        "a": "Le risposte vengono generate in tempo reale."
+      },
+      {
+        "q": "Posso usare Wieland AI in team?",
+        "a": "Attualmente è pensato per uso individuale."
+      },
+      {
+        "q": "Quanto è aggiornata la conoscenza dell'AI?",
+        "a": "Accesso internet live in pianificazione, non ancora attivo."
+      },
+      {
+        "q": "Ci sono limiti di utilizzo?",
+        "a": "Uso praticamente illimitato in condizioni normali."
+      },
+      {
+        "q": "Esiste una prova per Pro o Max?",
+        "a": "Al momento non è disponibile una prova temporanea."
+      },
+      {
+        "q": "Posso cambiare piano in qualsiasi momento?",
+        "a": "Sì, upgrade e downgrade sono sempre possibili."
+      },
+      {
+        "q": "Come funziona il supporto prioritario?",
+        "a": "Utenti Pro e Max ricevono risposte più rapide."
+      },
+      {
+        "q": "Cosa include Max?",
+        "a": "Max offre la massima qualità modello per compiti complessi."
+      },
+      {
+        "q": "Posso esportare la cronologia chat?",
+        "a": "Esportazione non ancora disponibile."
+      },
+      {
+        "q": "C'è un limite per upload immagini?",
+        "a": "Sì, massimo un'immagine per richiesta."
+      },
+      {
+        "q": "Quali lingue sono supportate?",
+        "a": "Wieland AI supporta diverse lingue."
+      },
+      {
+        "q": "Con quale frequenza vengono aggiornati i modelli?",
+        "a": "Modelli e funzioni vengono aggiornati regolarmente."
+      },
+      {
+        "q": "Posso usarlo su smartphone?",
+        "a": "Sì, smartphone e tablet moderni sono supportati."
+      },
+      {
+        "q": "Testo e analisi immagini possono essere usati insieme?",
+        "a": "Sì, l'analisi multimodale supporta entrambi."
+      },
+      {
+        "q": "Posso richiedere la cancellazione dei miei dati?",
+        "a": "Sì, puoi richiedere la cancellazione completa."
+      },
+      {
+        "q": "Quanto è affidabile l'AI?",
+        "a": "Punta a risultati consistenti anche con prompt complessi."
+      },
+      {
+        "q": "Posso lavorare su più progetti insieme?",
+        "a": "Sì, chat e progetti paralleli sono supportati."
+      },
+      {
+        "q": "Come vengono distribuiti gli aggiornamenti?",
+        "a": "Gli aggiornamenti vengono distribuiti automaticamente."
+      },
+      {
+        "q": "Posso personalizzare le risposte AI?",
+        "a": "Sì, tono e stile possono essere configurati."
+      },
+      {
+        "q": "La piattaforma è sempre disponibile?",
+        "a": "L'infrastruttura è pensata per disponibilità 24/7."
+      },
+      {
+        "q": "Sono disponibili notifiche?",
+        "a": "Le notifiche non sono ancora disponibili."
+      },
+      {
+        "q": "È disponibile un accesso API?",
+        "a": "Un'API pubblica non è ancora disponibile."
+      },
+      {
+        "q": "C'è un limite per richieste simultanee?",
+        "a": "La piattaforma è scalabile per molte richieste."
+      },
+      {
+        "q": "Quanto è semplice l'onboarding per nuovi utenti?",
+        "a": "Molto semplice: apri il browser e inizia."
+      },
+      {
+        "q": "Ci sono tutorial disponibili?",
+        "a": "Non ci sono tutorial ufficiali al momento."
+      },
+      {
+        "q": "Quanto è sicura la piattaforma?",
+        "a": "Sono usati standard moderni con cifratura e monitoraggio."
+      }
     ]
   },
   "pricing": {
@@ -299,9 +418,18 @@
       ]
     },
     "faqItems": [
-      { "q": "I miei dati sono salvati nel cloud?", "a": "Sì, i dati sono salvati cifrati nel database." },
-      { "q": "Posso annullare quando voglio?", "a": "Sì, l'abbonamento è disdicibile mensilmente." },
-      { "q": "La qualità del modello cambia in base al piano?", "a": "Sì, Pro e Max usano modelli più forti; Max è il top." }
+      {
+        "q": "I miei dati sono salvati nel cloud?",
+        "a": "Sì, i dati sono salvati cifrati nel database."
+      },
+      {
+        "q": "Posso annullare quando voglio?",
+        "a": "Sì, l'abbonamento è disdicibile mensilmente."
+      },
+      {
+        "q": "La qualità del modello cambia in base al piano?",
+        "a": "Sì, Pro e Max usano modelli più forti; Max è il top."
+      }
     ]
   },
   "download": {
@@ -321,16 +449,129 @@
     "lead": "Tutte le versioni, fix e funzionalita.",
     "initialTag": "Iniziale",
     "entries": [
-      { "version": "v0.1.9", "date": "30 marzo 2026", "tag": "green", "title": "Estensione Browser e Accesso Internet", "changes": ["Aggiunta la Browser Extension di Wieland AI (chat nel side panel del browser)", "Aggiunta modalita accesso internet per il modello con fonti e fallback offline", "Aggiunto supporto lingue nella Browser Extension (de/en/it) con sincronizzazione automatica della lingua del sito", "Aggiunto pacchetto favicon completo + web manifest per migliore supporto browser e dispositivi", "La pagina Download ora scarica la Browser Extension in formato ZIP", "Correzioni bug e pulizia UI in chat e menu dell'estensione"] },
-      { "version": "v0.1.8", "date": "30 marzo 2026", "tag": "purple", "title": "Language UPDATEEEE (i18n)", "changes": ["Integrato i18next su tutte le pagine (de/en/it)", "Aggiunto routing basato sulla lingua con /de/, /en/, /it/", "Collegato il pulsante lingua nell'header a cambio route + locale", "Estese le traduzioni per pagine, modali e dashboard", "Risolti bug cambio lingua (welcome in Home aggiornata live, card statistiche About sempre visibili)"] },
-      { "version": "v0.1.7", "date": "30 marzo 2026", "tag": "green", "title": "Aggiornamento Backend & Auth", "changes": ["Migrazione da PostgreSQL a SQLite", "Aggiunto script CLI admin", "Cookie login legato al consenso", "Correzioni bug"] },
-      { "version": "v0.1.6", "date": "23 marzo 2026", "tag": "purple", "title": "Aggiornamento Design & Contenuti", "changes": ["Correzioni bug", "Rifacimento visuale di più pagine", "Revisione contenuti", "Animazioni GSAP", "Aggiunto piano Max e modello 2B", "Migliore responsività mobile", "Ricerca e filtri FAQ"] },
-      { "version": "v0.1.5", "date": "16 marzo 2026", "tag": "green", "title": "Contenuti v2.0", "changes": ["Correzioni bug", "Refresh design", "Aggiunte pagine Profilo e Contatti", "Funzioni account e abbonamento", "Link chat diretti via UUID"] },
-      { "version": "v0.1.4", "date": "10 marzo 2026", "tag": "pink", "title": "Contenuti", "changes": ["Aggiunte 8 nuove pagine", "Pulsante lingua nell'header", "Correzioni bug"] },
-      { "version": "v0.1.3", "date": "10 marzo 2026", "tag": "purple", "title": "Dashboard admin", "changes": ["Nuova /dashboard con grafici", "Strumenti admin utenti e modelli", "Correzioni bug"] },
-      { "version": "v0.1.2", "date": "06 marzo 2026", "tag": "green", "title": "Backend", "changes": ["Backend con PostgreSQL", "Login e registrazione", "Correzioni bug"] },
-      { "version": "v0.1.1", "date": "03 marzo 2026", "tag": "pink", "title": "AI migliorata", "changes": ["Correzioni bug", "Supporto elaborazione immagini", "Redesign header e sidebar"] },
-      { "version": "v0.1.0", "date": "01 marzo 2026", "tag": "gray", "title": "Pre-release", "changes": ["Avvio progetto", "Sviluppo funzionalità base", "Integrazione Ollama", "Integrazione personaggio 3D"] }
+      {
+        "version": "v0.1.9",
+        "date": "30 marzo 2026",
+        "tag": "green",
+        "title": "Estensione Browser e Accesso Internet",
+        "changes": [
+          "Aggiunta la Browser Extension di Wieland AI (chat nel side panel del browser)",
+          "Aggiunta modalita accesso internet per il modello con fonti e fallback offline",
+          "Aggiunto supporto lingue nella Browser Extension (de/en/it) con sincronizzazione automatica della lingua del sito",
+          "Aggiunto pacchetto favicon completo + web manifest per migliore supporto browser e dispositivi",
+          "La pagina Download ora scarica la Browser Extension in formato ZIP",
+          "Correzioni bug e pulizia UI in chat e menu dell'estensione"
+        ]
+      },
+      {
+        "version": "v0.1.8",
+        "date": "30 marzo 2026",
+        "tag": "purple",
+        "title": "Language UPDATEEEE (i18n)",
+        "changes": [
+          "Integrato i18next su tutte le pagine (de/en/it)",
+          "Aggiunto routing basato sulla lingua con /de/, /en/, /it/",
+          "Collegato il pulsante lingua nell'header a cambio route + locale",
+          "Estese le traduzioni per pagine, modali e dashboard",
+          "Risolti bug cambio lingua (welcome in Home aggiornata live, card statistiche About sempre visibili)"
+        ]
+      },
+      {
+        "version": "v0.1.7",
+        "date": "30 marzo 2026",
+        "tag": "green",
+        "title": "Aggiornamento Backend & Auth",
+        "changes": [
+          "Migrazione da PostgreSQL a SQLite",
+          "Aggiunto script CLI admin",
+          "Cookie login legato al consenso",
+          "Correzioni bug"
+        ]
+      },
+      {
+        "version": "v0.1.6",
+        "date": "23 marzo 2026",
+        "tag": "purple",
+        "title": "Aggiornamento Design & Contenuti",
+        "changes": [
+          "Correzioni bug",
+          "Rifacimento visuale di più pagine",
+          "Revisione contenuti",
+          "Animazioni GSAP",
+          "Aggiunto piano Max e modello 2B",
+          "Migliore responsività mobile",
+          "Ricerca e filtri FAQ"
+        ]
+      },
+      {
+        "version": "v0.1.5",
+        "date": "16 marzo 2026",
+        "tag": "green",
+        "title": "Contenuti v2.0",
+        "changes": [
+          "Correzioni bug",
+          "Refresh design",
+          "Aggiunte pagine Profilo e Contatti",
+          "Funzioni account e abbonamento",
+          "Link chat diretti via UUID"
+        ]
+      },
+      {
+        "version": "v0.1.4",
+        "date": "10 marzo 2026",
+        "tag": "pink",
+        "title": "Contenuti",
+        "changes": [
+          "Aggiunte 8 nuove pagine",
+          "Pulsante lingua nell'header",
+          "Correzioni bug"
+        ]
+      },
+      {
+        "version": "v0.1.3",
+        "date": "10 marzo 2026",
+        "tag": "purple",
+        "title": "Dashboard admin",
+        "changes": [
+          "Nuova /dashboard con grafici",
+          "Strumenti admin utenti e modelli",
+          "Correzioni bug"
+        ]
+      },
+      {
+        "version": "v0.1.2",
+        "date": "06 marzo 2026",
+        "tag": "green",
+        "title": "Backend",
+        "changes": [
+          "Backend con PostgreSQL",
+          "Login e registrazione",
+          "Correzioni bug"
+        ]
+      },
+      {
+        "version": "v0.1.1",
+        "date": "03 marzo 2026",
+        "tag": "pink",
+        "title": "AI migliorata",
+        "changes": [
+          "Correzioni bug",
+          "Supporto elaborazione immagini",
+          "Redesign header e sidebar"
+        ]
+      },
+      {
+        "version": "v0.1.0",
+        "date": "01 marzo 2026",
+        "tag": "gray",
+        "title": "Pre-release",
+        "changes": [
+          "Avvio progetto",
+          "Sviluppo funzionalità base",
+          "Integrazione Ollama",
+          "Integrazione personaggio 3D"
+        ]
+      }
     ]
   },
   "profile": {
@@ -392,28 +633,110 @@
     "lastUpdated": "Ultimo aggiornamento: marzo 2026",
     "status": "Stato: marzo 2025",
     "noticeSections": [
-      { "title": "Fornitore", "paragraphs": ["Progetto Wieland AI", "c/o Wieland AI, Wielandstrasse 11, 39042 Bressanone (BZ), Italia"] },
+      {
+        "title": "Fornitore",
+        "paragraphs": [
+          "Progetto Wieland AI",
+          "c/o Wieland AI, Wielandstrasse 11, 39042 Bressanone (BZ), Italia"
+        ]
+      },
       { "title": "Contatti", "paragraphs": ["Email: kontakt@wieland.ai"] },
-      { "title": "Responsabile contenuti", "paragraphs": ["Wieland, Wielandstrasse 11, 39042 Bressanone (BZ), Italia"] },
-      { "title": "Disclaimer", "paragraphs": ["I contenuti sono creati con cura ma senza garanzia di completezza/attualità."] },
-      { "title": "Risoluzione controversie online", "paragraphs": ["Piattaforma ODR UE: https://ec.europa.eu/consumers/odr/", "Non siamo obbligati né disponibili alla procedura di conciliazione."] }
+      {
+        "title": "Responsabile contenuti",
+        "paragraphs": [
+          "Wieland, Wielandstrasse 11, 39042 Bressanone (BZ), Italia"
+        ]
+      },
+      {
+        "title": "Disclaimer",
+        "paragraphs": [
+          "I contenuti sono creati con cura ma senza garanzia di completezza/attualità."
+        ]
+      },
+      {
+        "title": "Risoluzione controversie online",
+        "paragraphs": [
+          "Piattaforma ODR UE: https://ec.europa.eu/consumers/odr/",
+          "Non siamo obbligati né disponibili alla procedura di conciliazione."
+        ]
+      }
     ],
     "privacySections": [
-      { "title": "1. Panoramica", "paragraphs": ["Wieland AI è principalmente locale. Di default nessun dato lascia il dispositivo."] },
-      { "title": "2. Dati raccolti", "list": ["App locale: chat e account salvati localmente.", "Sito web: log server standard."] },
-      { "title": "3. Cookie", "paragraphs": ["Non usiamo cookie di marketing o tracking."] },
-      { "title": "4. Condivisione dati", "paragraphs": ["I tuoi dati non vengono venduti né condivisi a fini pubblicitari."] },
-      { "title": "5. Diritti", "list": ["Accesso (Art. 15 GDPR)", "Rettifica (Art. 16 GDPR)", "Cancellazione (Art. 17 GDPR)", "Opposizione (Art. 21 GDPR)"] },
-      { "title": "6. Contatto", "paragraphs": ["Per domande privacy: kontakt@wieland.ai"] }
+      {
+        "title": "1. Panoramica",
+        "paragraphs": [
+          "Wieland AI è principalmente locale. Di default nessun dato lascia il dispositivo."
+        ]
+      },
+      {
+        "title": "2. Dati raccolti",
+        "list": [
+          "App locale: chat e account salvati localmente.",
+          "Sito web: log server standard."
+        ]
+      },
+      {
+        "title": "3. Cookie",
+        "paragraphs": ["Non usiamo cookie di marketing o tracking."]
+      },
+      {
+        "title": "4. Condivisione dati",
+        "paragraphs": [
+          "I tuoi dati non vengono venduti né condivisi a fini pubblicitari."
+        ]
+      },
+      {
+        "title": "5. Diritti",
+        "list": [
+          "Accesso (Art. 15 GDPR)",
+          "Rettifica (Art. 16 GDPR)",
+          "Cancellazione (Art. 17 GDPR)",
+          "Opposizione (Art. 21 GDPR)"
+        ]
+      },
+      {
+        "title": "6. Contatto",
+        "paragraphs": ["Per domande privacy: kontakt@wieland.ai"]
+      }
     ],
     "termsSections": [
-      { "title": "1. Ambito", "paragraphs": ["Questi termini valgono per software e sito Wieland AI."] },
-      { "title": "2. Diritti d'uso", "paragraphs": ["Wieland AI è distribuito con licenza MIT."] },
-      { "title": "3. Uso vietato", "list": ["Uso illegale", "Abuso dei servizi online", "Bypass della sicurezza", "Condivisione credenziali admin"] },
-      { "title": "4. Limitazione di responsabilità", "paragraphs": ["Wieland AI è fornito as-is senza garanzie."] },
-      { "title": "5. Contenuti AI", "paragraphs": ["I contenuti AI possono essere imprecisi e non sono consulenza professionale."] },
-      { "title": "6. Modifiche", "paragraphs": ["I termini possono essere aggiornati e pubblicati su sito/changelog."] },
-      { "title": "7. Legge applicabile", "paragraphs": ["Si applica la legge della Repubblica Italiana."] }
+      {
+        "title": "1. Ambito",
+        "paragraphs": ["Questi termini valgono per software e sito Wieland AI."]
+      },
+      {
+        "title": "2. Diritti d'uso",
+        "paragraphs": ["Wieland AI è distribuito con licenza MIT."]
+      },
+      {
+        "title": "3. Uso vietato",
+        "list": [
+          "Uso illegale",
+          "Abuso dei servizi online",
+          "Bypass della sicurezza",
+          "Condivisione credenziali admin"
+        ]
+      },
+      {
+        "title": "4. Limitazione di responsabilità",
+        "paragraphs": ["Wieland AI è fornito as-is senza garanzie."]
+      },
+      {
+        "title": "5. Contenuti AI",
+        "paragraphs": [
+          "I contenuti AI possono essere imprecisi e non sono consulenza professionale."
+        ]
+      },
+      {
+        "title": "6. Modifiche",
+        "paragraphs": [
+          "I termini possono essere aggiornati e pubblicati su sito/changelog."
+        ]
+      },
+      {
+        "title": "7. Legge applicabile",
+        "paragraphs": ["Si applica la legge della Repubblica Italiana."]
+      }
     ]
   },
   "notFound": { "title": "404 - Pagina non trovata" },

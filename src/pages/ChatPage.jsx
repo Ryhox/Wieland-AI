@@ -1,12 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import Starfield from '../components/Starfield';
-import Scene3D from '../components/Scene3D';
-import ChatInterface from '../components/ChatInterface';
-import LoadingAnimation from '../components/LoadingAnimation';
-import Header from '../components/Header';
-import { useAuth } from '../context/AuthContext';
-import '../styles/HomePage.css';
+import { useState, useRef, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import Starfield from "../components/Starfield";
+import Scene3D from "../components/Scene3D";
+import ChatInterface from "../components/ChatInterface";
+import LoadingAnimation from "../components/LoadingAnimation";
+import Header from "../components/Header";
+import { useAuth } from "../context/AuthContext";
+import "../styles/HomePage.css";
 
 function ChatPage() {
   const { chatId } = useParams();
@@ -22,21 +22,23 @@ function ChatPage() {
     if (chatId) {
       const findChatFile = async () => {
         try {
-          const response = await authFetch('/api/history');
+          const response = await authFetch("/api/history");
           if (response.ok) {
             const chats = await response.json();
-            const matchingChat = chats.find(chat =>
-              chat.filename.includes(chatId) || chat.filename === `chat_${chatId}.json`
+            const matchingChat = chats.find(
+              (chat) =>
+                chat.filename.includes(chatId) ||
+                chat.filename === `chat_${chatId}.json`,
             );
             if (matchingChat) {
               setActualFilename(matchingChat.filename);
             } else {
-              console.log('No chat found with UUID:', chatId);
+              console.log("No chat found with UUID:", chatId);
               setActualFilename(null);
             }
           }
         } catch (error) {
-          console.error('Error finding chat file:', error);
+          console.error("Error finding chat file:", error);
           setActualFilename(null);
         }
       };
@@ -65,15 +67,25 @@ function ChatPage() {
       />
       <Starfield />
       <div className="home-ambient-glow" />
-      <Scene3D hasMessages={hasMessages} onReady={() => { setIs3DReady(true); isInitialLoadRef.current = false; }} />
+      <Scene3D
+        hasMessages={hasMessages}
+        onReady={() => {
+          setIs3DReady(true);
+          isInitialLoadRef.current = false;
+        }}
+      />
       <ChatInterface
         onMessagesChange={setHasMessages}
         chatId={actualFilename}
         sidebarOpen={sidebarOpen}
         onSidebarChange={setSidebarOpen}
         inputOffset={hasMessages ? 50 : 425}
-        onNewChatRef={(fn) => { newChatRef.current = fn; }}
-        onLoadChatRef={(fn) => { loadChatRef.current = fn; }}
+        onNewChatRef={(fn) => {
+          newChatRef.current = fn;
+        }}
+        onLoadChatRef={(fn) => {
+          loadChatRef.current = fn;
+        }}
       />
     </div>
   );

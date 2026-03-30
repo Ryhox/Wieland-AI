@@ -3,7 +3,11 @@ import { initReactI18next } from "react-i18next";
 import de from "./locales/de.json";
 import en from "./locales/en.json";
 import it from "./locales/it.json";
-import { DEFAULT_LANG, getPreferredLang, persistLang } from "./utils/i18nRouting";
+import {
+  DEFAULT_LANG,
+  getPreferredLang,
+  persistLang,
+} from "./utils/i18nRouting";
 
 const resources = {
   de: { translation: de },

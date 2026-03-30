@@ -1,28 +1,43 @@
-import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { makeCloudTex } from '../utils/cloudTexture';
+import { useEffect, useRef } from "react";
+import * as THREE from "three";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { makeCloudTex } from "../utils/cloudTexture";
 
 const PLANET_ROTATION_X = -0.3;
 const PLANET_ROTATION_Y = 1.2;
 const PLANET_ROTATION_Z = 0.0;
 
-
 function makeSpring(stiffness = 100, damping = 16) {
   return {
-    pos: 0, vel: 0, target: 0, stiffness, damping,
+    pos: 0,
+    vel: 0,
+    target: 0,
+    stiffness,
+    damping,
     step(dt) {
-      const f = -this.stiffness * (this.pos - this.target) - this.damping * this.vel;
+      const f =
+        -this.stiffness * (this.pos - this.target) - this.damping * this.vel;
       this.vel += f * dt;
       this.pos += this.vel * dt;
       return this.pos;
     },
-    reset(v) { this.pos = v; this.vel = 0; this.target = v; }
+    reset(v) {
+      this.pos = v;
+      this.vel = 0;
+      this.target = v;
+    },
   };
 }
 
-export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', sceneProgress = 0, sceneSpin = 0, hidePlanet = false }) {
+export default function Scene3D({
+  hasMessages,
+  onReady,
+  sceneMode = "default",
+  sceneProgress = 0,
+  sceneSpin = 0,
+  hidePlanet = false,
+}) {
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
@@ -54,11 +69,20 @@ export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', s
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 800);
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      800,
+    );
     camera.position.set(0, 3.2, 7.8);
     cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, canvas, alpha: true });
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      canvas,
+      alpha: true,
+    });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
@@ -86,7 +110,11 @@ export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', s
 
     scene.add(new THREE.AmbientLight(0x404060, 2.2));
 
-    const planetGlow = new THREE.PointLight(0x88aaff, hidePlanet ? 1.0 : 2.8, 15);
+    const planetGlow = new THREE.PointLight(
+      0x88aaff,
+      hidePlanet ? 1.0 : 2.8,
+      15,
+    );
     planetGlow.position.set(0, 0.8, 0);
     scene.add(planetGlow);
 
@@ -105,11 +133,20 @@ export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', s
       particleColors[i * 3 + 1] = 0.7 + Math.random() * 0.5;
       particleColors[i * 3 + 2] = 1.0;
     }
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-    particleGeo.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+    particleGeo.setAttribute(
+      "position",
+      new THREE.BufferAttribute(particlePositions, 3),
+    );
+    particleGeo.setAttribute(
+      "color",
+      new THREE.BufferAttribute(particleColors, 3),
+    );
     const particleMat = new THREE.PointsMaterial({
-      size: 0.08, vertexColors: true, transparent: true,
-      opacity: 0.4, blending: THREE.AdditiveBlending,
+      size: 0.08,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.4,
+      blending: THREE.AdditiveBlending,
     });
     const particles = new THREE.Points(particleGeo, particleMat);
     scene.add(particles);
@@ -133,55 +170,75 @@ export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', s
     let cloudMesh = null;
 
     if (!hidePlanet) {
-      const planetTex = texLoader.load('/Texture_Planet.png');
+      const planetTex = texLoader.load("/Texture_Planet.png");
       planetTex.encoding = THREE.sRGBEncoding;
       planetTex.wrapS = THREE.RepeatWrapping;
       planetTex.wrapT = THREE.RepeatWrapping;
 
-      fbxLoader.load('/Planet.fbx', (fbx) => {
-        const box = new THREE.Box3().setFromObject(fbx);
-        const size = new THREE.Vector3();
-        box.getSize(size);
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const scale = (ER * 2) / maxDim;
-        fbx.scale.setScalar(scale);
-        const center = new THREE.Vector3();
-        box.getCenter(center);
-        fbx.position.sub(center.multiplyScalar(scale));
-        fbx.traverse((child) => {
-          if (child.isMesh) {
-            child.castShadow = child.receiveShadow = true;
-            child.material = new THREE.MeshStandardMaterial({
-              map: planetTex, roughness: 0.25, metalness: 0.6,
-              emissive: new THREE.Color(0x112233), emissiveIntensity: 0.5, color: 0xffffff,
-            });
-          }
-        });
-        const pivot = new THREE.Group();
-        pivot.rotation.x = PLANET_ROTATION_X;
-        pivot.rotation.y = PLANET_ROTATION_Y;
-        pivot.rotation.z = PLANET_ROTATION_Z;
-        pivot.add(fbx);
-        planetGroup.add(pivot);
-      }, undefined, (err) => console.error('Planet FBX error:', err));
+      fbxLoader.load(
+        "/Planet.fbx",
+        (fbx) => {
+          const box = new THREE.Box3().setFromObject(fbx);
+          const size = new THREE.Vector3();
+          box.getSize(size);
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const scale = (ER * 2) / maxDim;
+          fbx.scale.setScalar(scale);
+          const center = new THREE.Vector3();
+          box.getCenter(center);
+          fbx.position.sub(center.multiplyScalar(scale));
+          fbx.traverse((child) => {
+            if (child.isMesh) {
+              child.castShadow = child.receiveShadow = true;
+              child.material = new THREE.MeshStandardMaterial({
+                map: planetTex,
+                roughness: 0.25,
+                metalness: 0.6,
+                emissive: new THREE.Color(0x112233),
+                emissiveIntensity: 0.5,
+                color: 0xffffff,
+              });
+            }
+          });
+          const pivot = new THREE.Group();
+          pivot.rotation.x = PLANET_ROTATION_X;
+          pivot.rotation.y = PLANET_ROTATION_Y;
+          pivot.rotation.z = PLANET_ROTATION_Z;
+          pivot.add(fbx);
+          planetGroup.add(pivot);
+        },
+        undefined,
+        (err) => console.error("Planet FBX error:", err),
+      );
 
       cloudMesh = new THREE.Mesh(
         new THREE.SphereGeometry(ER + 0.04, 64, 64),
         new THREE.MeshStandardMaterial({
-          map: makeCloudTex(), transparent: true, opacity: 0.5, roughness: 0.4,
-          emissive: new THREE.Color(0x88aaff), emissiveIntensity: 0.3,
-          depthWrite: false, blending: THREE.AdditiveBlending,
-        })
+          map: makeCloudTex(),
+          transparent: true,
+          opacity: 0.5,
+          roughness: 0.4,
+          emissive: new THREE.Color(0x88aaff),
+          emissiveIntensity: 0.3,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
       );
       planetGroup.add(cloudMesh);
 
-      planetGroup.add(new THREE.Mesh(
-        new THREE.SphereGeometry(ER + 0.15, 48, 48),
-        new THREE.MeshStandardMaterial({
-          color: 0x1500ff, transparent: true, opacity: 0.10, side: THREE.BackSide,
-          emissive: new THREE.Color(0x0013e3), emissiveIntensity: 0.3,
-        })
-      ));
+      planetGroup.add(
+        new THREE.Mesh(
+          new THREE.SphereGeometry(ER + 0.15, 48, 48),
+          new THREE.MeshStandardMaterial({
+            color: 0x1500ff,
+            transparent: true,
+            opacity: 0.1,
+            side: THREE.BackSide,
+            emissive: new THREE.Color(0x0013e3),
+            emissiveIntensity: 0.3,
+          }),
+        ),
+      );
     }
 
     const NPART = 180;
@@ -198,32 +255,64 @@ export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', s
       pH[i] = (Math.random() - 0.5) * 0.8;
       pTilt[i] = (Math.random() - 0.5) * 1.2;
       const cv = Math.random();
-      if (cv < 0.33) { pColor[i * 3] = 0.9; pColor[i * 3 + 1] = 0.8; pColor[i * 3 + 2] = 1.0; }
-      else if (cv < 0.66) { pColor[i * 3] = 0.7; pColor[i * 3 + 1] = 1.0; pColor[i * 3 + 2] = 0.9; }
-      else { pColor[i * 3] = 1.0; pColor[i * 3 + 1] = 0.9; pColor[i * 3 + 2] = 0.7; }
+      if (cv < 0.33) {
+        pColor[i * 3] = 0.9;
+        pColor[i * 3 + 1] = 0.8;
+        pColor[i * 3 + 2] = 1.0;
+      } else if (cv < 0.66) {
+        pColor[i * 3] = 0.7;
+        pColor[i * 3 + 1] = 1.0;
+        pColor[i * 3 + 2] = 0.9;
+      } else {
+        pColor[i * 3] = 1.0;
+        pColor[i * 3 + 1] = 0.9;
+        pColor[i * 3 + 2] = 0.7;
+      }
     }
     const pGeo = new THREE.BufferGeometry();
-    pGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NPART * 3), 3));
-    pGeo.setAttribute('color', new THREE.BufferAttribute(pColor, 3));
+    pGeo.setAttribute(
+      "position",
+      new THREE.BufferAttribute(new Float32Array(NPART * 3), 3),
+    );
+    pGeo.setAttribute("color", new THREE.BufferAttribute(pColor, 3));
     const pMat = new THREE.PointsMaterial({
-      size: 0.022, vertexColors: true, transparent: true,
-      opacity: 0.8, sizeAttenuation: true, blending: THREE.AdditiveBlending,
+      size: 0.022,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.8,
+      sizeAttenuation: true,
+      blending: THREE.AdditiveBlending,
     });
     const partMesh = new THREE.Points(pGeo, pMat);
     partMesh.position.copy(planetGroup.position);
     scene.add(partMesh);
     objectsToRotateRef.current.push(partMesh);
 
-    let headBone = null, origHeadQ = null;
-    let curH = 0, curV = 0, curBH = 0, curBV = 0;
+    let headBone = null,
+      origHeadQ = null;
+    let curH = 0,
+      curV = 0,
+      curBH = 0,
+      curBV = 0;
     const bodyLeanBones = [];
-    const SMOOTH = 0.20, BS = 0.1;
+    const SMOOTH = 0.2,
+      BS = 0.1;
     const B_BLEND = { Spine1: 0.28, Chest: 0.16 };
     const DEF_DOWN = (35 * Math.PI) / 180;
     const breathBones = [];
-    const BC = 3.9, BAC = 0.4, BAS = 0.4, BAH = 0.03;
-    const CK = ['chest', 'spine1', 'spine_1', 'spine01', 'upperchest', 'upper_chest'];
-    const SK = ['spine', 'pelvis', 'hips', 'root'];
+    const BC = 3.9,
+      BAC = 0.4,
+      BAS = 0.4,
+      BAH = 0.03;
+    const CK = [
+      "chest",
+      "spine1",
+      "spine_1",
+      "spine01",
+      "upperchest",
+      "upper_chest",
+    ];
+    const SK = ["spine", "pelvis", "hips", "root"];
 
     const ARM_POSE = {
       Shoulderr: { ax: new THREE.Vector3(0, 0, 1), ag: 0.2 },
@@ -236,88 +325,118 @@ export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', s
       Thumbl: { ax: new THREE.Vector3(1, 0, 0), ag: -1.5 },
     };
 
-    const D_MIN = 40, D_MAX = 480;
+    const D_MIN = 40,
+      D_MAX = 480;
     const MH = (25 * Math.PI) / 180;
     const MV = (15 * Math.PI) / 180;
     const DZ = (5 * Math.PI) / 180;
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
-    const mousePx = new THREE.Vector2(window.innerWidth / 2, window.innerHeight / 2);
+    const mousePx = new THREE.Vector2(
+      window.innerWidth / 2,
+      window.innerHeight / 2,
+    );
 
     const mouseMoveHandler = (e) => {
       mousePx.set(e.clientX, e.clientY);
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
     };
-    window.addEventListener('mousemove', mouseMoveHandler);
+    window.addEventListener("mousemove", mouseMoveHandler);
 
-    const astroTex = texLoader.load('/AstronautColor.png');
+    const astroTex = texLoader.load("/AstronautColor.png");
     astroTex.encoding = THREE.sRGBEncoding;
 
-    fbxLoader.load('/character.fbx', (fbx) => {
-      fbx.scale.setScalar(0.026);
-      fbx.position.set(0, charBaseY.current, 0);
-      if (sceneMode === 'about') {
-        fbx.visible = false;
-      }
-
-      fbx.traverse((child) => {
-        if (child.isMesh) {
-          child.castShadow = child.receiveShadow = true;
-          child.material = new THREE.MeshStandardMaterial({
-            map: astroTex, color: 0xffffff,
-            emissive: new THREE.Color(0x222222), emissiveIntensity: 0.05,
-            roughness: 0.2, metalness: 0.6, skinning: !!child.isSkinnedMesh,
-          });
+    fbxLoader.load(
+      "/character.fbx",
+      (fbx) => {
+        fbx.scale.setScalar(0.026);
+        fbx.position.set(0, charBaseY.current, 0);
+        if (sceneMode === "about") {
+          fbx.visible = false;
         }
-        if (child.isBone) {
-          const n = child.name.toLowerCase();
-          if (n.includes('head') && !n.includes('end')) headBone = child;
-          const isC = CK.some(k => n.includes(k));
-          const isS = !isC && SK.some(k => n.includes(k));
-          if (isC || isS) {
-            const isH = n.includes('hip') || n.includes('pelvis') || n.includes('root');
-            breathBones.push({ bone: child, restQ: null, amp: isH ? BAH : isC ? BAC : BAS, hip: isH });
+
+        fbx.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = child.receiveShadow = true;
+            child.material = new THREE.MeshStandardMaterial({
+              map: astroTex,
+              color: 0xffffff,
+              emissive: new THREE.Color(0x222222),
+              emissiveIntensity: 0.05,
+              roughness: 0.2,
+              metalness: 0.6,
+              skinning: !!child.isSkinnedMesh,
+            });
           }
+          if (child.isBone) {
+            const n = child.name.toLowerCase();
+            if (n.includes("head") && !n.includes("end")) headBone = child;
+            const isC = CK.some((k) => n.includes(k));
+            const isS = !isC && SK.some((k) => n.includes(k));
+            if (isC || isS) {
+              const isH =
+                n.includes("hip") || n.includes("pelvis") || n.includes("root");
+              breathBones.push({
+                bone: child,
+                restQ: null,
+                amp: isH ? BAH : isC ? BAC : BAS,
+                hip: isH,
+              });
+            }
+          }
+        });
+
+        scene.add(fbx);
+        characterRef.current = fbx;
+        if (sceneMode !== "about") {
+          objectsToRotateRef.current.push(fbx);
         }
-      });
 
-      scene.add(fbx);
-      characterRef.current = fbx;
-      if (sceneMode !== 'about') {
-        objectsToRotateRef.current.push(fbx);
-      }
+        fbx.traverse((child) => {
+          if (!child.isBone) return;
+          const p = ARM_POSE[child.name];
+          if (p)
+            child.quaternion.premultiply(
+              new THREE.Quaternion().setFromAxisAngle(p.ax, p.ag),
+            );
+          if (child.name === "LowerArml" || child.name === "LowerArmr") {
+            waveBoneRef.current = child;
+          }
+        });
 
-      fbx.traverse((child) => {
-        if (!child.isBone) return;
-        const p = ARM_POSE[child.name];
-        if (p) child.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(p.ax, p.ag));
-        if (child.name === 'LowerArml' || child.name === 'LowerArmr') {
-          waveBoneRef.current = child;
+        if (headBone) {
+          origHeadQ = headBone.quaternion.clone();
+          origHeadQ = new THREE.Quaternion()
+            .setFromAxisAngle(new THREE.Vector3(1, 0, 0), DEF_DOWN)
+            .multiply(origHeadQ);
         }
-      });
+        if (waveBoneRef.current) {
+          waveRestQuatRef.current = waveBoneRef.current.quaternion.clone();
+        }
+        for (const e of breathBones) e.restQ = e.bone.quaternion.clone();
+        fbx.traverse((child) => {
+          if (!child.isBone) return;
+          const bl = B_BLEND[child.name];
+          if (bl !== undefined)
+            bodyLeanBones.push({
+              bone: child,
+              restQ: child.quaternion.clone(),
+              bl,
+            });
+        });
 
-      if (headBone) {
-        origHeadQ = headBone.quaternion.clone();
-        origHeadQ = new THREE.Quaternion()
-          .setFromAxisAngle(new THREE.Vector3(1, 0, 0), DEF_DOWN)
-          .multiply(origHeadQ);
-      }
-      if (waveBoneRef.current) {
-        waveRestQuatRef.current = waveBoneRef.current.quaternion.clone();
-      }
-      for (const e of breathBones) e.restQ = e.bone.quaternion.clone();
-      fbx.traverse((child) => {
-        if (!child.isBone) return;
-        const bl = B_BLEND[child.name];
-        if (bl !== undefined) bodyLeanBones.push({ bone: child, restQ: child.quaternion.clone(), bl });
-      });
+        charSpringX.current.reset(0);
+        charSpringY.current.reset(0);
 
-      charSpringX.current.reset(0);
-      charSpringY.current.reset(0);
-
-      if (!isReadyRef.current) { isReadyRef.current = true; onReady?.(); }
-    }, undefined, (err) => console.error('FBX:', err));
+        if (!isReadyRef.current) {
+          isReadyRef.current = true;
+          onReady?.();
+        }
+      },
+      undefined,
+      (err) => console.error("FBX:", err),
+    );
 
     camSpringX.current.reset(0);
     rotSpring.current.reset(0);
@@ -327,10 +446,12 @@ export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', s
       _p.copy(pos).project(camera);
       return new THREE.Vector2(
         (_p.x * 0.5 + 0.5) * window.innerWidth,
-        (1 - (_p.y * 0.5 + 0.5)) * window.innerHeight
+        (1 - (_p.y * 0.5 + 0.5)) * window.innerHeight,
       );
     }
-    function breathCurve(t) { return Math.sin(t) + 0.18 * Math.sin(2 * t); }
+    function breathCurve(t) {
+      return Math.sin(t) + 0.18 * Math.sin(2 * t);
+    }
 
     const clock = new THREE.Clock();
     let prevTime = 0;
@@ -346,13 +467,15 @@ export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', s
         cloudMesh.rotation.x = el * 0.02;
       }
       particles.rotation.y += 0.001;
-      planetGlow.intensity = (hidePlanet ? 0.8 : 2.4) + 0.25 * Math.sin(el * 0.8);
+      planetGlow.intensity =
+        (hidePlanet ? 0.8 : 2.4) + 0.25 * Math.sin(el * 0.8);
 
       const pp = pGeo.attributes.position;
       for (let i = 0; i < NPART; i++) {
         const a = pPh[i] + el * pSpd[i];
         pp.array[i * 3] = Math.cos(a) * pRad[i];
-        pp.array[i * 3 + 1] = Math.sin(a) * Math.sin(pTilt[i]) * pRad[i] + pH[i];
+        pp.array[i * 3 + 1] =
+          Math.sin(a) * Math.sin(pTilt[i]) * pRad[i] + pH[i];
         pp.array[i * 3 + 2] = Math.sin(a) * Math.cos(pTilt[i]) * pRad[i];
       }
       pp.needsUpdate = true;
@@ -363,19 +486,27 @@ export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', s
         for (const e of breathBones) {
           if (!e.restQ) continue;
           const ang = e.hip ? -bv * e.amp : bv * e.amp;
-          e.bone.quaternion.copy(e.restQ).premultiply(
-            new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), ang)
-          );
+          e.bone.quaternion
+            .copy(e.restQ)
+            .premultiply(
+              new THREE.Quaternion().setFromAxisAngle(
+                new THREE.Vector3(1, 0, 0),
+                ang,
+              ),
+            );
         }
       }
 
       scene.updateMatrixWorld();
 
-      if (sceneMode !== 'about' && headBone && origHeadQ) {
+      if (sceneMode !== "about" && headBone && origHeadQ) {
         const hp = headBone.getWorldPosition(new THREE.Vector3());
         const hs = w2s(hp);
         const dist = mousePx.distanceTo(hs);
-        const gf = Math.pow(Math.max(0, Math.min(1, (dist - D_MIN) / (D_MAX - D_MIN))), 0.65);
+        const gf = Math.pow(
+          Math.max(0, Math.min(1, (dist - D_MIN) / (D_MAX - D_MIN))),
+          0.65,
+        );
         const cd = camera.getWorldDirection(new THREE.Vector3());
         raycaster.setFromCamera(mouse, camera);
         const dn = raycaster.ray.direction.dot(cd);
@@ -383,24 +514,45 @@ export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', s
           const t2 = hp.clone().sub(raycaster.ray.origin).dot(cd) / dn;
           if (t2 >= 0) {
             const tp = raycaster.ray.at(t2, new THREE.Vector3());
-            const dir = new THREE.Vector3().subVectors(tp, hp).normalize().negate();
+            const dir = new THREE.Vector3()
+              .subVectors(tp, hp)
+              .normalize()
+              .negate();
             const fl = Math.sqrt(dir.x ** 2 + dir.z ** 2);
             const ha = Math.atan2(dir.x, dir.z) * Math.min(1, (fl / 0.35) ** 2);
             const va = Math.atan2(-dir.y, fl);
             const rf = 1 - (currentRotationRef.current / (Math.PI / 2)) * 0.6;
-            const tH = Math.abs(ha) > DZ ? Math.sign(ha) * Math.min(Math.abs(ha), MH * rf) * gf : 0;
-            const tV = Math.abs(va) > DZ ? Math.sign(va) * Math.min(Math.abs(va), MV * rf) * gf : 0;
+            const tH =
+              Math.abs(ha) > DZ
+                ? Math.sign(ha) * Math.min(Math.abs(ha), MH * rf) * gf
+                : 0;
+            const tV =
+              Math.abs(va) > DZ
+                ? Math.sign(va) * Math.min(Math.abs(va), MV * rf) * gf
+                : 0;
             curH += (tH - curH) * SMOOTH;
             curV += (tV - curV) * SMOOTH;
             curBH += (curH - curBH) * BS;
             curBV += (curV - curBV) * BS;
             for (const e of bodyLeanBones) {
-              const lH = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -curBH * e.bl);
-              const lV = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -curBV * e.bl * 0.5);
+              const lH = new THREE.Quaternion().setFromAxisAngle(
+                new THREE.Vector3(0, 1, 0),
+                -curBH * e.bl,
+              );
+              const lV = new THREE.Quaternion().setFromAxisAngle(
+                new THREE.Vector3(1, 0, 0),
+                -curBV * e.bl * 0.5,
+              );
               e.bone.quaternion.copy(e.restQ).premultiply(lH.multiply(lV));
             }
-            const rH = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -curH);
-            const rV = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -curV);
+            const rH = new THREE.Quaternion().setFromAxisAngle(
+              new THREE.Vector3(0, 1, 0),
+              -curH,
+            );
+            const rV = new THREE.Quaternion().setFromAxisAngle(
+              new THREE.Vector3(1, 0, 0),
+              -curV,
+            );
             headBone.quaternion.copy(rH.multiply(rV).multiply(origHeadQ));
           }
         }
@@ -408,19 +560,20 @@ export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', s
 
       if (cameraRef.current) {
         cameraRef.current.position.x = camSpringX.current.step(dt);
-        if (sceneMode === 'about') {
+        if (sceneMode === "about") {
           const p = sceneProgressRef.current;
-          cameraRef.current.position.y = 3.2 + Math.sin(p * Math.PI * 1.1) * 0.1;
+          cameraRef.current.position.y =
+            3.2 + Math.sin(p * Math.PI * 1.1) * 0.1;
           cameraRef.current.position.z = 8.1 - p * 0.18;
           cameraRef.current.lookAt(0, -0.55 + p * 0.12, 0);
         }
       }
 
-
       if (characterRef.current) {
-        if (sceneMode !== 'about') {
+        if (sceneMode !== "about") {
           characterRef.current.position.x = charSpringX.current.step(dt);
-          characterRef.current.position.y = charBaseY.current + charSpringY.current.step(dt);
+          characterRef.current.position.y =
+            charBaseY.current + charSpringY.current.step(dt);
         }
       }
 
@@ -449,11 +602,11 @@ export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', s
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener('mousemove', mouseMoveHandler);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("mousemove", mouseMoveHandler);
+      window.removeEventListener("resize", handleResize);
       renderer.dispose();
     };
   }, []);
@@ -475,7 +628,7 @@ export default function Scene3D({ hasMessages, onReady, sceneMode = 'default', s
     sceneProgressRef.current = sceneProgress;
     sceneSpinRef.current = sceneSpin;
 
-    if (sceneMode !== 'about') return;
+    if (sceneMode !== "about") return;
 
     camSpringX.current.target = 0;
     rotSpring.current.target = sceneSpinRef.current * Math.PI;

@@ -40,7 +40,7 @@ a {
   width: 220px;
   flex-shrink: 0;
   background: rgba(10, 10, 15, 0.95);
-  border-right: 1px solid rgba(255, 255, 255, 0.10);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   display: flex;
@@ -52,7 +52,7 @@ a {
   align-items: center;
   gap: 12px;
   padding: 20px 18px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .db-brand-icon {
@@ -83,7 +83,7 @@ a {
   font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   color: rgba(255, 255, 255, 0.45);
 }
 
@@ -104,7 +104,9 @@ a {
   font-size: 13px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.45);
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   letter-spacing: 0.3px;
   border: 1px solid transparent;
 }
@@ -133,7 +135,7 @@ a {
 
 .db-sidebar-footer {
   padding: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .db-current-user {
@@ -157,7 +159,7 @@ a {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.45);
   text-transform: uppercase;
-  letter-spacing: .1em;
+  letter-spacing: 0.1em;
 }
 
 .db-avatar {
@@ -194,7 +196,7 @@ a {
   justify-content: space-between;
   padding: 0 24px;
   height: 60px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(10, 10, 15, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -248,7 +250,10 @@ a {
   font-size: 13px;
   padding: 7px 12px 7px 30px;
   width: 200px;
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .db-search:focus {
@@ -274,7 +279,10 @@ a {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.3px;
-  transition: background 0.2s, box-shadow 0.2s, scale 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s,
+    scale 0.2s;
 }
 
 .db-btn-primary:hover {
@@ -301,7 +309,9 @@ a {
   padding: 7px 14px;
   font-size: 13px;
   font-weight: 500;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .db-btn-ghost:hover {
@@ -317,7 +327,9 @@ a {
   padding: 7px 18px;
   font-size: 13px;
   font-weight: 600;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .db-btn-danger:hover {
@@ -371,7 +383,7 @@ a {
 
 .db-stat-card {
   background: rgba(82, 82, 82, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 18px 20px;
   display: flex;
@@ -382,7 +394,9 @@ a {
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.02);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   animation: dbSlideIn 0.3s ease-out;
 }
 
@@ -402,7 +416,7 @@ a {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.45);
   text-transform: uppercase;
-  letter-spacing: .1em;
+  letter-spacing: 0.1em;
 }
 
 .db-stat-sub {
@@ -431,7 +445,7 @@ a {
 
 .db-panel {
   background: rgba(151, 151, 151, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
@@ -444,14 +458,14 @@ a {
   align-items: center;
   justify-content: space-between;
   padding: 13px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .db-panel-title {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .1em;
+  letter-spacing: 0.1em;
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -576,7 +590,7 @@ a {
 
 .db-table-section {
   background: rgba(151, 151, 151, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
@@ -603,7 +617,7 @@ a {
   text-align: left;
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   color: rgba(255, 255, 255, 0.45);
   font-weight: 700;
   white-space: nowrap;
@@ -611,7 +625,7 @@ a {
 }
 
 .db-table tbody tr {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   transition: background 0.1s;
 }
 
@@ -653,7 +667,7 @@ a {
 .db-chat-filename {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.22);
-  font-family: 'Monaco', 'Courier New', monospace;
+  font-family: "Monaco", "Courier New", monospace;
 }
 
 .db-msg-count-badge {
@@ -672,22 +686,22 @@ a {
   padding: 2px 8px;
   border-radius: 100px;
   font-weight: 700;
-  letter-spacing: .06em;
+  letter-spacing: 0.06em;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.45);
   text-transform: uppercase;
 }
 
 .db-plan-badge.pro {
-  background: rgba(167, 139, 250, .1);
-  border-color: rgba(167, 139, 250, .22);
+  background: rgba(167, 139, 250, 0.1);
+  border-color: rgba(167, 139, 250, 0.22);
   color: #a78bfa;
 }
 
 .db-plan-badge.admin {
-  background: rgba(251, 191, 36, .1);
-  border-color: rgba(251, 191, 36, .2);
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.2);
   color: #fbbf24;
 }
 
@@ -742,7 +756,7 @@ a {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.01);
 }
 
@@ -795,7 +809,7 @@ a {
 
 .db-chart-card {
   background: rgba(151, 151, 151, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
@@ -841,7 +855,7 @@ a {
 
 .db-activity-total-card {
   background: rgba(151, 151, 151, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   backdrop-filter: blur(5px);
   padding: 16px 18px;
@@ -861,7 +875,7 @@ a {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.45);
   text-transform: uppercase;
-  letter-spacing: .1em;
+  letter-spacing: 0.1em;
 }
 
 .db-modal-backdrop {
@@ -895,7 +909,9 @@ a {
   border-radius: 20px;
   width: 420px;
   max-width: 95vw;
-  box-shadow: 0 0 0 1px rgba(175, 175, 175, 0.07), 0 32px 80px rgba(0, 0, 0, 0.65);
+  box-shadow:
+    0 0 0 1px rgba(175, 175, 175, 0.07),
+    0 32px 80px rgba(0, 0, 0, 0.65);
   animation: cardIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   overflow: hidden;
 }
@@ -921,7 +937,7 @@ a {
   align-items: center;
   justify-content: space-between;
   padding: 18px 22px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .db-modal-title {
@@ -940,7 +956,10 @@ a {
   font-size: 15px;
   display: grid;
   place-items: center;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
 }
 
 .db-modal-close:hover {
@@ -968,7 +987,6 @@ a {
 }
 
 @keyframes errorShake {
-
   0%,
   100% {
     transform: translateX(0);
@@ -990,7 +1008,7 @@ a {
   font-size: 11.5px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: .4px;
+  letter-spacing: 0.4px;
   color: rgba(255, 255, 255, 0.45);
 }
 
@@ -1002,7 +1020,10 @@ a {
   font-size: 14px;
   padding: 10px 13px;
   width: 100%;
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .db-form-input:focus {
@@ -1045,14 +1066,16 @@ a {
   justify-content: flex-end;
   gap: 8px;
   padding: 14px 22px 18px;
-  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .db-skeleton {
-  background: linear-gradient(90deg,
-      rgba(255, 255, 255, 0.04) 25%,
-      rgba(255, 255, 255, 0.08) 50%,
-      rgba(255, 255, 255, 0.04) 75%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
   background-size: 200% 100%;
   animation: dbShimmer 1.4s infinite;
   border-radius: 8px;
@@ -1101,7 +1124,9 @@ a {
   color: rgba(255, 255, 255, 0.45);
   font-size: 12px;
   font-weight: 500;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   text-decoration: none;
 }
 
@@ -1132,7 +1157,9 @@ a {
   color: rgba(255, 255, 255, 0.6);
   margin-top: 6px;
   opacity: 0;
-  transition: opacity 0.15s, transform 0.15s;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
   display: flex;
   align-items: center;
 }
@@ -1183,7 +1210,10 @@ a {
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 4px;
-  transition: background 0.12s, color 0.12s, gap 0.15s;
+  transition:
+    background 0.12s,
+    color 0.12s,
+    gap 0.15s;
   opacity: 0.8;
 }
 
@@ -1202,7 +1232,9 @@ a {
   cursor: pointer;
   padding: 1px 4px;
   border-radius: 4px;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
 
 .db-mini-link:hover {
@@ -1271,7 +1303,9 @@ a {
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   white-space: nowrap;
 }
 
@@ -1389,7 +1423,7 @@ a {
 
 .db-cv-message.ai .db-cv-bubble {
   background: rgba(151, 151, 151, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff;
 }
 
@@ -1397,7 +1431,7 @@ a {
   background: rgba(0, 0, 0, 0.25);
   padding: 1px 5px;
   border-radius: 4px;
-  font-family: 'Monaco', 'Courier New', monospace;
+  font-family: "Monaco", "Courier New", monospace;
   color: #ffdd99;
   font-size: 11px;
 }
@@ -1451,7 +1485,9 @@ a {
   font-size: 13px;
   font-weight: 500;
   text-decoration: none;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   margin-bottom: 4px;
   white-space: nowrap;
 }
@@ -1471,7 +1507,7 @@ a {
   font-size: 14px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.45);
-  letter-spacing: .4px;
+  letter-spacing: 0.4px;
 }
 
 .db-main-area {

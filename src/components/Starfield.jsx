@@ -1,13 +1,13 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
-export default function Starfield({ mode = 'twinkle' }) {
+export default function Starfield({ mode = "twinkle" }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
     const c = canvasRef.current;
     if (!c) return;
 
-    const ctx = c.getContext('2d');
+    const ctx = c.getContext("2d");
     let W, H, stars;
 
     function resize() {
@@ -42,21 +42,22 @@ export default function Starfield({ mode = 'twinkle' }) {
     }
 
     function build() {
-      stars = mode === 'orbit-center' ? buildOrbitCenter() : buildTwinkle();
+      stars = mode === "orbit-center" ? buildOrbitCenter() : buildTwinkle();
     }
 
     function draw() {
       ctx.clearRect(0, 0, W, H);
       const now = performance.now() / 1000;
 
-      if (mode === 'orbit-center') {
+      if (mode === "orbit-center") {
         const cx = W / 2;
         const cy = H / 2;
         for (const s of stars) {
           const angle = s.a + now * s.v;
           const x = cx + Math.cos(angle) * s.d;
           const y = cy + Math.sin(angle) * s.d * 0.72;
-          const alpha = s.o * (0.45 + 0.55 * Math.sin(now * (Math.abs(s.v) + 0.35) + s.t));
+          const alpha =
+            s.o * (0.45 + 0.55 * Math.sin(now * (Math.abs(s.v) + 0.35) + s.t));
           ctx.beginPath();
           ctx.arc(x, y, s.r, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(185,215,255,${alpha})`;
@@ -64,7 +65,8 @@ export default function Starfield({ mode = 'twinkle' }) {
         }
       } else {
         for (const s of stars) {
-          const alpha = s.a * (0.4 + 0.6 * Math.sin(now * Math.abs(s.sp) + s.t));
+          const alpha =
+            s.a * (0.4 + 0.6 * Math.sin(now * Math.abs(s.sp) + s.t));
           ctx.beginPath();
           ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(185,215,255,${alpha})`;
@@ -76,11 +78,11 @@ export default function Starfield({ mode = 'twinkle' }) {
     }
 
     resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener("resize", resize);
     draw();
 
     return () => {
-      window.removeEventListener('resize', resize);
+      window.removeEventListener("resize", resize);
     };
   }, [mode]);
 

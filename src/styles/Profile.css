@@ -8,7 +8,7 @@
 
 .profile-eyebrow {
   display: inline-block;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 3.5px;
@@ -47,7 +47,12 @@
 
 .profile-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.07),
+    transparent
+  );
   margin: 48px 0;
 }
 
@@ -213,7 +218,9 @@
   font-weight: 600;
   letter-spacing: 0.3px;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.2s;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
   font-family: inherit;
 }
 

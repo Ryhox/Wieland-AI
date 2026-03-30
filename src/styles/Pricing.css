@@ -1,11 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap");
 
 .pricing-page-wrapper {
   position: relative;
   overflow-x: hidden;
   background:
-    radial-gradient(1200px 700px at 80% 0%, rgba(123, 92, 252, 0.16), transparent 60%),
-    radial-gradient(900px 600px at 0% 40%, rgba(31, 196, 255, 0.12), transparent 58%),
+    radial-gradient(
+      1200px 700px at 80% 0%,
+      rgba(123, 92, 252, 0.16),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 600px at 0% 40%,
+      rgba(31, 196, 255, 0.12),
+      transparent 58%
+    ),
     #0b0d13;
 }
 
@@ -17,7 +25,7 @@
 }
 
 .pricing-bg-layer::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: rgba(5, 7, 12, 0.418);
@@ -50,7 +58,12 @@
   top: 8vmin;
   z-index: 1;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(232, 35, 250, 0.137), rgba(76, 221, 255, 0.05) 58%, transparent 74%);
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(232, 35, 250, 0.137),
+    rgba(76, 221, 255, 0.05) 58%,
+    transparent 74%
+  );
   filter: blur(14px);
 }
 
@@ -78,7 +91,7 @@
 
 .pricing-eyebrow {
   display: inline-block;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 3.5px;
@@ -117,12 +130,17 @@
 
 .pricing-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.07),
+    transparent
+  );
   margin: 48px 0;
 }
 
 .pricing-section-label {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 2.5px;
@@ -142,13 +160,19 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035));
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.035)
+  );
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(8px);
   border-radius: 18px;
   padding: 32px 28px;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
   overflow: hidden;
 }
 
@@ -168,18 +192,22 @@
 }
 
 .pricing-card.featured::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -60px;
   right: -60px;
   width: 200px;
   height: 200px;
-  background: radial-gradient(circle, rgba(232, 35, 250, 0.1) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(232, 35, 250, 0.1) 0%,
+    transparent 70%
+  );
   pointer-events: none;
 }
 
 .pricing-badge {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 9px;
   font-weight: 500;
   letter-spacing: 2.5px;
@@ -230,7 +258,7 @@
 }
 
 .pricing-price-period {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 11px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -287,7 +315,7 @@
   margin-top: auto;
   padding: 12px 0;
   border-radius: 10px;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 2px;
@@ -295,7 +323,9 @@
   text-align: center;
   cursor: pointer;
   border: none;
-  transition: opacity 0.2s, transform 0.15s;
+  transition:
+    opacity 0.2s,
+    transform 0.15s;
 }
 
 .pricing-btn:hover {
@@ -323,7 +353,11 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035));
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.035)
+  );
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(8px);
@@ -383,7 +417,7 @@
   position: absolute;
   top: 14px;
   right: 14px;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 8px;
   font-weight: 600;
   letter-spacing: 1.8px;

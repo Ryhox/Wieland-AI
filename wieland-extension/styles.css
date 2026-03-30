@@ -9,11 +9,20 @@ body {
   height: 100%;
   overflow: hidden;
   background:
-    radial-gradient(1200px 700px at 80% 0%, rgba(232, 35, 250, 0.12), transparent 60%),
-    radial-gradient(900px 600px at 0% 40%, rgba(31, 196, 255, 0.08), transparent 58%),
+    radial-gradient(
+      1200px 700px at 80% 0%,
+      rgba(232, 35, 250, 0.12),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 600px at 0% 40%,
+      rgba(31, 196, 255, 0.08),
+      transparent 58%
+    ),
     #0b0d13;
   color: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
 }
@@ -34,7 +43,12 @@ body {
   top: 8vmin;
   z-index: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(232, 35, 250, 0.151), rgba(76, 221, 255, 0.05) 58%, transparent 74%);
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(232, 35, 250, 0.151),
+    rgba(76, 221, 255, 0.05) 58%,
+    transparent 74%
+  );
   filter: blur(14px);
   pointer-events: none;
 }
@@ -43,12 +57,10 @@ body {
   display: none !important;
 }
 
-
 ::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
-
 
 .screen {
   height: 100vh;
@@ -56,7 +68,6 @@ body {
   position: relative;
   z-index: 3;
 }
-
 
 #auth-screen {
   display: flex;
@@ -69,7 +80,7 @@ body {
 .auth-card {
   width: 100%;
   max-width: 380px;
-  background: rgba(15, 15, 15, 0.80);
+  background: rgba(15, 15, 15, 0.8);
   border: 1px solid rgba(184, 184, 184, 0.32);
   border-radius: 20px;
   padding: 36px 28px 28px;
@@ -117,7 +128,6 @@ body {
   line-height: 1.4;
 }
 
-
 .auth-tabs {
   display: flex;
   background: rgba(255, 255, 255, 0.04);
@@ -143,7 +153,7 @@ body {
 }
 
 .auth-tab:hover:not(.active) {
-  color: rgba(255, 255, 255, 0.60);
+  color: rgba(255, 255, 255, 0.6);
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -152,7 +162,6 @@ body {
   color: rgba(245, 245, 245, 0.95);
   border: 1px solid rgba(243, 242, 243, 0.2);
 }
-
 
 .auth-form {
   display: flex;
@@ -209,7 +218,6 @@ body {
 }
 
 @keyframes errorShake {
-
   0%,
   100% {
     transform: translateX(0);
@@ -244,7 +252,9 @@ body {
 
 .auth-submit:hover {
   background-color: rgba(238, 47, 255, 0.25);
-  box-shadow: 0 4px 24px rgba(250, 79, 199, 0.28), 0 0 0 1px rgba(250, 79, 199, 0.2);
+  box-shadow:
+    0 4px 24px rgba(250, 79, 199, 0.28),
+    0 0 0 1px rgba(250, 79, 199, 0.2);
   transform: translateY(-1px);
 }
 
@@ -288,13 +298,11 @@ body {
   color: #c9c9c9;
 }
 
-
 #chat-screen {
   display: flex;
   height: 100vh;
   background: transparent;
 }
-
 
 .sidebar {
   position: fixed;
@@ -490,7 +498,6 @@ body {
   background: rgba(117, 5, 5, 0.42);
 }
 
-
 .sidebar-bottom {
   padding: 12px 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
@@ -515,7 +522,11 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(250, 79, 199, 0.3), rgba(180, 50, 160, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(250, 79, 199, 0.3),
+    rgba(180, 50, 160, 0.2)
+  );
   border: 1px solid rgba(250, 79, 199, 0.3);
   display: flex;
   align-items: center;
@@ -545,7 +556,7 @@ body {
 
 .sidebar-plan {
   font-size: 11px;
-  color: rgba(250, 79, 199, 0.60);
+  color: rgba(250, 79, 199, 0.6);
   font-weight: 500;
 }
 
@@ -568,7 +579,6 @@ body {
   color: rgba(255, 100, 100, 0.9);
 }
 
-
 .chat-main {
   flex: 1;
   display: flex;
@@ -576,7 +586,6 @@ body {
   height: 100vh;
   width: 100%;
 }
-
 
 .chat-header {
   display: flex;
@@ -757,7 +766,6 @@ body {
   color: rgba(224, 224, 224, 0.4);
 }
 
-
 .messages-area {
   flex: 1;
   overflow-y: auto;
@@ -786,7 +794,6 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-
 
 .message {
   display: flex;
@@ -839,7 +846,6 @@ body {
   box-shadow: 0 4px 15px rgba(255, 0, 234, 0.09);
 }
 
-
 .message-bubble strong {
   color: #fa4fc7;
   font-weight: 600;
@@ -864,7 +870,7 @@ body {
   background: rgba(0, 0, 0, 0.25);
   padding: 2px 6px;
   border-radius: 4px;
-  font-family: 'Monaco', 'Courier New', monospace;
+  font-family: "Monaco", "Courier New", monospace;
   color: #ffdd99;
   font-size: 12px;
 }
@@ -914,7 +920,6 @@ body {
   display: block;
 }
 
-
 .message-actions {
   display: flex;
   gap: 6px;
@@ -946,7 +951,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.60);
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   transition: all 0.2s;
   padding: 0;
@@ -958,7 +963,6 @@ body {
   border-color: rgba(255, 255, 255, 0.2);
   transform: scale(1.05);
 }
-
 
 .typing-loader {
   display: flex;
@@ -1008,7 +1012,6 @@ body {
 }
 
 @keyframes circlePulse {
-
   0%,
   100% {
     transform: scale(1);
@@ -1022,7 +1025,6 @@ body {
 }
 
 @keyframes dotPulse {
-
   0%,
   100% {
     transform: scale(1);
@@ -1032,7 +1034,6 @@ body {
     transform: scale(0.5);
   }
 }
-
 
 .input-container {
   padding: 10px 12px 14px;
@@ -1108,7 +1109,6 @@ body {
 .image-pill-remove:hover {
   background: rgba(220, 38, 38, 0.9);
 }
-
 
 .plus-menu {
   position: absolute;
@@ -1229,9 +1229,11 @@ body {
   border-radius: 8px;
   border: none;
   background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.60);
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   flex-shrink: 0;
 }
 
@@ -1254,7 +1256,6 @@ body {
   background: rgba(220, 38, 38, 0.3);
   color: #ff8a8a;
 }
-
 
 .toast {
   position: fixed;

@@ -1,21 +1,27 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 
 const AuthContext = createContext(null);
 
-const TOKEN_KEY = 'wieland_token';
-const USER_KEY  = 'wieland_user';
-const COOKIE_CONSENT_KEY = 'wieland_cookie_consent';
+const TOKEN_KEY = "wieland_token";
+const USER_KEY = "wieland_user";
+const COOKIE_CONSENT_KEY = "wieland_cookie_consent";
 
 function setCookie(name, value, days = 365) {
   const date = new Date();
-  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+  date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
   const expires = `expires=${date.toUTCString()}`;
   document.cookie = `${name}=${value}; ${expires}; path=/; SameSite=Lax`;
 }
 
 function getCookie(name) {
   const nameEQ = `${name}=`;
-  const cookies = document.cookie.split(';');
+  const cookies = document.cookie.split(";");
   for (let cookie of cookies) {
     cookie = cookie.trim();
     if (cookie.indexOf(nameEQ) === 0) {
@@ -31,7 +37,7 @@ function deleteCookie(name) {
 
 function hasCookieConsent() {
   try {
-    return localStorage.getItem(COOKIE_CONSENT_KEY) === 'accepted';
+    return localStorage.getItem(COOKIE_CONSENT_KEY) === "accepted";
   } catch {
     return false;
   }
@@ -48,22 +54,30 @@ function clearStoredAuth() {
 }
 
 export function AuthProvider({ children }) {
-  const [user,    setUser]    = useState(() => {
-    try { return JSON.parse(localStorage.getItem(USER_KEY)); } catch { return null; }
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(USER_KEY));
+    } catch {
+      return null;
+    }
   });
-  const [token,   setToken]   = useState(() => 
-    localStorage.getItem(TOKEN_KEY) || (hasCookieConsent() ? getCookie(TOKEN_KEY) : null)
+  const [token, setToken] = useState(
+    () =>
+      localStorage.getItem(TOKEN_KEY) ||
+      (hasCookieConsent() ? getCookie(TOKEN_KEY) : null),
   );
-  const [cookieConsentAccepted, setCookieConsentAccepted] = useState(() => hasCookieConsent());
+  const [cookieConsentAccepted, setCookieConsentAccepted] = useState(() =>
+    hasCookieConsent(),
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const syncConsent = () => setCookieConsentAccepted(hasCookieConsent());
-    window.addEventListener('storage', syncConsent);
-    window.addEventListener('wieland-cookie-consent-changed', syncConsent);
+    window.addEventListener("storage", syncConsent);
+    window.addEventListener("wieland-cookie-consent-changed", syncConsent);
     return () => {
-      window.removeEventListener('storage', syncConsent);
-      window.removeEventListener('wieland-cookie-consent-changed', syncConsent);
+      window.removeEventListener("storage", syncConsent);
+      window.removeEventListener("wieland-cookie-consent-changed", syncConsent);
     };
   }, []);
 
@@ -76,19 +90,24 @@ export function AuthProvider({ children }) {
   }, [token, cookieConsentAccepted]);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem(TOKEN_KEY) || (hasCookieConsent() ? getCookie(TOKEN_KEY) : null);
-    if (!storedToken) { setLoading(false); return; }
+    const storedToken =
+      localStorage.getItem(TOKEN_KEY) ||
+      (hasCookieConsent() ? getCookie(TOKEN_KEY) : null);
+    if (!storedToken) {
+      setLoading(false);
+      return;
+    }
 
-    fetch('/api/auth/me', {
+    fetch("/api/auth/me", {
       headers: { Authorization: `Bearer ${storedToken}` },
     })
       .then(async (r) => {
-        if (r.ok) return { kind: 'ok', data: await r.json() };
-        if (isInvalidAuthStatus(r.status)) return { kind: 'invalid' };
+        if (r.ok) return { kind: "ok", data: await r.json() };
+        if (isInvalidAuthStatus(r.status)) return { kind: "invalid" };
         throw new Error(`Transient auth check failure (${r.status})`);
       })
-      .then(data => {
-        if (data.kind === 'invalid') {
+      .then((data) => {
+        if (data.kind === "invalid") {
           clearStoredAuth();
           setUser(null);
           setToken(null);
@@ -129,7 +148,7 @@ export function AuthProvider({ children }) {
       if (nextToken === token && user) return;
 
       try {
-        const response = await fetch('/api/auth/me', {
+        const response = await fetch("/api/auth/me", {
           headers: { Authorization: `Bearer ${nextToken}` },
         });
 
@@ -191,13 +210,25 @@ export function AuthProvider({ children }) {
 
   const authFetch = useCallback((url, options = {}) => {
     const headers = { ...(options.headers || {}) };
-    const tok = localStorage.getItem(TOKEN_KEY) || (hasCookieConsent() ? getCookie(TOKEN_KEY) : null);
-    if (tok) headers['Authorization'] = `Bearer ${tok}`;
+    const tok =
+      localStorage.getItem(TOKEN_KEY) ||
+      (hasCookieConsent() ? getCookie(TOKEN_KEY) : null);
+    if (tok) headers["Authorization"] = `Bearer ${tok}`;
     return fetch(url, { ...options, headers });
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, authFetch, setUser: updateUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        login,
+        logout,
+        authFetch,
+        setUser: updateUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -205,6 +236,6 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
 }
