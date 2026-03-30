@@ -119,6 +119,10 @@
     "imageUpload": "Carica immagine",
     "removeImage": "Rimuovi immagine",
     "options": "Opzioni",
+    "internetSection": "Accesso Internet",
+    "internetAccess": "Usa internet",
+    "internetOn": "On",
+    "internetOff": "Off",
     "regenerate": "Rigenera",
     "planModelLocked": "Questo modello e impostato automaticamente dal tuo piano.",
     "demoFallback": "**Ciao! Sono Wieland** - il tuo assistente AI locale.\n\nQuesta e una **demo**. Nell'uso reale qui gira un modello locale (Wieland AI).\n\n*Per risparmiare risorse, qui non gira una vera AI*",
@@ -317,6 +321,7 @@
     "lead": "Tutte le versioni, fix e funzionalita.",
     "initialTag": "Iniziale",
     "entries": [
+      { "version": "v0.1.9", "date": "30 marzo 2026", "tag": "green", "title": "Estensione Browser e Accesso Internet", "changes": ["Aggiunta la Browser Extension di Wieland AI (chat nel side panel del browser)", "Aggiunta modalita accesso internet per il modello con fonti e fallback offline", "Aggiunto supporto lingue nella Browser Extension (de/en/it) con sincronizzazione automatica della lingua del sito", "Aggiunto pacchetto favicon completo + web manifest per migliore supporto browser e dispositivi", "La pagina Download ora scarica la Browser Extension in formato ZIP", "Correzioni bug e pulizia UI in chat e menu dell'estensione"] },
       { "version": "v0.1.8", "date": "30 marzo 2026", "tag": "purple", "title": "Language UPDATEEEE (i18n)", "changes": ["Integrato i18next su tutte le pagine (de/en/it)", "Aggiunto routing basato sulla lingua con /de/, /en/, /it/", "Collegato il pulsante lingua nell'header a cambio route + locale", "Estese le traduzioni per pagine, modali e dashboard", "Risolti bug cambio lingua (welcome in Home aggiornata live, card statistiche About sempre visibili)"] },
       { "version": "v0.1.7", "date": "30 marzo 2026", "tag": "green", "title": "Aggiornamento Backend & Auth", "changes": ["Migrazione da PostgreSQL a SQLite", "Aggiunto script CLI admin", "Cookie login legato al consenso", "Correzioni bug"] },
       { "version": "v0.1.6", "date": "23 marzo 2026", "tag": "purple", "title": "Aggiornamento Design & Contenuti", "changes": ["Correzioni bug", "Rifacimento visuale di più pagine", "Revisione contenuti", "Animazioni GSAP", "Aggiunto piano Max e modello 2B", "Migliore responsività mobile", "Ricerca e filtri FAQ"] },

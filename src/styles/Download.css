@@ -207,6 +207,13 @@
   transform: translateY(-2px);
 }
 
+.dl-btn-primary:disabled {
+  opacity: 0.72;
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
+}
+
 .dl-btn-primary svg {
   flex-shrink: 0;
 }

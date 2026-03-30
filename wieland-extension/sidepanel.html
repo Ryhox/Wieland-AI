@@ -12,30 +12,30 @@
 
   <div id="auth-screen" class="screen">
     <div class="auth-card">
-      <div class="auth-brand">WIELAND</div>
+      <div class="auth-brand" id="auth-brand">WIELAND</div>
       <h2 class="auth-title" id="auth-title">Willkommen zurück</h2>
       <p class="auth-subtitle" id="auth-subtitle">Melde dich an, um Nachrichten zu senden</p>
 
       <div class="auth-tabs">
-        <button class="auth-tab active" data-mode="login">Anmelden</button>
-        <button class="auth-tab" data-mode="register">Registrieren</button>
+        <button class="auth-tab active" data-mode="login" id="auth-tab-login">Anmelden</button>
+        <button class="auth-tab" data-mode="register" id="auth-tab-register">Registrieren</button>
       </div>
 
       <div class="auth-form" id="auth-form">
         <div class="auth-field hidden" id="field-username">
-          <label>Benutzername</label>
+          <label id="label-username">Benutzername</label>
           <input type="text" id="input-username" placeholder="wieland_user" autocomplete="username" />
         </div>
         <div class="auth-field">
-          <label>E-Mail</label>
+          <label id="label-email">E-Mail</label>
           <input type="email" id="input-email" placeholder="deine@email.de" autocomplete="email" />
         </div>
         <div class="auth-field">
-          <label>Passwort</label>
+          <label id="label-password">Passwort</label>
           <input type="password" id="input-password" placeholder="Mindestens 8 Zeichen" autocomplete="current-password" />
         </div>
         <div class="auth-field hidden" id="field-confirm">
-          <label>Passwort bestätigen</label>
+          <label id="label-confirm">Passwort bestätigen</label>
           <input type="password" id="input-confirm" placeholder="••••••••" autocomplete="new-password" />
         </div>
 
@@ -59,17 +59,25 @@
     <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
 
     <aside id="sidebar" class="sidebar">
+      <button class="sidebar-hamburger" id="btn-close-sidebar" title="Menü schließen">
+        <svg fill="none" viewBox="0 0 50 50" height="28" width="28">
+          <path class="lineTop line" stroke-linecap="round" stroke-width="4" stroke="white" d="M6 11L44 11"/>
+          <path class="lineMid line" stroke-linecap="round" stroke-width="4" stroke="white" d="M6 24H43"/>
+          <path class="lineBottom line" stroke-linecap="round" stroke-width="4" stroke="white" d="M6 37H43"/>
+        </svg>
+      </button>
+
       <div class="sidebar-top-actions">
         <button class="sidebar-action-btn" id="btn-new-chat" title="Neuer Chat">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          <span>Neuer Chat</span>
+          <span id="txt-new-chat">Neuer Chat</span>
         </button>
       </div>
 
       <div class="sidebar-chats">
-        <p class="sidebar-section-label">Deine Chats</p>
+        <p class="sidebar-section-label" id="txt-your-chats">Deine Chats</p>
         <div id="chat-list" class="chat-list">
-          <p class="no-chats">Keine Chats vorhanden</p>
+          <p class="no-chats" id="txt-no-chats">Keine Chats vorhanden</p>
         </div>
       </div>
 
@@ -96,9 +104,9 @@
             <path class="lineBottom line" stroke-linecap="round" stroke-width="4" stroke="white" d="M6 37H43"/>
           </svg>
         </button>
-        <div class="header-title">
-          <span>Wieland</span>
-        </div>
+        <a href="#" class="header-logo" id="header-logo" title="Neuer Chat">
+          <span class="header-logo-name">Wieland</span>
+        </a>
         <div class="header-right">
           <button class="model-btn" id="btn-model">
             <span id="model-label">2B · Free</span>
@@ -133,12 +141,18 @@
         <div class="plus-menu hidden" id="plus-menu">
           <button class="plus-menu-item" id="btn-upload-image">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-            Bild hochladen
+            <span id="txt-upload-image">Bild hochladen</span>
           </button>
           <div class="plus-menu-divider"></div>
-          <button class="plus-menu-item" data-style="formal"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 4v4"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/></svg> KI-Stil: Formell</button>
-          <button class="plus-menu-item" data-style="friendly"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 4v4"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/></svg> KI-Stil: Freundlich</button>
-          <button class="plus-menu-item" data-style="precise"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg> KI-Stil: Präzise</button>
+          <button class="plus-menu-item toggle-item" id="btn-toggle-internet">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14.5 14.5 0 0 1 0 18"/><path d="M12 3a14.5 14.5 0 0 0 0 18"/></svg>
+            <span id="txt-internet-access">Internet nutzen</span>
+          </button>
+          <div class="plus-menu-divider"></div>
+          <p class="plus-menu-section-title" id="txt-style-section">KI-Stil</p>
+          <button class="plus-menu-item" data-style="formal"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 4v4"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/></svg><span id="txt-style-formal">KI-Stil: Formell</span></button>
+          <button class="plus-menu-item" data-style="friendly"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 4v4"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/></svg><span id="txt-style-friendly">KI-Stil: Freundlich</span></button>
+          <button class="plus-menu-item" data-style="precise"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg><span id="txt-style-precise">KI-Stil: Präzise</span></button>
         </div>
 
         <input type="file" id="file-input" accept="image/*" style="display:none"/>

@@ -123,6 +123,10 @@
     "imageUpload": "Bild hochladen",
     "removeImage": "Bild entfernen",
     "options": "Optionen",
+    "internetSection": "Internetzugang",
+    "internetAccess": "Internet nutzen",
+    "internetOn": "An",
+    "internetOff": "Aus",
     "regenerate": "Neu generieren",
     "planModelLocked": "Dieses Modell wird automatisch durch deinen Plan festgelegt.",
     "demoFallback": "**Hallo! Ich bin Wieland** - dein lokaler KI-Assistent.\n\nDies ist eine **Demo-Vorschau**. Im echten Betrieb läuft hier ein lokales Sprachmodell (Wieland AI).\n\n*Um Ressourcen zu schonen läuft hier keine wirkliche AI*",
@@ -331,6 +335,20 @@
     "lead": "Alle Versionen, Fixes und Features - chronologisch dokumentiert.",
     "initialTag": "Initial",
     "entries": [
+      {
+        "version": "v0.1.9",
+        "date": "30 März 2026",
+        "tag": "green",
+        "title": "Browser Extension & Internet-Update",
+        "changes": [
+          "Wieland AI Browser Extension hinzugefügt (Sidepanel-Chat direkt im Browser)",
+          "Internetzugang für das Modell hinzugefügt, inklusive Quellenangaben und Fallback ohne Internet",
+          "Mehrsprachigkeit in der Browser Extension (de/en/it) inkl. automatischer Sprach-Synchronisierung mit der Website",
+          "Vollständiges Favicon-Paket + Web-Manifest für bessere Browser- und Geräteunterstützung",
+          "Download-Seite lädt jetzt die Browser Extension als ZIP herunter",
+          "Bugfixes und UI-Bereinigung in Chat und Extension-Menüs"
+        ]
+      },
       {
         "version": "v0.1.8",
         "date": "30 März 2026",

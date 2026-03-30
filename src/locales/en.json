@@ -119,6 +119,10 @@
     "imageUpload": "Upload image",
     "removeImage": "Remove image",
     "options": "Options",
+    "internetSection": "Internet Access",
+    "internetAccess": "Use internet",
+    "internetOn": "On",
+    "internetOff": "Off",
     "regenerate": "Regenerate",
     "planModelLocked": "This model is set automatically by your plan.",
     "demoFallback": "**Hi! I'm Wieland** - your local AI assistant.\n\nThis is a **demo preview**. In real usage, a local language model runs here (Wieland AI).\n\n*To save resources, no actual AI is running here*",
@@ -311,6 +315,7 @@
     "runsOn": "Runs on"
   },
   "changelogs": { "eyebrow": "Changelogs", "title": "What's", "titleAccent": "new?", "lead": "All versions, fixes and features - documented chronologically.", "initialTag": "Initial", "entries": [
+    { "version": "v0.1.9", "date": "30 March 2026", "tag": "green", "title": "Browser Extension & Web Access", "changes": ["Added Wieland AI Browser Extension (side panel chat inside the browser)", "Added internet access mode for the model with source links and offline fallback", "Added browser extension language support (de/en/it) with automatic website language sync", "Added full favicon package and web manifest for broader browser and device support", "Download page now delivers the browser extension as a ZIP", "Bug fixes and UI cleanup across chat and extension menus"] },
     { "version": "v0.1.8", "date": "30 March 2026", "tag": "purple", "title": "Language UPDATEEEE (i18n)", "changes": ["Integrated i18next across all pages (de/en/it)", "Added language-based routing with /de/, /en/, /it/", "Connected header language switch to real route + locale changes", "Expanded translations for pages, modals and dashboard", "Fixed language-switch regressions (Home welcome live update, About stats cards stay visible)"] },
     { "version": "v0.1.7", "date": "30 March 2026", "tag": "green", "title": "Backend & Auth Update", "changes": ["Migrated PostgreSQL to SQLite", "Added admin CLI script", "Login cookie now depends on consent", "Bug fixes"] },
     { "version": "v0.1.6", "date": "23 March 2026", "tag": "purple", "title": "Design & Content Update", "changes": ["Bug fixes", "Visual refresh across pages", "Content rewrite", "GSAP scroll animations", "Added Max plan and 2B model", "Improved mobile responsiveness", "FAQ search and filters"] },

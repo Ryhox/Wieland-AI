@@ -29,6 +29,14 @@ const SparkIcon = () => (
     <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
   </svg>
 );
+const GlobeIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3 12h18" />
+    <path d="M12 3a14.5 14.5 0 0 1 0 18" />
+    <path d="M12 3a14.5 14.5 0 0 0 0 18" />
+  </svg>
+);
 
 const AVAILABLE_MODELS = [
   { id: 'qwen3-vl:2b-instruct', key: 'chat.models.free', icon: <BotIcon /> },
@@ -85,6 +93,14 @@ function renderMarkdown(raw = '') {
 
 const stripImg = (text = '') => text.replace(/!\[.*?\]\([^)]+\)\n\n?/g, '').trim();
 
+const toContextContent = (text = '') => String(text || '')
+  .replace(/!\[[^\]]*\]\(([^)]+)\)/g, (full, rawUrl) => {
+    const url = String(rawUrl || '').trim();
+    return /\/history\/images\//.test(url) ? full : '';
+  })
+  .replace(/\n{3,}/g, '\n\n')
+  .trim();
+
 function extractImageUrl(content = '') {
   const m = content.match(/!\[.*?\]\(([^)]+)\)/);
   return m ? m[1] : null;
@@ -135,11 +151,25 @@ export default function ChatInterface({
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [aiStyle, setAiStyle] = useState('formal');
+  const [internetAccess, setInternetAccess] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.localStorage.getItem('wieland_internet_access') === '1';
+    } catch {
+      return false;
+    }
+  });
   const pendingInputRef = useRef('');
 
   useEffect(() => {
     setSelectedModel(getPlanModel(user?.plan));
   }, [user?.plan]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('wieland_internet_access', internetAccess ? '1' : '0');
+    } catch { }
+  }, [internetAccess]);
 
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -283,14 +313,14 @@ export default function ChatInterface({
 
     const contextSnap = messages.map(m => ({
       role: m.isUser ? 'user' : 'assistant',
-      content: stripImg(m.content),
+      content: toContextContent(m.content),
     }));
 
     const withUser = [...messages, userMsg];
     setMessages(withUser);
 
-    await runStream(text, fileCopy, contextSnap, withUser, selectedModel, aiStyle);
-  }, [input, imageFile, imagePreview, isSending, messages, user, clearImage, selectedModel, aiStyle, uploadImage]);
+    await runStream(text, fileCopy, contextSnap, withUser, selectedModel, aiStyle, internetAccess);
+  }, [input, imageFile, imagePreview, isSending, messages, user, clearImage, selectedModel, aiStyle, internetAccess, uploadImage]);
 
   const handleAuthSuccess = useCallback(() => {
     if (pendingInputRef.current) {
@@ -301,7 +331,7 @@ export default function ChatInterface({
     }
   }, []);
 
-  const runStream = useCallback(async (userText, file, contextSnap, baseMessages, model = AVAILABLE_MODELS[0].id, style = 'formal') => {
+  const runStream = useCallback(async (userText, file, contextSnap, baseMessages, model = AVAILABLE_MODELS[0].id, style = 'formal', useInternet = false) => {
     const aiId = uid();
     setMessages(prev => [...prev, { content: '', isUser: false, id: aiId }]);
 
@@ -315,6 +345,7 @@ export default function ChatInterface({
       fd.append('context', JSON.stringify(contextSnap));
       fd.append('model', model);
       fd.append('aiStyle', style);
+      fd.append('internetAccess', useInternet ? 'true' : 'false');
       if (file) fd.append('image', file);
 
       const token = localStorage.getItem('wieland_token');
@@ -413,7 +444,7 @@ export default function ChatInterface({
     if (hadAI) {
       setIsSending(true);
       const ctx = truncated.slice(0, idx).map(m => ({
-        role: m.isUser ? 'user' : 'assistant', content: stripImg(m.content),
+        role: m.isUser ? 'user' : 'assistant', content: toContextContent(m.content),
       }));
       let refile = null;
       if (imgUrl) {
@@ -424,7 +455,8 @@ export default function ChatInterface({
           console.error('Failed to restore image for edit stream:', err);
         }
       }
-      await runStream(editingText, refile, ctx, truncated, selectedModel, aiStyle);
+      const requestText = refile ? editingText : toContextContent(newContent);
+      await runStream(requestText, refile, ctx, truncated, selectedModel, aiStyle, internetAccess);
     } else {
       if (currentChatRef.current) await saveChat(truncated, currentChatRef.current, false);
     }
@@ -444,7 +476,7 @@ export default function ChatInterface({
     setIsSending(true);
 
     const ctx = truncated.slice(0, uIdx).map(m => ({
-      role: m.isUser ? 'user' : 'assistant', content: stripImg(m.content),
+      role: m.isUser ? 'user' : 'assistant', content: toContextContent(m.content),
     }));
     let refile = null;
     if (imgUrl) {
@@ -455,8 +487,9 @@ export default function ChatInterface({
         console.error('Failed to restore image for regenerate stream:', err);
       }
     }
-    await runStream(stripImg(uMsg.content), refile, ctx, truncated, selectedModel, aiStyle);
-  }, [messages, isSending, runStream, selectedModel, aiStyle]);
+    const requestText = refile ? stripImg(uMsg.content) : toContextContent(uMsg.content);
+    await runStream(requestText, refile, ctx, truncated, selectedModel, aiStyle, internetAccess);
+  }, [messages, isSending, runStream, selectedModel, aiStyle, internetAccess]);
 
   const copyText = (content) => navigator.clipboard.writeText(stripImg(content)).catch(console.error);
 
@@ -530,6 +563,14 @@ export default function ChatInterface({
                 <ImageIcon /> {t('chat.imageUpload')}
               </button>
               <div className="plus-popup-divider" />
+              <button
+                className={`plus-popup-item plus-popup-toggle ${internetAccess ? 'active' : ''}`}
+                onClick={() => setInternetAccess((prev) => !prev)}
+              >
+                <GlobeIcon /> {t('chat.internetAccess')}
+              </button>
+              <div className="plus-popup-divider" />
+              <div className="plus-popup-section-title">{t('chat.aiStyle')}</div>
               {AI_STYLES.map(style => (
                 <button
                   key={style.id}
@@ -537,7 +578,6 @@ export default function ChatInterface({
                   onClick={() => { setAiStyle(style.id); setShowPlusMenu(false); }}
                 >
                   {style.icon} {t('chat.aiStyle')}: {t(style.key)}
-                  {aiStyle === style.id}
                 </button>
               ))}
             </div>

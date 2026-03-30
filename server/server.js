@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const crypto = require('crypto');
+const archiver = require('archiver');
 const { exec } = require('child_process');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -132,8 +133,50 @@ app.use(cors({
 }));
 
 const IMAGES_DIR = path.join(__dirname, 'history', 'images');
+const EXTENSION_DIR = path.resolve(__dirname, '..', 'wieland-extension');
+const EXTENSION_ARCHIVE_NAME = 'wieland-extension.zip';
 fs.mkdirSync(IMAGES_DIR, { recursive: true });
 app.use('/history/images', express.static(IMAGES_DIR));
+
+app.get('/api/extension/download', async (_req, res) => {
+  try {
+    await fs.promises.access(EXTENSION_DIR, fs.constants.R_OK);
+  } catch {
+    return res.status(404).json({ error: 'Extension folder not found' });
+  }
+
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', `attachment; filename="${EXTENSION_ARCHIVE_NAME}"`);
+  res.setHeader('Cache-Control', 'no-store');
+
+  const archive = archiver('zip', { zlib: { level: 9 } });
+
+  archive.on('warning', (err) => {
+    if (err?.code === 'ENOENT') {
+      console.warn('Extension archive warning:', err.message);
+      return;
+    }
+    if (!res.writableEnded) res.end();
+  });
+
+  archive.on('error', (err) => {
+    console.error('Extension archive error:', err.message);
+    if (!res.writableEnded) res.end();
+  });
+
+  res.once('close', () => {
+    if (!res.writableEnded) archive.abort();
+  });
+
+  archive.pipe(res);
+  archive.directory(EXTENSION_DIR, 'wieland-extension');
+
+  try {
+    await archive.finalize();
+  } catch {
+    if (!res.writableEnded) res.end();
+  }
+});
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 const upload = multer({
@@ -562,11 +605,315 @@ app.get('/api/admin/chats/:id/messages', requireAuth, requireAdmin, async (req, 
     res.status(500).json({ error: 'Failed to load messages' });
   }
 });
-const SYSTEM_BASE = `You are a LOCAL, OFFLINE language model. YOUR NAME IS "Wieland".
-- You are NOT online and have no internet access.
-- You CAN analyse images provided in this conversation.
+const SYSTEM_BASE = `You are a LOCAL AI assistant named "Wieland".
+- You CAN analyze images provided in this conversation.
 - You do NOT represent any company (Alibaba, OpenAI, Anthropic, etc.).
+- Internet snippets can be provided by the server. Use them only when present.
 Always respond in the exact language of the user's last message.`;
+
+const IMAGE_MD_REGEX = /!\[[^\]]*\]\(([^)]+)\)/g;
+const MAX_CONTEXT_IMAGES = 4;
+const WEB_SEARCH_TIMEOUT_MS = 7_000;
+const MAX_WEB_SOURCES = 4;
+const MAX_WEB_SNIPPET_CHARS = 320;
+const SERVER_TIMEZONE = process.env.RUNTIME_TIMEZONE || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+
+function stripImageMarkdown(text) {
+  return String(text || '').replace(/!\[[^\]]*\]\([^)]+\)\n\n?/g, '').trim();
+}
+
+function extractImageUrlsFromMarkdown(text) {
+  const urls = [];
+  const content = String(text || '');
+  let match;
+  while ((match = IMAGE_MD_REGEX.exec(content)) !== null) {
+    urls.push(match[1]);
+  }
+  IMAGE_MD_REGEX.lastIndex = 0;
+  return urls;
+}
+
+function resolveHistoryImageFileFromUrl(rawUrl) {
+  const value = String(rawUrl || '').trim();
+  if (!value) return null;
+
+  let pathname = '';
+  try {
+    pathname = new URL(value, 'http://localhost').pathname || '';
+  } catch {
+    return null;
+  }
+
+  if (!pathname.startsWith('/history/images/')) return null;
+
+  const filename = path.basename(pathname);
+  if (!filename) return null;
+
+  const candidate = path.resolve(path.join(IMAGES_DIR, filename));
+  const root = path.resolve(IMAGES_DIR);
+  if (!(candidate === root || candidate.startsWith(`${root}${path.sep}`))) return null;
+  if (!fs.existsSync(candidate)) return null;
+
+  return candidate;
+}
+
+function parseBooleanFlag(value) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value === 1;
+  const normalized = String(value || '').trim().toLowerCase();
+  return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+}
+
+function safeLocaleFormat(formatter, fallback = 'unknown') {
+  try {
+    const value = formatter();
+    return value ? String(value) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function buildRuntimeSystemContextMessage(now = new Date()) {
+  const utcIso = now.toISOString();
+  const unixSeconds = Math.floor(now.getTime() / 1000);
+
+  const localDate = safeLocaleFormat(() => now.toLocaleDateString('en-CA', { timeZone: SERVER_TIMEZONE }));
+  const localTime = safeLocaleFormat(() => now.toLocaleTimeString('en-GB', {
+    timeZone: SERVER_TIMEZONE,
+    hour12: false,
+  }));
+  const localWeekday = safeLocaleFormat(() => now.toLocaleDateString('en-US', {
+    timeZone: SERVER_TIMEZONE,
+    weekday: 'long',
+  }));
+  const utcWeekday = safeLocaleFormat(() => now.toLocaleDateString('en-US', {
+    timeZone: 'UTC',
+    weekday: 'long',
+  }));
+
+  return [
+    'Runtime context from the server clock (authoritative):',
+    `- Server timezone: ${SERVER_TIMEZONE}`,
+    `- Current UTC datetime: ${utcIso}`,
+    `- Current UTC weekday: ${utcWeekday}`,
+    `- Current local date (${SERVER_TIMEZONE}): ${localDate}`,
+    `- Current local time (${SERVER_TIMEZONE}): ${localTime}`,
+    `- Current local weekday (${SERVER_TIMEZONE}): ${localWeekday}`,
+    `- Unix timestamp (seconds): ${unixSeconds}`,
+    'Use this as ground truth for questions about today, day/date/time, deadlines, and relative time.',
+  ].join('\n');
+}
+
+function decodeHtmlEntities(text) {
+  return String(text || '')
+    .replace(/&#(\d+);/g, (_m, dec) => {
+      const code = Number(dec);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : _m;
+    })
+    .replace(/&#x([\da-f]+);/gi, (_m, hex) => {
+      const code = parseInt(hex, 16);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : _m;
+    })
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ');
+}
+
+function stripHtmlTags(html) {
+  return decodeHtmlEntities(String(html || '').replace(/<[^>]*>/g, ' '))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isPrivateIPv4(host) {
+  const parts = host.split('.').map(Number);
+  if (parts.length !== 4 || parts.some((p) => !Number.isInteger(p) || p < 0 || p > 255)) return false;
+  if (parts[0] === 10 || parts[0] === 127) return true;
+  if (parts[0] === 192 && parts[1] === 168) return true;
+  if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+  if (parts[0] === 169 && parts[1] === 254) return true;
+  return false;
+}
+
+function isSafePublicHttpUrl(rawUrl) {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+
+    const host = parsed.hostname.toLowerCase();
+    if (!host || host === 'localhost' || host.endsWith('.local') || host === '::1') return false;
+    if (host.startsWith('[') && host.endsWith(']')) return false;
+    if (/^\d+\.\d+\.\d+\.\d+$/.test(host) && isPrivateIPv4(host)) return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function normalizeDuckDuckGoUrl(rawHref) {
+  const href = decodeHtmlEntities(rawHref);
+
+  try {
+    const parsed = new URL(href, 'https://duckduckgo.com');
+    const host = parsed.hostname.toLowerCase();
+
+    if ((host === 'duckduckgo.com' || host === 'www.duckduckgo.com') && parsed.pathname.startsWith('/l/')) {
+      const wrapped = parsed.searchParams.get('uddg');
+      if (wrapped) return decodeURIComponent(wrapped);
+    }
+
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function parseDuckDuckGoResults(html, maxSources = MAX_WEB_SOURCES) {
+  const out = [];
+  const seen = new Set();
+
+  const withSnippetRegex = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]{0,1200}?<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+
+  while ((match = withSnippetRegex.exec(html)) !== null && out.length < maxSources) {
+    const url = normalizeDuckDuckGoUrl(match[1]);
+    if (!url || !isSafePublicHttpUrl(url) || seen.has(url)) continue;
+
+    const title = stripHtmlTags(match[2]).slice(0, 180);
+    const snippet = stripHtmlTags(match[3]).slice(0, MAX_WEB_SNIPPET_CHARS);
+    out.push({
+      title: title || url,
+      url,
+      snippet,
+    });
+    seen.add(url);
+  }
+
+  if (out.length >= maxSources) return out;
+
+  const titleOnlyRegex = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+  while ((match = titleOnlyRegex.exec(html)) !== null && out.length < maxSources) {
+    const url = normalizeDuckDuckGoUrl(match[1]);
+    if (!url || !isSafePublicHttpUrl(url) || seen.has(url)) continue;
+
+    const title = stripHtmlTags(match[2]).slice(0, 180);
+    out.push({
+      title: title || url,
+      url,
+      snippet: '',
+    });
+    seen.add(url);
+  }
+
+  return out;
+}
+
+async function fetchWebSources(query) {
+  const normalized = String(query || '').trim();
+  if (!normalized) return [];
+
+  const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(normalized)}`;
+  const res = await fetch(searchUrl, {
+    method: 'GET',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) WielandAI/1.0',
+      Accept: 'text/html',
+    },
+    signal: AbortSignal.timeout(WEB_SEARCH_TIMEOUT_MS),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Web search failed (${res.status})`);
+  }
+
+  const html = await res.text();
+  return parseDuckDuckGoResults(html, MAX_WEB_SOURCES);
+}
+
+function buildWebContextSystemMessage(sources) {
+  const lines = [
+    'Live web access is enabled for this answer.',
+    'Use the following current web snippets as context where relevant.',
+    'Do not invent URLs or source details.',
+    'Web snippets:',
+  ];
+
+  for (let i = 0; i < sources.length; i++) {
+    const source = sources[i];
+    lines.push(`[${i + 1}] ${source.title}`);
+    lines.push(`URL: ${source.url}`);
+    if (source.snippet) lines.push(`Snippet: ${source.snippet}`);
+  }
+
+  return lines.join('\n');
+}
+
+function escapeMarkdownLinkText(text) {
+  return String(text || '')
+    .replace(/[\[\]]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function escapeMarkdownUrl(url) {
+  return String(url || '')
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29');
+}
+
+function formatWebSourcesMarkdown(sources) {
+  if (!Array.isArray(sources) || sources.length === 0) return '';
+
+  const lines = ['', '', 'Sources / Quellen:'];
+  for (let i = 0; i < sources.length; i++) {
+    const source = sources[i];
+    const title = escapeMarkdownLinkText(source.title) || `Source ${i + 1}`;
+    lines.push(`- [${i + 1}] [${title}](${escapeMarkdownUrl(source.url)})`);
+  }
+
+  return lines.join('\n');
+}
+
+function buildContextMessagesForOllama(context) {
+  let remainingImages = MAX_CONTEXT_IMAGES;
+  const mapped = [];
+
+  for (const m of context) {
+    const role = m?.role === 'assistant' ? 'assistant' : 'user';
+    const rawContent = String(m?.content || '');
+    const textContent = stripImageMarkdown(rawContent);
+    const imageUrls = role === 'user' ? extractImageUrlsFromMarkdown(rawContent) : [];
+
+    const out = {
+      role,
+      content: textContent || (imageUrls.length ? 'Image attached.' : ''),
+    };
+
+    if (role === 'user' && imageUrls.length && remainingImages > 0) {
+      const images = [];
+      for (const imageUrl of imageUrls) {
+        if (remainingImages <= 0) break;
+        const filePath = resolveHistoryImageFileFromUrl(imageUrl);
+        if (!filePath) continue;
+        try {
+          images.push(fs.readFileSync(filePath).toString('base64'));
+          remainingImages--;
+        } catch { }
+      }
+      if (images.length) out.images = images;
+    }
+
+    if (!out.content && !out.images?.length) continue;
+    mapped.push(out);
+  }
+
+  return mapped;
+}
 
 function getSystemPrompt(style = 'formal') {
   const styleGuides = {
@@ -628,17 +975,17 @@ function getOptionsForModel(model) {
   return OLLAMA_OPTIONS_2B;
 }
 
-async function pipeOllamaChatStream(ollamaRes, expressRes) {
+async function pipeOllamaChatStream(ollamaRes, expressRes, abortSignal) {
   const body = ollamaRes.body;
-  let tokenCount = 0;
+  if (!body) return;
+
   const onLine = (line) => {
     if (!line.trim()) return;
     try {
       const chunk = JSON.parse(line);
       const token = chunk?.message?.content ?? '';
-      if (token) {
+      if (token && !expressRes.writableEnded && !expressRes.destroyed) {
         expressRes.write(token);
-        tokenCount++;
       }
     } catch { }
   };
@@ -647,26 +994,75 @@ async function pipeOllamaChatStream(ollamaRes, expressRes) {
     const reader = body.getReader();
     const decoder = new TextDecoder();
     let buf = '';
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      const lines = buf.split('\n');
-      buf = lines.pop() ?? '';
-      lines.forEach(onLine);
+    let readerCancelled = false;
+    const onAbort = () => {
+      if (readerCancelled) return;
+      readerCancelled = true;
+      try {
+        const cancelPromise = reader.cancel();
+        if (cancelPromise && typeof cancelPromise.catch === 'function') {
+          cancelPromise.catch(() => { });
+        }
+      } catch { }
+    };
+
+    if (abortSignal) {
+      if (abortSignal.aborted) onAbort();
+      else abortSignal.addEventListener('abort', onAbort, { once: true });
     }
-    if (buf) onLine(buf);
+
+    try {
+      while (true) {
+        if (expressRes.writableEnded || expressRes.destroyed) {
+          onAbort();
+          break;
+        }
+
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop() ?? '';
+        lines.forEach(onLine);
+      }
+      if (buf) onLine(buf);
+    } finally {
+      if (abortSignal) abortSignal.removeEventListener('abort', onAbort);
+    }
   } else {
     await new Promise((resolve, reject) => {
       let buf = '';
+      const onAbort = () => {
+        try { body.destroy?.(); } catch { }
+        resolve();
+      };
+
+      if (abortSignal) {
+        if (abortSignal.aborted) return onAbort();
+        abortSignal.addEventListener('abort', onAbort, { once: true });
+      }
+
       body.on('data', (chunk) => {
+        if (expressRes.writableEnded || expressRes.destroyed) {
+          onAbort();
+          return;
+        }
         buf += chunk.toString();
         const lines = buf.split('\n');
         buf = lines.pop() ?? '';
         lines.forEach(onLine);
       });
-      body.on('end', () => { if (buf) onLine(buf); resolve(); });
-      body.on('error', reject);
+
+      body.on('end', () => {
+        if (abortSignal) abortSignal.removeEventListener('abort', onAbort);
+        if (buf) onLine(buf);
+        resolve();
+      });
+
+      body.on('error', (err) => {
+        if (abortSignal) abortSignal.removeEventListener('abort', onAbort);
+        reject(err);
+      });
     });
   }
 }
@@ -697,8 +1093,25 @@ async function generateChatTitle(firstUserMessage) {
 
 app.post('/api/chat/stream', requireAuth, upload.single('image'), async (req, res) => {
   const imageFile = req.file ?? null;
-  const message = req.body.message?.trim() || (imageFile ? 'Describe this image' : '');
-  if (!message) return res.status(400).json({ error: 'message or image required' });
+  const rawMessage = req.body.message?.trim() || (imageFile ? 'Describe this image' : '');
+  if (!rawMessage) return res.status(400).json({ error: 'message or image required' });
+
+  const message = stripImageMarkdown(rawMessage);
+  const currentMessageImages = [];
+
+  if (imageFile) {
+    currentMessageImages.push(imageFile.buffer.toString('base64'));
+  } else {
+    const inlineImageUrls = extractImageUrlsFromMarkdown(rawMessage);
+    for (const imageUrl of inlineImageUrls) {
+      if (currentMessageImages.length >= MAX_CONTEXT_IMAGES) break;
+      const filePath = resolveHistoryImageFileFromUrl(imageUrl);
+      if (!filePath) continue;
+      try {
+        currentMessageImages.push(fs.readFileSync(filePath).toString('base64'));
+      } catch { }
+    }
+  }
 
   let userPlan = 'Free';
   try {
@@ -713,6 +1126,7 @@ app.post('/api/chat/stream', requireAuth, upload.single('image'), async (req, re
   const defaultModel = getModelForPlan(userPlan);
   const model = isModelAllowedForPlan(requestedSafeModel, userPlan) ? requestedSafeModel : defaultModel;
   const aiStyle = req.body.aiStyle || 'formal';
+  const internetAccessEnabled = parseBooleanFlag(req.body.internetAccess);
   const options = getOptionsForModel(model);
 
   let context = [];
@@ -726,32 +1140,76 @@ app.post('/api/chat/stream', requireAuth, upload.single('image'), async (req, re
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no');
 
+  let webSources = [];
+  let webUnavailable = false;
+
+  if (internetAccessEnabled && message) {
+    try {
+      webSources = await fetchWebSources(message);
+    } catch (err) {
+      webUnavailable = true;
+      console.warn('Web access unavailable:', err?.message || err);
+    }
+  }
+
   const systemPrompt = getSystemPrompt(aiStyle);
+  const runtimeSystemContext = buildRuntimeSystemContextMessage();
   const ollamaMessages = [
     { role: 'system', content: systemPrompt },
-    ...context
-      .map(m => ({ role: m.role, content: (m.content ?? '').replace(/!\[.*?\]\([^)]+\)\n\n?/g, '').trim() }))
-      .filter(m => m.content),
-    { role: 'user', content: message, ...(imageFile ? { images: [imageFile.buffer.toString('base64')] } : {}) },
+    { role: 'system', content: runtimeSystemContext },
+    ...(webSources.length ? [{ role: 'system', content: buildWebContextSystemMessage(webSources) }] : []),
+    ...(internetAccessEnabled && webUnavailable ? [{
+      role: 'system',
+      content: 'The user asked for internet access, but it is currently unavailable. In this reply, start with one short sentence that internet access is unavailable, then continue normally using your own knowledge. Keep the user language.',
+    }] : []),
+    ...buildContextMessagesForOllama(context),
+    {
+      role: 'user',
+      content: message || (currentMessageImages.length ? 'Image attached.' : ''),
+      ...(currentMessageImages.length ? { images: currentMessageImages } : {}),
+    },
   ];
+
+  const upstreamAbort = new AbortController();
+  const abortUpstream = () => {
+    if (upstreamAbort.signal.aborted) return;
+    try {
+      upstreamAbort.abort();
+    } catch { }
+  };
+
+  req.once('close', abortUpstream);
+  res.once('close', abortUpstream);
 
   try {
     const ollamaRes = await fetch('http://localhost:11434/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, messages: ollamaMessages, stream: true, options }),
+      signal: upstreamAbort.signal,
     });
 
     if (!ollamaRes.ok) {
       return res.status(502).end('Upstream model error');
     }
 
-    req.on('close', () => { try { ollamaRes.body.cancel?.(); } catch { } });
-    await pipeOllamaChatStream(ollamaRes, res);
-    res.end();
+    await pipeOllamaChatStream(ollamaRes, res, upstreamAbort.signal);
+    if (!res.writableEnded && !res.destroyed && webSources.length) {
+      res.write(formatWebSourcesMarkdown(webSources));
+    }
+    if (!res.writableEnded) res.end();
   } catch (err) {
+    const aborted = upstreamAbort.signal.aborted || err?.name === 'AbortError';
+    if (aborted) {
+      if (!res.writableEnded) res.end();
+      return;
+    }
+
     if (!res.headersSent) res.status(502).end('Model unavailable');
-    else res.end();
+    else if (!res.writableEnded) res.end();
+  } finally {
+    req.removeListener('close', abortUpstream);
+    res.removeListener('close', abortUpstream);
   }
 });
 
