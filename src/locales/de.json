@@ -127,6 +127,8 @@
     "internetAccess": "Internet nutzen",
     "internetOn": "An",
     "internetOff": "Aus",
+    "copied": "Kopiert!",
+    "memorySaved": "Im Gedachtnis gespeichert ({{count}}).",
     "regenerate": "Neu generieren",
     "planModelLocked": "Dieses Modell wird automatisch durch deinen Plan festgelegt.",
     "demoFallback": "**Hallo! Ich bin Wieland** - dein lokaler KI-Assistent.\n\nDies ist eine **Demo-Vorschau**. Im echten Betrieb läuft hier ein lokales Sprachmodell (Wieland AI).\n\n*Um Ressourcen zu schonen läuft hier keine wirkliche AI*",

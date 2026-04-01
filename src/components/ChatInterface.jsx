@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import { withLang } from "../utils/i18nRouting";
 
 const MAX_IMAGE_MB = 10;
+const MODEL_PRELOAD_REFRESH_MS = 10 * 60 * 1000;
 
 const TargetIcon = () => (
   <svg
@@ -213,6 +214,7 @@ export default function ChatInterface({
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [aiStyle, setAiStyle] = useState("formal");
+  const [toast, setToast] = useState(null);
   const [internetAccess, setInternetAccess] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
@@ -243,6 +245,21 @@ export default function ChatInterface({
   const currentChatRef = useRef(currentChatId);
   const plusMenuRef = useRef(null);
   const modelDropdownRef = useRef(null);
+  const modelWarmUntilRef = useRef({});
+  const toastTimeoutRef = useRef(null);
+
+  const showToast = useCallback((message, type = "success") => {
+    if (!message) return;
+    setToast({ message, type, id: Date.now() });
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setToast(null), 2600);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, []);
 
   const welcomeMessage = useMemo(() => {
     const welcomeMessages = t("chat.welcome", { returnObjects: true });
@@ -305,6 +322,34 @@ export default function ChatInterface({
     },
     [authFetch],
   );
+
+  const preloadModel = useCallback(
+    async (modelId) => {
+      if (!user || !modelId) return;
+
+      const now = Date.now();
+      const warmUntil = modelWarmUntilRef.current[modelId] || 0;
+      if (warmUntil > now) return;
+
+      try {
+        const res = await authFetch("/api/chat/preload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: modelId }),
+        });
+
+        if (res.ok) {
+          modelWarmUntilRef.current[modelId] = now + MODEL_PRELOAD_REFRESH_MS;
+        }
+      } catch {}
+    },
+    [authFetch, user],
+  );
+
+  useEffect(() => {
+    if (!user) return;
+    preloadModel(selectedModel);
+  }, [user, selectedModel, preloadModel]);
 
   const loadChat = useCallback(
     async (filename) => {
@@ -500,6 +545,15 @@ export default function ChatInterface({
         });
         if (!res.ok) throw new Error(`API ${res.status}`);
 
+        const memorySaved =
+          res.headers.get("X-Wieland-Memory-Saved") === "1";
+        const memoryCount = Number(
+          res.headers.get("X-Wieland-Memory-Count") || "0",
+        );
+        if (memorySaved && memoryCount > 0) {
+          showToast(t("chat.memorySaved", { count: memoryCount }), "success");
+        }
+
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
 
@@ -541,7 +595,7 @@ export default function ChatInterface({
         setIsSending(false);
       }
     },
-    [saveChat],
+    [saveChat, showToast, t],
   );
 
   const stopGeneration = () => abortRef.current?.abort();
@@ -677,8 +731,18 @@ export default function ChatInterface({
     );
   }, [messages, isSending, runStream, selectedModel, aiStyle, internetAccess]);
 
-  const copyText = (content) =>
-    navigator.clipboard.writeText(stripImg(content)).catch(console.error);
+  const copyText = useCallback(
+    async (content) => {
+      try {
+        await navigator.clipboard.writeText(stripImg(content));
+        showToast(t("chat.copied"), "success");
+      } catch (err) {
+        console.error(err);
+        showToast(t("chat.errors.server"), "error");
+      }
+    },
+    [showToast, t],
+  );
 
   return (
     <div
@@ -928,6 +992,8 @@ export default function ChatInterface({
           </div>
         </div>
       </div>
+
+      {toast && <div className={`chat-toast ${toast.type}`}>{toast.message}</div>}
 
       <AuthModal
         isOpen={authModalOpen}

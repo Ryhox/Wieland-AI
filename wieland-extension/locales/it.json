@@ -58,6 +58,7 @@
     "streamError": "Errore durante la comunicazione con il server.",
     "shortError": "Errore.",
     "copied": "Copiato!",
+    "memorySaved": "Salvato in memoria ({{count}}).",
     "regenerate": "Rigenera",
     "copy": "Copia",
     "delete": "Elimina",

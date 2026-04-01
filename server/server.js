@@ -13,8 +13,69 @@ const jwt = require("jsonwebtoken");
 const sqlite3 = require("sqlite3");
 const { open } = require("sqlite");
 
+function isEnvEnabled(value, fallback = true) {
+  if (value == null) return fallback;
+  const normalized = String(value).trim().toLowerCase();
+  if (!normalized) return fallback;
+  return (
+    normalized === "1" ||
+    normalized === "true" ||
+    normalized === "yes" ||
+    normalized === "on"
+  );
+}
+
 const app = express();
 const PORT = process.env.PORT || 3001;
+const OLLAMA_BASE_URL =
+  process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+const OLLAMA_KEEP_ALIVE = process.env.OLLAMA_KEEP_ALIVE || "30m";
+const OLLAMA_PREWARM_TIMEOUT_MS = Math.max(
+  5_000,
+  parseInt(process.env.OLLAMA_PREWARM_TIMEOUT_MS || "90000", 10) || 90_000,
+);
+const OLLAMA_STARTUP_PREWARM_ENABLED = isEnvEnabled(
+  process.env.OLLAMA_STARTUP_PREWARM,
+  true,
+);
+const OLLAMA_STARTUP_PREWARM_DELAY_MS = Math.max(
+  0,
+  parseInt(process.env.OLLAMA_STARTUP_PREWARM_DELAY_MS || "0", 10) || 0,
+);
+const OLLAMA_STARTUP_PREWARM_MODELS_RAW = String(
+  process.env.OLLAMA_STARTUP_PREWARM_MODELS || "",
+);
+const INTENT_NLU_ENABLED = isEnvEnabled(process.env.INTENT_NLU_ENABLED, true);
+const INTENT_NLU_DEBUG = isEnvEnabled(process.env.INTENT_NLU_DEBUG, false);
+const INTENT_NLU_MAX_MESSAGE_CHARS = Math.max(
+  120,
+  parseInt(process.env.INTENT_NLU_MAX_MESSAGE_CHARS || "520", 10) || 520,
+);
+const INTENT_NLU_MODEL =
+  process.env.INTENT_NLU_MODEL ||
+  process.env.MEMORY_NLU_MODEL ||
+  "qwen3-vl:2b-instruct";
+const INTENT_NLU_TIMEOUT_MS = Math.max(
+  900,
+  parseInt(
+    process.env.INTENT_NLU_TIMEOUT_MS ||
+      process.env.MEMORY_NLU_TIMEOUT_MS ||
+      "2800",
+    10,
+  ) || 2_800,
+);
+const INTENT_NLU_MAX_MEMORY_ITEMS = Math.max(
+  1,
+  Math.min(
+    6,
+    parseInt(
+      process.env.INTENT_NLU_MAX_MEMORY_ITEMS ||
+        process.env.MEMORY_NLU_MAX_ITEMS ||
+        "3",
+      10,
+    ) || 3,
+  ),
+);
 
 const JWT_SECRET =
   process.env.JWT_SECRET ||
@@ -135,8 +196,22 @@ async function initDB() {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
 
+      CREATE TABLE IF NOT EXISTS user_memories (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        memory_key  TEXT    NOT NULL,
+        memory_value TEXT   NOT NULL,
+        is_explicit INTEGER NOT NULL DEFAULT 0,
+        usage_count INTEGER NOT NULL DEFAULT 0,
+        last_used_at TEXT,
+        created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, memory_key, memory_value)
+      );
+
       CREATE INDEX IF NOT EXISTS idx_chats_user_id    ON chats(user_id);
       CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON chat_messages(chat_id);
+      CREATE INDEX IF NOT EXISTS idx_user_memories_user_id ON user_memories(user_id);
     `);
     console.log("DB schema ready.");
   } finally {
@@ -732,6 +807,10 @@ const SYSTEM_BASE = `You are a LOCAL AI assistant named "Wieland".
 - You CAN analyze images provided in this conversation.
 - You do NOT represent any company (Alibaba, OpenAI, Anthropic, etc.).
 - Internet snippets can be provided by the server. Use them only when present.
+- Answer only what the user asked. Skip unrelated prefaces and meta commentary.
+- Do not mention date/time/timezone/calendar details unless the user explicitly asks for them.
+- Do not narrate internal actions (for example: "checks the clock" or "checks the server clock").
+- Keep answers concise by default. Expand only when the user asks for more detail.
 Always respond in the exact language of the user's last message.`;
 
 const IMAGE_MD_REGEX = /!\[[^\]]*\]\(([^)]+)\)/g;
@@ -846,6 +925,1119 @@ function buildRuntimeSystemContextMessage(now = new Date()) {
     `- Unix timestamp (seconds): ${unixSeconds}`,
     "Use this as ground truth for questions about today, day/date/time, deadlines, and relative time.",
   ].join("\n");
+}
+
+function getLastUserContextMessage(context = []) {
+  for (let i = context.length - 1; i >= 0; i--) {
+    const item = context[i];
+    if (item?.role === "user") {
+      return String(item?.content || "");
+    }
+  }
+  return "";
+}
+
+function emptyMessageIntentSignals() {
+  return {
+    asksTime: false,
+    asksTodayEvents: false,
+    asksLiveWeb: false,
+    explicitWebLookup: false,
+    liveFollowup: false,
+    needsMemoryContext: false,
+    explicitRemember: false,
+    memoryHintKeys: [],
+    memoryItems: [],
+  };
+}
+
+function toIntentBoolean(value) {
+  if (value === true || value === 1) return true;
+  if (value === false || value === 0 || value == null) return false;
+  const normalized = String(value).trim().toLowerCase();
+  return normalized === "true" || normalized === "yes" || normalized === "on";
+}
+
+function toUniqueHintKeys(values = []) {
+  const out = [];
+  const seen = new Set();
+
+  for (const value of values) {
+    const normalized = normalizeHintKey(value);
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    out.push(normalized);
+  }
+
+  return out;
+}
+
+const INTENT_TIME_PHRASES = [
+  "wie spaet ist es",
+  "wie spat ist es",
+  "uhrzeit",
+  "what time",
+  "current time",
+  "time now",
+  "date today",
+  "heutiges datum",
+  "che ora",
+  "ora",
+  "orario",
+  "timezone",
+  "time zone",
+  "zeitzone",
+  "fuso orario",
+];
+
+const INTENT_NEWS_PHRASES = [
+  "news",
+  "nachrichten",
+  "notizie",
+  "headlines",
+  "breaking",
+  "latest updates",
+  "current events",
+  "news von heute",
+  "today news",
+  "today in history",
+  "what happened today",
+  "what is happening today",
+  "was ist heute passiert",
+  "was passiert heute",
+  "cosa e successo oggi",
+  "cosa succede oggi",
+];
+
+const INTENT_LIVE_TOPIC_PHRASES = [
+  "weather",
+  "forecast",
+  "wetter",
+  "meteo",
+  "stock",
+  "aktie",
+  "borsa",
+  "crypto",
+  "traffic",
+  "verkehr",
+  "flight status",
+  "sports scores",
+  "results",
+  "release date",
+  "trending",
+];
+
+const INTENT_WEB_LOOKUP_PHRASES = [
+  "search web",
+  "web search",
+  "google",
+  "duckduckgo",
+  "bing",
+  "internet",
+  "online search",
+  "with sources",
+  "source links",
+  "citations",
+  "mit quellen",
+  "quellen",
+  "con fonti",
+  "fonti",
+];
+
+const INTENT_MEMORY_QUERY_PHRASES = [
+  "what do you remember",
+  "do you remember",
+  "about me",
+  "who am i",
+  "how old am i",
+  "my age",
+  "my name",
+  "where do i live",
+  "where am i from",
+  "was weisst du uber mich",
+  "was weisst du ueber mich",
+  "wer bin ich",
+  "wie alt bin ich",
+  "mein alter",
+  "wie heisse ich",
+  "wo wohne ich",
+  "ricordi",
+  "su di me",
+  "quanti anni ho",
+  "come mi chiamo",
+  "was mag ich",
+  "what do i like",
+  "cosa mi piace",
+];
+
+const INTENT_REMEMBER_PHRASES = [
+  "remember",
+  "please remember",
+  "keep this in mind",
+  "merk dir",
+  "bitte merk dir",
+  "ricorda",
+  "ricorda che",
+];
+
+const INTENT_FOLLOWUP_PHRASES = [
+  "yes",
+  "yep",
+  "yeah",
+  "ja",
+  "ok",
+  "okay",
+  "continue",
+  "continua",
+  "do it",
+  "go on",
+  "mach weiter",
+  "mach es",
+];
+
+const INTENT_AGE_HINT_PHRASES = [
+  "age",
+  "years old",
+  "how old",
+  "jahre",
+  "wie alt",
+  "anni",
+  "quanti anni",
+  "mein alter",
+  "my age",
+];
+
+const INTENT_NAME_HINT_PHRASES = [
+  "name",
+  "wie heisse ich",
+  "come mi chiamo",
+  "called",
+  "my name",
+];
+
+const INTENT_LOCATION_HINT_PHRASES = [
+  "where do i live",
+  "where am i from",
+  "wo wohne ich",
+  "woher komme ich",
+  "dove vivo",
+  "di dove sono",
+  "from",
+  "live in",
+];
+
+const INTENT_FAVORITE_HINT_PHRASES = [
+  "favorite",
+  "prefer",
+  "lieblings",
+  "ich mag",
+  "mag ich",
+  "i like",
+  "i love",
+  "mi piace",
+  "what do i like",
+  "was mag ich",
+  "cosa mi piace",
+];
+
+const INTENT_PREFERENCE_PREFIX_PHRASES = [
+  "i like",
+  "i love",
+  "ich mag",
+  "ich liebe",
+  "mi piace",
+  "mi piacciono",
+  "amo",
+  "prefer",
+  "my favorite is",
+  "mein lieblings",
+  "mein liebling ist",
+  "il mio preferito e",
+];
+
+const INTENT_PREFERENCE_STOP_PHRASES = [
+  " and ",
+  " und ",
+  " e ",
+  " but ",
+  " aber ",
+  " ma ",
+  " because ",
+  " weil ",
+  " perche ",
+  " that ",
+  " dass ",
+  " che ",
+];
+
+const INTENT_PREFERENCE_LEADING_WORDS = [
+  "the",
+  "a",
+  "an",
+  "der",
+  "die",
+  "das",
+  "ein",
+  "eine",
+  "einen",
+  "la",
+  "il",
+  "lo",
+  "i",
+  "gli",
+  "le",
+  "un",
+  "una",
+  "uno",
+];
+
+function foldIntentChars(value) {
+  const source = String(value || "").toLowerCase();
+  let out = "";
+
+  for (let i = 0; i < source.length; i++) {
+    const ch = source[i];
+    if (ch === "a" || ch === "b" || ch === "c" || ch === "d" || ch === "e") {
+      out += ch;
+      continue;
+    }
+    if (ch === "f" || ch === "g" || ch === "h" || ch === "i" || ch === "j") {
+      out += ch;
+      continue;
+    }
+    if (ch === "k" || ch === "l" || ch === "m" || ch === "n" || ch === "o") {
+      out += ch;
+      continue;
+    }
+    if (ch === "p" || ch === "q" || ch === "r" || ch === "s" || ch === "t") {
+      out += ch;
+      continue;
+    }
+    if (ch === "u" || ch === "v" || ch === "w" || ch === "x" || ch === "y" || ch === "z") {
+      out += ch;
+      continue;
+    }
+    if (ch >= "0" && ch <= "9") {
+      out += ch;
+      continue;
+    }
+    if (ch === "ä") {
+      out += "ae";
+      continue;
+    }
+    if (ch === "ö") {
+      out += "oe";
+      continue;
+    }
+    if (ch === "ü") {
+      out += "ue";
+      continue;
+    }
+    if (ch === "ß") {
+      out += "ss";
+      continue;
+    }
+    if (ch === "à" || ch === "á" || ch === "â" || ch === "ã") {
+      out += "a";
+      continue;
+    }
+    if (ch === "è" || ch === "é" || ch === "ê") {
+      out += "e";
+      continue;
+    }
+    if (ch === "ì" || ch === "í" || ch === "î") {
+      out += "i";
+      continue;
+    }
+    if (ch === "ò" || ch === "ó" || ch === "ô") {
+      out += "o";
+      continue;
+    }
+    if (ch === "ù" || ch === "ú" || ch === "û") {
+      out += "u";
+      continue;
+    }
+    out += " ";
+  }
+
+  return out;
+}
+
+function compactIntentText(value, maxLen = 360) {
+  const folded = foldIntentChars(value);
+  let out = "";
+  let lastWasSpace = true;
+
+  for (let i = 0; i < folded.length; i++) {
+    if (out.length >= maxLen) break;
+    const ch = folded[i];
+    const isSpace = ch === " " || ch === "\t" || ch === "\n" || ch === "\r";
+    if (isSpace) {
+      if (!lastWasSpace && out.length > 0) {
+        out += " ";
+        lastWasSpace = true;
+      }
+      continue;
+    }
+    out += ch;
+    lastWasSpace = false;
+  }
+
+  if (out.endsWith(" ")) out = out.slice(0, -1);
+  return out;
+}
+
+function containsAnyPhrase(text, phrases = []) {
+  if (!text) return false;
+  for (const phrase of phrases) {
+    const needle = compactIntentText(phrase, 120);
+    if (!needle) continue;
+    if (text.includes(needle)) return true;
+  }
+  return false;
+}
+
+function extractFirstIntegerFromText(text) {
+  const parts = String(text || "").split(" ");
+  for (const part of parts) {
+    let digits = "";
+    for (let i = 0; i < part.length; i++) {
+      const ch = part[i];
+      if (ch >= "0" && ch <= "9") {
+        digits += ch;
+      } else if (digits.length > 0) {
+        break;
+      }
+    }
+    if (!digits) continue;
+    const value = Number(digits);
+    if (Number.isFinite(value)) return value;
+  }
+  return null;
+}
+
+function trimLeadingIntentWords(text, blockedWords = []) {
+  const words = String(text || "")
+    .split(" ")
+    .filter(Boolean);
+
+  while (words.length > 0 && blockedWords.includes(words[0])) {
+    words.shift();
+  }
+
+  return words.join(" ");
+}
+
+function extractPreferenceCandidateFromText(text = "") {
+  const source = String(text || "");
+  if (!source) return "";
+
+  for (const rawPrefix of INTENT_PREFERENCE_PREFIX_PHRASES) {
+    const prefix = compactIntentText(rawPrefix, 80);
+    if (!prefix) continue;
+
+    const index = source.indexOf(prefix);
+    if (index < 0) continue;
+
+    let tail = source.slice(index + prefix.length).trim();
+    if (!tail) continue;
+
+    let cutPos = tail.length;
+    for (const stopPhrase of INTENT_PREFERENCE_STOP_PHRASES) {
+      const stop = compactIntentText(stopPhrase, 30);
+      if (!stop) continue;
+      const stopIndex = tail.indexOf(stop);
+      if (stopIndex > 0 && stopIndex < cutPos) {
+        cutPos = stopIndex;
+      }
+    }
+
+    tail = tail.slice(0, cutPos).trim();
+    tail = trimLeadingIntentWords(tail, INTENT_PREFERENCE_LEADING_WORDS);
+    if (!tail) continue;
+
+    const words = tail.split(" ").filter(Boolean).slice(0, 6);
+    const candidate = words.join(" ").trim();
+    if (candidate.length < 2) continue;
+    return candidate;
+  }
+
+  return "";
+}
+
+function hasAnyIntentSignal(intent) {
+  if (!intent) return false;
+  return (
+    intent.asksTime ||
+    intent.asksTodayEvents ||
+    intent.asksLiveWeb ||
+    intent.explicitWebLookup ||
+    intent.liveFollowup ||
+    intent.needsMemoryContext ||
+    intent.explicitRemember ||
+    (Array.isArray(intent.memoryHintKeys) && intent.memoryHintKeys.length > 0) ||
+    (Array.isArray(intent.memoryItems) && intent.memoryItems.length > 0)
+  );
+}
+
+function buildDeterministicBackupIntentSignals(message = "", previousUserMessage = "") {
+  const signals = emptyMessageIntentSignals();
+  const text = compactIntentText(message, 420);
+  if (!text) return signals;
+
+  const previous = compactIntentText(previousUserMessage, 420);
+
+  const asksTime = containsAnyPhrase(text, INTENT_TIME_PHRASES);
+  const asksNews = containsAnyPhrase(text, INTENT_NEWS_PHRASES);
+  const asksLiveTopic = containsAnyPhrase(text, INTENT_LIVE_TOPIC_PHRASES);
+  const explicitWeb = containsAnyPhrase(text, INTENT_WEB_LOOKUP_PHRASES);
+  const needsMemory = containsAnyPhrase(text, INTENT_MEMORY_QUERY_PHRASES);
+  const explicitRemember = containsAnyPhrase(text, INTENT_REMEMBER_PHRASES);
+
+  const followup = containsAnyPhrase(text, INTENT_FOLLOWUP_PHRASES);
+  const previousWasLive =
+    containsAnyPhrase(previous, INTENT_NEWS_PHRASES) ||
+    containsAnyPhrase(previous, INTENT_LIVE_TOPIC_PHRASES) ||
+    containsAnyPhrase(previous, INTENT_WEB_LOOKUP_PHRASES);
+
+  signals.asksTodayEvents = asksNews;
+  signals.asksLiveWeb = asksNews || asksLiveTopic || explicitWeb;
+  signals.explicitWebLookup = explicitWeb;
+  signals.asksTime = asksTime && !asksNews;
+  signals.liveFollowup = followup && previousWasLive;
+  signals.needsMemoryContext = needsMemory;
+  signals.explicitRemember = explicitRemember;
+
+  const hintKeys = [];
+  if (containsAnyPhrase(text, INTENT_AGE_HINT_PHRASES)) hintKeys.push("age");
+  if (containsAnyPhrase(text, INTENT_NAME_HINT_PHRASES)) hintKeys.push("name");
+  if (containsAnyPhrase(text, INTENT_LOCATION_HINT_PHRASES))
+    hintKeys.push("location");
+  if (containsAnyPhrase(text, INTENT_FAVORITE_HINT_PHRASES))
+    hintKeys.push("favorite");
+  if (needsMemory || explicitRemember) hintKeys.push("note");
+
+  const memoryItems = [];
+  const ageCandidate = extractFirstIntegerFromText(text);
+  if (
+    ageCandidate != null &&
+    ageCandidate >= 3 &&
+    ageCandidate <= 120 &&
+    containsAnyPhrase(text, INTENT_AGE_HINT_PHRASES)
+  ) {
+    memoryItems.push({
+      key: "age",
+      value: String(ageCandidate),
+      explicit: explicitRemember,
+    });
+  }
+
+  const preferenceCandidate = extractPreferenceCandidateFromText(text);
+  if (preferenceCandidate) {
+    memoryItems.push({
+      key: `favorite_${toMemoryKeySuffix(preferenceCandidate)}`,
+      value: preferenceCandidate,
+      explicit: explicitRemember,
+    });
+    hintKeys.push("favorite");
+    signals.needsMemoryContext = true;
+  }
+
+  signals.memoryHintKeys = toUniqueHintKeys(hintKeys);
+  signals.memoryItems = mergeMemoryCandidates([], memoryItems);
+
+  return signals;
+}
+
+function mergeMessageIntentSignals(
+  baseIntent = emptyMessageIntentSignals(),
+  modelIntent = emptyMessageIntentSignals(),
+) {
+  const merged = {
+    ...emptyMessageIntentSignals(),
+    ...baseIntent,
+    ...modelIntent,
+  };
+
+  merged.asksTime = Boolean(baseIntent.asksTime || modelIntent.asksTime);
+  merged.asksTodayEvents = Boolean(
+    baseIntent.asksTodayEvents || modelIntent.asksTodayEvents,
+  );
+  merged.asksLiveWeb = Boolean(
+    baseIntent.asksLiveWeb || modelIntent.asksLiveWeb,
+  );
+  merged.explicitWebLookup = Boolean(
+    baseIntent.explicitWebLookup || modelIntent.explicitWebLookup,
+  );
+  merged.liveFollowup = Boolean(
+    baseIntent.liveFollowup || modelIntent.liveFollowup,
+  );
+  merged.needsMemoryContext = Boolean(
+    baseIntent.needsMemoryContext || modelIntent.needsMemoryContext,
+  );
+  merged.explicitRemember = Boolean(
+    baseIntent.explicitRemember || modelIntent.explicitRemember,
+  );
+  merged.memoryHintKeys = toUniqueHintKeys([
+    ...(baseIntent.memoryHintKeys || []),
+    ...(modelIntent.memoryHintKeys || []),
+  ]);
+  merged.memoryItems = mergeMemoryCandidates(
+    baseIntent.memoryItems || [],
+    modelIntent.memoryItems || [],
+  );
+
+  return merged;
+}
+
+function shouldIncludeRuntimeClockContext(
+  _message = "",
+  _context = [],
+  intentSignals = null,
+) {
+  const intent = mergeMessageIntentSignals(
+    emptyMessageIntentSignals(),
+    intentSignals || emptyMessageIntentSignals(),
+  );
+
+  const likelyLiveQuery =
+    intent.asksTodayEvents ||
+    intent.asksLiveWeb ||
+    intent.explicitWebLookup ||
+    intent.liveFollowup;
+  if (likelyLiveQuery) return false;
+
+  return intent.asksTime;
+}
+
+function shouldRunWebLookup(message = "", _context = [], intentSignals = null) {
+  const query = String(message || "").trim();
+  if (!query) return false;
+
+  const intent = mergeMessageIntentSignals(
+    emptyMessageIntentSignals(),
+    intentSignals || emptyMessageIntentSignals(),
+  );
+
+  if (intent.asksTodayEvents) return true;
+  if (intent.liveFollowup) return true;
+  if (intent.explicitWebLookup) return true;
+
+  if (intent.asksTime) return false;
+
+  if (intent.asksLiveWeb) return true;
+
+  return false;
+}
+
+const SINGLE_VALUE_MEMORY_KEYS = new Set([
+  "name",
+  "age",
+  "location",
+  "birthday",
+  "timezone",
+  "occupation",
+]);
+const MEMORY_KEY_ALIASES = new Map([
+  ["full_name", "name"],
+  ["first_name", "name"],
+  ["years_old", "age"],
+  ["age_years", "age"],
+  ["years", "age"],
+  ["city", "location"],
+  ["country", "location"],
+  ["birth_date", "birthday"],
+  ["profession", "occupation"],
+  ["job", "occupation"],
+  ["work", "occupation"],
+  ["likes", "favorite"],
+  ["like", "favorite"],
+  ["preference", "favorite"],
+  ["preferences", "favorite"],
+  ["favorite_animal", "favorite_animals"],
+  ["favorite_animals", "favorite_animals"],
+  ["note", "note"],
+  ["memo", "note"],
+]);
+
+function collapseWhitespace(value) {
+  const source = String(value || "");
+  let out = "";
+  let seenText = false;
+  let lastWasSpace = false;
+
+  for (let i = 0; i < source.length; i++) {
+    const ch = source[i];
+    const code = ch.charCodeAt(0);
+    const isSpace = code <= 32 || code === 160;
+
+    if (isSpace) {
+      if (seenText) {
+        lastWasSpace = true;
+      }
+      continue;
+    }
+
+    if (lastWasSpace && out) out += " ";
+    out += ch;
+    seenText = true;
+    lastWasSpace = false;
+  }
+
+  return out;
+}
+
+function trimUnderscores(value) {
+  let start = 0;
+  let end = value.length;
+  while (start < end && value[start] === "_") start++;
+  while (end > start && value[end - 1] === "_") end--;
+  return value.slice(start, end);
+}
+
+function toUnderscoreKey(value, maxLen = 60) {
+  const source = collapseWhitespace(value).toLowerCase();
+  let out = "";
+  let lastWasUnderscore = false;
+
+  for (let i = 0; i < source.length; i++) {
+    if (out.length >= maxLen) break;
+    const code = source.charCodeAt(i);
+    const isDigit = code >= 48 && code <= 57;
+    const isLower = code >= 97 && code <= 122;
+
+    if (isDigit || isLower) {
+      out += source[i];
+      lastWasUnderscore = false;
+      continue;
+    }
+
+    if (!lastWasUnderscore && out.length > 0) {
+      out += "_";
+      lastWasUnderscore = true;
+    }
+  }
+
+  return trimUnderscores(out);
+}
+
+function normalizeMemoryText(value, maxLen = 180) {
+  return collapseWhitespace(value).slice(0, maxLen);
+}
+
+function toMemoryKeySuffix(value) {
+  const normalized = toUnderscoreKey(normalizeMemoryText(value, 30), 30);
+  return normalized || "item";
+}
+
+function parseJsonObjectFromText(raw) {
+  const text = String(raw || "").trim();
+  if (!text) return null;
+
+  const candidates = [];
+
+  if (text.startsWith("```")) {
+    const headerEnd = text.indexOf("\n", 3);
+    const contentStart = headerEnd >= 0 ? headerEnd + 1 : 3;
+    const closeFence = text.indexOf("```", contentStart);
+    if (closeFence > contentStart) {
+      const fencedPayload = text.slice(contentStart, closeFence).trim();
+      if (fencedPayload) candidates.push(fencedPayload);
+    }
+  }
+
+  candidates.push(text);
+
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start >= 0 && end > start) {
+    candidates.push(text.slice(start, end + 1));
+  }
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate);
+    } catch {}
+  }
+  return null;
+}
+
+function normalizeSuggestedMemoryKey(rawKey, rawValue) {
+  let key = toUnderscoreKey(normalizeMemoryText(rawKey, 60), 60);
+
+  if (!key) key = "note";
+  if (MEMORY_KEY_ALIASES.has(key)) key = MEMORY_KEY_ALIASES.get(key);
+
+  if (
+    key.startsWith("favorite") &&
+    key !== "favorite" &&
+    !key.startsWith("favorite_")
+  ) {
+    let suffix = key.slice("favorite".length);
+    while (suffix.startsWith("_")) suffix = suffix.slice(1);
+    key = suffix ? `favorite_${suffix}` : "favorite";
+  }
+  if (key === "favorite") {
+    key = `favorite_${toMemoryKeySuffix(rawValue)}`;
+  }
+  if (key === "note") {
+    key = `note_${crypto
+      .createHash("sha1")
+      .update(normalizeMemoryText(rawValue, 220))
+      .digest("hex")
+      .slice(0, 12)}`;
+  }
+
+  return key;
+}
+
+function sanitizeMemoryCandidate(candidate, defaultExplicit = false) {
+  const value = normalizeMemoryText(candidate?.value, 180);
+  if (!value) return null;
+
+  const key = normalizeSuggestedMemoryKey(candidate?.key, value);
+  if (!key) return null;
+
+  const explicit =
+    candidate?.explicit === true || candidate?.explicit === 1 || defaultExplicit;
+
+  return { key, value, explicit };
+}
+
+function mergeMemoryCandidates(base = [], extra = []) {
+  const map = new Map();
+
+  for (const candidate of [...base, ...extra]) {
+    if (!candidate?.key || !candidate?.value) continue;
+    const signature = `${candidate.key}::${candidate.value}`;
+    const existing = map.get(signature);
+    if (!existing) {
+      map.set(signature, { ...candidate });
+      continue;
+    }
+    if (candidate.explicit) existing.explicit = true;
+  }
+
+  return [...map.values()];
+}
+
+function normalizeHintKey(key) {
+  const source = normalizeMemoryText(key, 60);
+  if (!source) return "";
+
+  const normalized = normalizeSuggestedMemoryKey(source, source);
+  if (normalized.startsWith("favorite_")) return "favorite";
+  if (normalized.startsWith("note_")) return "note";
+  return normalized;
+}
+
+function getIntentNluModel() {
+  if (ALLOWED_MODELS.has(INTENT_NLU_MODEL)) return INTENT_NLU_MODEL;
+  return "qwen3-vl:2b-instruct";
+}
+
+async function analyzeMessageIntentWithModel(message, previousUserMessage = "") {
+  const emptyIntent = emptyMessageIntentSignals();
+  if (!INTENT_NLU_ENABLED) return emptyIntent;
+
+  const userText = normalizeMemoryText(message, INTENT_NLU_MAX_MESSAGE_CHARS);
+  const previousText = normalizeMemoryText(
+    previousUserMessage,
+    INTENT_NLU_MAX_MESSAGE_CHARS,
+  );
+  if (!userText) return emptyIntent;
+
+  const systemInstruction = [
+    "Analyze a user message in ANY language.",
+    "Use previous_user_message only as optional context for short follow-ups.",
+    "Return ONLY strict JSON with this schema:",
+    '{"asks_time": boolean, "asks_today_events": boolean, "asks_live_web": boolean, "explicit_web_lookup": boolean, "live_followup": boolean, "needs_memory_context": boolean, "explicit_remember": boolean, "memory_hint_keys": string[], "memory_items": [{"key": string, "value": string, "explicit": boolean}]}.',
+    "asks_time: user asks for current time/date/day/week/timezone.",
+    "asks_today_events: user asks what happened/is happening today (events/news), not clock-time.",
+    "asks_live_web: user needs up-to-date external information (news, weather, prices, traffic, match results, releases).",
+    "explicit_web_lookup: user explicitly requests internet/search/sources/citations.",
+    "live_followup: short follow-up confirmations like yes/continue/do it.",
+    "needs_memory_context: user asks about profile/preferences/past remembered facts.",
+    "explicit_remember: user explicitly asks you to remember something.",
+    "memory_hint_keys: optional keys to retrieve (name, age, location, birthday, timezone, occupation, favorite, note).",
+    "memory_items: durable personal facts to store from this message only.",
+    "When user corrects a prior fact, store the corrected value (latest wins).",
+    "Do not infer or guess. If no facts exist, return memory_items as [].",
+    "Examples:",
+    '- "whats the time" => asks_time=true',
+    '- "kannst du mir die news von heute sagen?" => asks_today_events=true, asks_live_web=true',
+    '- "ich bin 20 jahre alt" => needs_memory_context=true, memory_items includes {key:"age", value:"20"}',
+    '- "nein, ich bin 19" => memory_items includes {key:"age", value:"19"}',
+    '- "merk dir, dass ich katzen mag" => explicit_remember=true, memory_items includes {key:"favorite_animals", value:"cats"}',
+    '- "was mag ich?" => needs_memory_context=true, memory_hint_keys includes "favorite" or "note"',
+    "No markdown. No explanation. JSON only.",
+  ].join("\n");
+
+  const compactFallbackInstruction = [
+    "Analyze a user message in ANY language.",
+    "Return ONLY strict JSON with this minimal schema:",
+    '{"asks_time": boolean, "asks_today_events": boolean, "asks_live_web": boolean, "explicit_web_lookup": boolean, "live_followup": boolean, "needs_memory_context": boolean, "explicit_remember": boolean, "memory_hint_keys": [], "memory_items": []}.',
+    "If unsure, choose the most likely intent from the message.",
+    "No markdown. No explanation. JSON only.",
+  ].join("\n");
+
+  const userPayload = JSON.stringify({
+    previous_user_message: previousText || null,
+    current_user_message: userText,
+  });
+
+  async function requestIntentObject(
+    instruction,
+    numPredict = 220,
+    timeoutMs = INTENT_NLU_TIMEOUT_MS,
+  ) {
+    const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: getIntentNluModel(),
+        messages: [
+          { role: "system", content: instruction },
+          { role: "user", content: userPayload },
+        ],
+        stream: false,
+        format: "json",
+        options: {
+          think: false,
+          num_ctx: 768,
+          num_predict: numPredict,
+          temperature: 0,
+          ...OLLAMA_ANTI_REPEAT_OPTIONS,
+        },
+        keep_alive: OLLAMA_KEEP_ALIVE,
+      }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const parsed = parseJsonObjectFromText(data?.message?.content || "");
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  }
+
+  try {
+    const primaryTimeout = Math.max(
+      900,
+      Math.min(INTENT_NLU_TIMEOUT_MS, 2_300),
+    );
+    const retryTimeout = Math.max(
+      700,
+      Math.min(INTENT_NLU_TIMEOUT_MS, 1_400),
+    );
+
+    let parsed = await requestIntentObject(systemInstruction, 170, primaryTimeout);
+    if (!parsed) {
+      parsed = await requestIntentObject(
+        compactFallbackInstruction,
+        120,
+        retryTimeout,
+      );
+    }
+    if (!parsed) return emptyIntent;
+
+    const defaultExplicit =
+      toIntentBoolean(parsed?.explicit_remember) ||
+      toIntentBoolean(parsed?.explicit);
+    const memoryItemsRaw = Array.isArray(parsed.memory_items)
+      ? parsed.memory_items
+      : Array.isArray(parsed.items)
+        ? parsed.items
+        : [];
+    const memoryItems = memoryItemsRaw
+      .slice(0, INTENT_NLU_MAX_MEMORY_ITEMS)
+      .map((item) => sanitizeMemoryCandidate(item, defaultExplicit))
+      .filter(Boolean);
+
+    const rawHintKeys = Array.isArray(parsed.memory_hint_keys)
+      ? parsed.memory_hint_keys
+      : Array.isArray(parsed.hint_keys)
+        ? parsed.hint_keys
+        : [];
+
+    const modelIntent = emptyMessageIntentSignals();
+    modelIntent.asksTime = toIntentBoolean(parsed.asks_time);
+    modelIntent.asksTodayEvents = toIntentBoolean(parsed.asks_today_events);
+    modelIntent.asksLiveWeb = toIntentBoolean(parsed.asks_live_web);
+    modelIntent.explicitWebLookup = toIntentBoolean(parsed.explicit_web_lookup);
+    modelIntent.liveFollowup =
+      toIntentBoolean(parsed.live_followup) && !!previousText;
+    modelIntent.needsMemoryContext = toIntentBoolean(parsed.needs_memory_context);
+    modelIntent.explicitRemember = toIntentBoolean(parsed.explicit_remember) || defaultExplicit;
+    modelIntent.memoryHintKeys = toUniqueHintKeys(rawHintKeys);
+    modelIntent.memoryItems = memoryItems;
+
+    return modelIntent;
+  } catch {
+    return emptyIntent;
+  }
+}
+
+async function saveUserMemories(userId, candidates = []) {
+  let savedCount = 0;
+
+  for (const candidate of candidates) {
+    const key = normalizeMemoryText(candidate?.key, 60).toLowerCase();
+    const value = normalizeMemoryText(candidate?.value, 180);
+    if (!key || !value) continue;
+
+    const existing = await pool.query(
+      `SELECT id, is_explicit FROM user_memories
+       WHERE user_id = $1 AND memory_key = $2 AND memory_value = $3
+       LIMIT 1`,
+      [userId, key, value],
+    );
+
+    if (existing.rows[0]) {
+      if (candidate.explicit && !existing.rows[0].is_explicit) {
+        await pool.query(
+          `UPDATE user_memories
+           SET is_explicit = 1, updated_at = CURRENT_TIMESTAMP
+           WHERE id = $1`,
+          [existing.rows[0].id],
+        );
+      }
+      continue;
+    }
+
+    if (SINGLE_VALUE_MEMORY_KEYS.has(key)) {
+      await pool.query(
+        `DELETE FROM user_memories WHERE user_id = $1 AND memory_key = $2`,
+        [userId, key],
+      );
+    }
+
+    await pool.query(
+      `INSERT INTO user_memories
+       (user_id, memory_key, memory_value, is_explicit, usage_count, last_used_at)
+       VALUES ($1, $2, $3, $4, 0, NULL)`,
+      [userId, key, value, candidate.explicit ? 1 : 0],
+    );
+    savedCount++;
+  }
+
+  return savedCount;
+}
+
+function shouldInjectUserMemories(_message = "", _context = [], intentSignals = null) {
+  const intent = mergeMessageIntentSignals(
+    emptyMessageIntentSignals(),
+    intentSignals || emptyMessageIntentSignals(),
+  );
+
+  return (
+    intent.needsMemoryContext ||
+    intent.liveFollowup ||
+    intent.explicitRemember ||
+    (intent.memoryHintKeys || []).length > 0 ||
+    (intent.memoryItems || []).length > 0
+  );
+}
+
+async function getRelevantUserMemories(
+  userId,
+  _message = "",
+  limit = 6,
+  externalHintKeys = [],
+) {
+  const rowsRes = await pool.query(
+    `SELECT id, memory_key, memory_value, is_explicit, usage_count, updated_at
+     FROM user_memories
+     WHERE user_id = $1
+     ORDER BY updated_at DESC, id DESC
+     LIMIT 40`,
+    [userId],
+  );
+
+  const rows = rowsRes.rows || [];
+  if (!rows.length) return [];
+
+  const keyHints = new Set();
+  for (const key of externalHintKeys || []) {
+    const normalized = normalizeHintKey(key);
+    if (normalized) keyHints.add(normalized);
+  }
+
+  let filtered = rows;
+  if (keyHints.size > 0) {
+    filtered = rows.filter((memory) => {
+      for (const key of keyHints) {
+        if (memory.memory_key === key) return true;
+        if (key === "favorite" && memory.memory_key.startsWith("favorite_"))
+          return true;
+        if (key === "favorite" && memory.memory_key.startsWith("note_"))
+          return true;
+        if (key === "note" && memory.memory_key.startsWith("note_"))
+          return true;
+      }
+      return false;
+    });
+  }
+
+  if (!filtered.length && keyHints.size > 0) return [];
+
+  const seenSingleValueKeys = new Set();
+  const selected = [];
+  for (const memory of filtered) {
+    if (
+      SINGLE_VALUE_MEMORY_KEYS.has(memory.memory_key) &&
+      seenSingleValueKeys.has(memory.memory_key)
+    ) {
+      continue;
+    }
+    if (SINGLE_VALUE_MEMORY_KEYS.has(memory.memory_key)) {
+      seenSingleValueKeys.add(memory.memory_key);
+    }
+    selected.push(memory);
+    if (selected.length >= limit) break;
+  }
+
+  return selected;
+}
+
+async function markUserMemoriesUsed(memories = []) {
+  for (const memory of memories) {
+    if (!memory?.id) continue;
+    await pool.query(
+      `UPDATE user_memories
+       SET usage_count = usage_count + 1,
+           last_used_at = CURRENT_TIMESTAMP
+       WHERE id = $1`,
+      [memory.id],
+    );
+  }
+}
+
+function formatMemoryLabel(key = "") {
+  if (key.startsWith("favorite_")) {
+    return `favorite ${key.slice("favorite_".length).replace(/_/g, " ")}`;
+  }
+  if (key.startsWith("note_")) {
+    return "note";
+  }
+  return key;
+}
+
+function buildUserMemorySystemMessage(memories = []) {
+  const lines = [
+    "Known user memory (private profile).",
+    "Use this only when relevant to the current request.",
+    "Do not mention memory items that are not needed for the answer.",
+  ];
+
+  for (const memory of memories) {
+    lines.push(
+      `- ${formatMemoryLabel(memory.memory_key)}: ${memory.memory_value}`,
+    );
+  }
+
+  return lines.join("\n");
 }
 
 function decodeHtmlEntities(text) {
@@ -1087,36 +2279,55 @@ function getSystemPrompt(style = "formal") {
   const styleGuides = {
     formal: `${SYSTEM_BASE}
 Speak naturally, concisely, and professionally. Be accurate and precise.
+Start directly with the answer, then add detail only if needed.
 You may use *italic*, **bold**, and - bullet points.`,
     friendly: `${SYSTEM_BASE}
 Be warm, conversational, and approachable. Use a friendly tone.
-Make jokes when appropriate and show personality.
+Keep it compact and practical. Avoid filler.
 You may use *italic*, **bold**, and - bullet points with emojis.`,
     precise: `${SYSTEM_BASE}
-Be extremely precise and analytical. Focus on accuracy and detail.
-Provide structured, well-organized responses with technical depth.
+Be precise and analytical. Focus on correctness first.
+Use structure when helpful, but keep responses compact unless detail is requested.
 You may use *italic*, **bold**, and - bullet points. Avoid fluff.`,
   };
   return styleGuides[style] || styleGuides.formal;
 }
 
+function getModelResponseGuidance(model) {
+  if (model === "qwen3-vl:2b-instruct") {
+    return "Model guidance: keep replies short and focused. Usually 1-4 short sentences or up to 5 bullets. Only go longer when the user explicitly asks for detailed steps or code. Never output stage directions like 'checks the clock'.";
+  }
+  if (model === "qwen3-vl:4b-instruct") {
+    return "Model guidance: prioritize concise, direct answers. Usually 1-6 short sentences. Expand only when the user explicitly requests depth. Never output stage directions like 'checks the clock'.";
+  }
+  return "Model guidance: stay on-topic and concise by default. Add depth only when requested. Never output stage directions like 'checks the clock'.";
+}
+
+const OLLAMA_ANTI_REPEAT_OPTIONS = {
+  repeat_penalty: 1.12,
+  repeat_last_n: 128,
+};
+
 const OLLAMA_OPTIONS_8B = {
   think: false,
   num_ctx: 2048,
   num_predict: 1024,
-  temperature: 0.7,
+  temperature: 0.65,
+  ...OLLAMA_ANTI_REPEAT_OPTIONS,
 };
 const OLLAMA_OPTIONS_4B = {
   think: false,
   num_ctx: 1024,
-  num_predict: 512,
-  temperature: 0.7,
+  num_predict: 320,
+  temperature: 0.55,
+  ...OLLAMA_ANTI_REPEAT_OPTIONS,
 };
 const OLLAMA_OPTIONS_2B = {
   think: false,
   num_ctx: 768,
-  num_predict: 384,
-  temperature: 0.7,
+  num_predict: 220,
+  temperature: 0.5,
+  ...OLLAMA_ANTI_REPEAT_OPTIONS,
 };
 const ALLOWED_MODELS = new Set([
   "qwen3-vl:8b-instruct",
@@ -1161,6 +2372,92 @@ function getOptionsForModel(model) {
   if (model === "qwen3-vl:8b-instruct") return OLLAMA_OPTIONS_8B;
   if (model === "qwen3-vl:4b-instruct") return OLLAMA_OPTIONS_4B;
   return OLLAMA_OPTIONS_2B;
+}
+
+function getStartupPrewarmModels() {
+  const defaults = [
+    "qwen3-vl:2b-instruct",
+    "qwen3-vl:4b-instruct",
+    "qwen3-vl:8b-instruct",
+  ];
+
+  if (!OLLAMA_STARTUP_PREWARM_MODELS_RAW.trim()) {
+    return defaults.filter((model) => ALLOWED_MODELS.has(model));
+  }
+
+  const configured = OLLAMA_STARTUP_PREWARM_MODELS_RAW.split(",")
+    .map((m) => m.trim())
+    .filter((m) => m && ALLOWED_MODELS.has(m));
+
+  return configured.length
+    ? configured
+    : defaults.filter((model) => ALLOWED_MODELS.has(model));
+}
+
+async function warmModelInOllama(model, baseOptions, timeoutMs) {
+  const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: "user",
+          content: "Reply with exactly: OK",
+        },
+      ],
+      stream: false,
+      options: {
+        think: false,
+        num_ctx: Math.min(baseOptions.num_ctx || 512, 512),
+        num_predict: 1,
+        temperature: 0,
+      },
+      keep_alive: OLLAMA_KEEP_ALIVE,
+    }),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Warmup failed (${res.status})`);
+  }
+}
+
+async function prewarmModelsOnStartup() {
+  if (!OLLAMA_STARTUP_PREWARM_ENABLED) {
+    console.log("[prewarm] startup prewarm disabled");
+    return;
+  }
+
+  const models = getStartupPrewarmModels();
+  if (!models.length) {
+    console.log("[prewarm] no valid models configured for startup prewarm");
+    return;
+  }
+
+  if (OLLAMA_STARTUP_PREWARM_DELAY_MS > 0) {
+    await new Promise((resolve) =>
+      setTimeout(resolve, OLLAMA_STARTUP_PREWARM_DELAY_MS),
+    );
+  }
+
+  console.log(`[prewarm] starting warmup for: ${models.join(", ")}`);
+
+  for (const model of models) {
+    const started = Date.now();
+    try {
+      await warmModelInOllama(
+        model,
+        getOptionsForModel(model),
+        OLLAMA_PREWARM_TIMEOUT_MS,
+      );
+      console.log(`[prewarm] ready: ${model} (${Date.now() - started}ms)`);
+    } catch (err) {
+      console.warn(
+        `[prewarm] failed: ${model} (${Date.now() - started}ms) - ${err?.message || err}`,
+      );
+    }
+  }
 }
 
 async function pipeOllamaChatStream(ollamaRes, expressRes, abortSignal) {
@@ -1260,7 +2557,7 @@ async function pipeOllamaChatStream(ollamaRes, expressRes, abortSignal) {
 async function generateChatTitle(firstUserMessage) {
   const truncated = firstUserMessage.slice(0, 200);
   try {
-    const res = await fetch("http://localhost:11434/api/chat", {
+    const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1293,6 +2590,42 @@ async function generateChatTitle(firstUserMessage) {
     return truncated.slice(0, 50);
   }
 }
+
+app.post("/api/chat/preload", requireAuth, async (req, res) => {
+  let userPlan = "Free";
+  try {
+    const planResult = await pool.query(`SELECT plan FROM users WHERE id = $1`, [
+      req.userId,
+    ]);
+    userPlan = planResult.rows[0]?.plan || "Free";
+  } catch {
+    userPlan = "Free";
+  }
+
+  const requestedModel = req.body?.model || getModelForPlan(userPlan);
+  const requestedSafeModel = ALLOWED_MODELS.has(requestedModel)
+    ? requestedModel
+    : getModelForPlan(userPlan);
+  const defaultModel = getModelForPlan(userPlan);
+  const model = isModelAllowedForPlan(requestedSafeModel, userPlan)
+    ? requestedSafeModel
+    : defaultModel;
+
+  const baseOptions = getOptionsForModel(model);
+
+  try {
+    await warmModelInOllama(model, baseOptions, OLLAMA_PREWARM_TIMEOUT_MS);
+
+    return res.json({
+      success: true,
+      model,
+      keepAlive: OLLAMA_KEEP_ALIVE,
+    });
+  } catch (err) {
+    console.warn("Model preload error:", err?.message || err);
+    return res.status(502).json({ error: "Model preload failed" });
+  }
+});
 
 app.post(
   "/api/chat/stream",
@@ -1355,17 +2688,111 @@ app.post(
       context = [];
     }
 
+    const previousUserMessage = getLastUserContextMessage(context);
+    const deterministicIntent = buildDeterministicBackupIntentSignals(
+      message,
+      previousUserMessage,
+    );
+
+    let modelIntent = emptyMessageIntentSignals();
+    if (message && !hasAnyIntentSignal(deterministicIntent)) {
+      modelIntent = await analyzeMessageIntentWithModel(
+        message,
+        previousUserMessage,
+      );
+    }
+    const intentSignals = mergeMessageIntentSignals(
+      deterministicIntent,
+      modelIntent,
+    );
+
+    if (INTENT_NLU_DEBUG) {
+      console.log(
+        "[intent-nlu]",
+        JSON.stringify({
+          message: normalizeMemoryText(message, 120),
+          asksTime: intentSignals.asksTime,
+          asksTodayEvents: intentSignals.asksTodayEvents,
+          asksLiveWeb: intentSignals.asksLiveWeb,
+          explicitWebLookup: intentSignals.explicitWebLookup,
+          liveFollowup: intentSignals.liveFollowup,
+          needsMemoryContext: intentSignals.needsMemoryContext,
+          explicitRemember: intentSignals.explicitRemember,
+          memoryHintKeys: intentSignals.memoryHintKeys || [],
+          memoryItemsCount: (intentSignals.memoryItems || []).length,
+        }),
+      );
+    }
+
+    let memorySavedCount = 0;
+    let memoryShouldInject = shouldInjectUserMemories(
+      message,
+      context,
+      intentSignals,
+    );
+    let memoryHintKeys = intentSignals.memoryHintKeys || [];
+    try {
+      let memoryCandidates = [...(intentSignals.memoryItems || [])];
+
+      if (intentSignals.explicitRemember && memoryCandidates.length === 0) {
+        const note = normalizeMemoryText(message, 220);
+        if (note) {
+          const noteKey = `note_${crypto
+            .createHash("sha1")
+            .update(note)
+            .digest("hex")
+            .slice(0, 12)}`;
+          memoryCandidates.push({ key: noteKey, value: note, explicit: true });
+        }
+      }
+
+      if (memoryCandidates.length) {
+        memorySavedCount = await saveUserMemories(req.userId, memoryCandidates);
+      }
+    } catch (err) {
+      console.warn("Memory save failed:", err?.message || err);
+    }
+
+    let relevantUserMemories = [];
+    if (memoryShouldInject) {
+      try {
+        relevantUserMemories = await getRelevantUserMemories(
+          req.userId,
+          message,
+          6,
+          memoryHintKeys,
+        );
+        if (relevantUserMemories.length) {
+          await markUserMemoriesUsed(relevantUserMemories);
+        }
+      } catch (err) {
+        console.warn("Memory lookup failed:", err?.message || err);
+      }
+    }
+
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
     res.setHeader("X-Accel-Buffering", "no");
+    res.setHeader("X-Wieland-Memory-Saved", memorySavedCount > 0 ? "1" : "0");
+    res.setHeader("X-Wieland-Memory-Count", String(memorySavedCount));
+    res.setHeader(
+      "Access-Control-Expose-Headers",
+      "X-Wieland-Memory-Saved, X-Wieland-Memory-Count",
+    );
 
     let webSources = [];
     let webUnavailable = false;
+    const shouldLookupWeb =
+      internetAccessEnabled &&
+      shouldRunWebLookup(message, context, intentSignals);
 
-    if (internetAccessEnabled && message) {
+    if (shouldLookupWeb && message) {
       try {
         webSources = await fetchWebSources(message);
+        if (!webSources.length) {
+          webUnavailable = true;
+        }
       } catch (err) {
         webUnavailable = true;
         console.warn("Web access unavailable:", err?.message || err);
@@ -1373,10 +2800,29 @@ app.post(
     }
 
     const systemPrompt = getSystemPrompt(aiStyle);
-    const runtimeSystemContext = buildRuntimeSystemContextMessage();
+    const modelResponseGuidance = getModelResponseGuidance(model);
+    const includeRuntimeSystemContext = shouldIncludeRuntimeClockContext(
+      message,
+      context,
+      intentSignals,
+    );
+    const runtimeSystemContext = includeRuntimeSystemContext
+      ? buildRuntimeSystemContextMessage()
+      : "";
     const ollamaMessages = [
       { role: "system", content: systemPrompt },
-      { role: "system", content: runtimeSystemContext },
+      { role: "system", content: modelResponseGuidance },
+      ...(relevantUserMemories.length
+        ? [
+            {
+              role: "system",
+              content: buildUserMemorySystemMessage(relevantUserMemories),
+            },
+          ]
+        : []),
+      ...(runtimeSystemContext
+        ? [{ role: "system", content: runtimeSystemContext }]
+        : []),
       ...(webSources.length
         ? [
             {
@@ -1385,7 +2831,16 @@ app.post(
             },
           ]
         : []),
-      ...(internetAccessEnabled && webUnavailable
+      ...(shouldLookupWeb
+        ? [
+            {
+              role: "system",
+              content:
+                "The user asked for current/live information. Do not claim you never have real-time access. If no web snippets are present, say the live lookup is temporarily unavailable right now.",
+            },
+          ]
+        : []),
+      ...(shouldLookupWeb && webUnavailable
         ? [
             {
               role: "system",
@@ -1417,7 +2872,7 @@ app.post(
     res.once("close", abortUpstream);
 
     try {
-      const ollamaRes = await fetch("http://localhost:11434/api/chat", {
+      const ollamaRes = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1425,6 +2880,7 @@ app.post(
           messages: ollamaMessages,
           stream: true,
           options,
+          keep_alive: OLLAMA_KEEP_ALIVE,
         }),
         signal: upstreamAbort.signal,
       });
@@ -1697,7 +3153,10 @@ app.post("/api/contact", (req, res) => {
 
 initDB()
   .then(() => {
-    app.listen(PORT, () => console.log(`Wieland http://localhost:${PORT}`));
+    app.listen(PORT, () => {
+      console.log(`Wieland http://localhost:${PORT}`);
+      void prewarmModelsOnStartup();
+    });
   })
   .catch((err) => {
     console.error("DB init failed:", err.message);

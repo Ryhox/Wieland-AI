@@ -8,6 +8,7 @@ const AUTH_COOKIE_KEY = "wieland_ext_token";
 const WEBSITE_LANG_COOKIE_KEY = "wieland_lang";
 const MAIN_WEBSITE_HOSTS = ["localhost", "127.0.0.1"];
 const LANG_SYNC_INTERVAL_MS = 1500;
+const MODEL_PRELOAD_REFRESH_MS = 10 * 60 * 1000;
 const SUPPORTED_LANGS = ["de", "en", "it"];
 const I18N = Object.fromEntries(SUPPORTED_LANGS.map((lang) => [lang, {}]));
 let localesLoaded = false;
@@ -379,6 +380,7 @@ let internetAccess = false;
 let imageFile = null;
 let imagePreview = null;
 let sidebarOpen = false;
+const modelWarmUntil = new Map();
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -590,12 +592,33 @@ async function clearAuthSession() {
   user = null;
   clearAuthCookie();
   await chromeRemove([TOKEN_KEY, USER_KEY]);
+  modelWarmUntil.clear();
 }
 
 function apiFetch(path, opts = {}) {
   const headers = { ...(opts.headers || {}) };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   return fetch(`${API_BASE}${path}`, { ...opts, headers });
+}
+
+async function preloadModel(modelId) {
+  if (!token || !modelId) return;
+
+  const now = Date.now();
+  const warmUntil = modelWarmUntil.get(modelId) || 0;
+  if (warmUntil > now) return;
+
+  try {
+    const res = await apiFetch("/api/chat/preload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: modelId }),
+    });
+
+    if (res.ok) {
+      modelWarmUntil.set(modelId, now + MODEL_PRELOAD_REFRESH_MS);
+    }
+  } catch {}
 }
 
 function showAuth() {
@@ -719,6 +742,7 @@ function showChat() {
 
   updateModelForPlan();
   updateModelDropdown();
+  void preloadModel(selectedModel);
 
   loadChatList();
 
@@ -775,6 +799,7 @@ modelOptions.forEach((opt) => {
     modelLabelEl.textContent = modelLabelFor(selectedModel);
     updateModelDropdown();
     modelDropdown.classList.add("hidden");
+    void preloadModel(selectedModel);
   });
 });
 
@@ -1134,6 +1159,14 @@ async function sendMessage() {
 
     if (!res.ok) throw new Error(`API ${res.status}`);
 
+    const memorySaved = res.headers.get("X-Wieland-Memory-Saved") === "1";
+    const memoryCount = Number(
+      res.headers.get("X-Wieland-Memory-Count") || "0",
+    );
+    if (memorySaved && memoryCount > 0) {
+      toast(tr("chat.memorySaved", { count: memoryCount }), "success");
+    }
+
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
 
@@ -1320,6 +1353,14 @@ async function regenerate() {
       signal: abortController.signal,
     });
     if (!res.ok) throw new Error(`API ${res.status}`);
+
+    const memorySaved = res.headers.get("X-Wieland-Memory-Saved") === "1";
+    const memoryCount = Number(
+      res.headers.get("X-Wieland-Memory-Count") || "0",
+    );
+    if (memorySaved && memoryCount > 0) {
+      toast(tr("chat.memorySaved", { count: memoryCount }), "success");
+    }
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();

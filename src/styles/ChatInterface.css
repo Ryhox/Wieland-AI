@@ -811,6 +811,30 @@
   transition: opacity 0.3s ease-in-out;
 }
 
+.chat-toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 320;
+  pointer-events: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.chat-toast.success {
+  background: rgba(22, 163, 74, 0.18);
+}
+
+.chat-toast.error {
+  background: rgba(220, 38, 38, 0.2);
+}
+
 @media (max-width: 768px) {
   .messages-area {
     max-width: 100%;
@@ -850,5 +874,11 @@
   .add-more-images-btn {
     width: 60px;
     height: 60px;
+  }
+
+  .chat-toast {
+    right: 12px;
+    bottom: 12px;
+    max-width: calc(100% - 24px);
   }
 }

@@ -123,6 +123,8 @@
     "internetAccess": "Use internet",
     "internetOn": "On",
     "internetOff": "Off",
+    "copied": "Copied!",
+    "memorySaved": "Saved to memory ({{count}}).",
     "regenerate": "Regenerate",
     "planModelLocked": "This model is set automatically by your plan.",
     "demoFallback": "**Hi! I'm Wieland** - your local AI assistant.\n\nThis is a **demo preview**. In real usage, a local language model runs here (Wieland AI).\n\n*To save resources, no actual AI is running here*",
