@@ -8,6 +8,28 @@ import { withLang } from "../utils/i18nRouting";
 
 const MAX_IMAGE_MB = 10;
 const MODEL_PRELOAD_REFRESH_MS = 10 * 60 * 1000;
+const CLARIFY_POPUP_DELAY_MS = 240;
+
+function normalizeUiLang(value = "") {
+  const lang = String(value || "").toLowerCase();
+  if (lang.startsWith("en")) return "en";
+  if (lang.startsWith("it")) return "it";
+  return "de";
+}
+
+function getLocalizedIdeaPlaceholder(language = "de") {
+  const lang = normalizeUiLang(language);
+  if (lang === "en") return "Describe your idea";
+  if (lang === "it") return "Descrivi la tua idea";
+  return "Beschreibe deine Idee";
+}
+
+function getLocalizedSkipLabel(language = "de") {
+  const lang = normalizeUiLang(language);
+  if (lang === "en") return "Skip";
+  if (lang === "it") return "Salta";
+  return "Überspringen";
+}
 
 const TargetIcon = () => (
   <svg
@@ -127,25 +149,520 @@ const AI_STYLES = [
   { id: "precise", key: "chat.styles.precise", icon: <SparkIcon /> },
 ];
 
-function renderMarkdown(raw = "") {
-  return raw
+const CLARIFY_JSON_BLOCK_RE =
+  /\[\[\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]([\s\S]*?)\[\[\s*\/\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
+const CLARIFY_JSON_OPEN_RE =
+  /\[\[\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
+const CLARIFY_JSON_CLOSE_RE =
+  /\[\[\s*\/\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
+const CLARIFY_JSON_TOKEN_RE = /WIELAND[\s_-]*CLARIFY[\s_-]*JSON/i;
+const CLARIFY_OPTION_LINE_RE = /^\s*([A-E])[)\].:-]\s*(.+)$/i;
+const CLARIFY_OPTION_IDS = ["A", "B", "C", "D", "E"];
+const CLARIFY_VAGUE_BUILD_VERB_RE =
+  /\b(mach|mache|build|make|create|generate|generat|generier|erstell\w*|baue?\b|program\w*|entwickl\w*|crea|sviluppa|fai)\b/i;
+const CLARIFY_VAGUE_BUILD_TARGET_RE =
+  /\b(app|website|webseite|landing\s+page|tool|projekt|project|bot|script|programm|program|dashboard|automation|automatisierung|extension)\b/i;
+const CLARIFY_VAGUE_BUILD_SCOPE_HINT_RE =
+  /\b(react|vue|svelte|html|css|javascript|typescript|node|python|java|single\s+file|mehrere\s+dateien|backend|frontend|api|mobile|ios|android|chrome\s+extension|browser\s+extension|deadline|budget|zielgruppe|target\s+audience)\b/i;
+
+function normalizeClarifyOptions(rawOptions = []) {
+  const out = [];
+  const list = Array.isArray(rawOptions) ? rawOptions : [];
+
+  for (const item of list) {
+    if (out.length >= 5) break;
+
+    let id = "";
+    let label = "";
+
+    if (typeof item === "string") {
+      label = item.trim();
+      id = CLARIFY_OPTION_IDS[out.length] || "";
+    } else {
+      id = String(item?.id || item?.key || "")
+        .trim()
+        .toUpperCase();
+      label = String(item?.label || item?.text || item?.value || "").trim();
+    }
+
+    if (!label) continue;
+    if (!/^[A-E]$/.test(id)) id = CLARIFY_OPTION_IDS[out.length] || "";
+    if (!id) continue;
+
+    out.push({ id, label });
+  }
+
+  return out;
+}
+
+function toSingleSentenceQuestion(value = "", fallback = "") {
+  const source = String(value || fallback || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!source) return "";
+
+  const sentenceMatch = source.match(/^[^.!?]+[.!?]?/);
+  let question = sentenceMatch ? sentenceMatch[0].trim() : source;
+
+  if (question.length > 140) {
+    question = `${question.slice(0, 137).trimEnd()}...`;
+  }
+
+  return question;
+}
+
+function isClarifyQaReplyText(value = "") {
+  const source = String(value || "").trim();
+  if (!source) return false;
+
+  return /^q\s*:/i.test(source) && /(?:^|\n)\s*a\s*:/im.test(source);
+}
+
+function formatClarifyReply(question = "", answer = "") {
+  const cleanAnswer = String(answer || "").trim();
+  if (!cleanAnswer) return "";
+  if (isClarifyQaReplyText(cleanAnswer)) return cleanAnswer;
+
+  const cleanQuestion = String(question || "").trim();
+  if (!cleanQuestion) return cleanAnswer;
+
+  return `Q: ${cleanQuestion}\nA: ${cleanAnswer}`;
+}
+
+function isLikelyVagueBuildPromptClient(message = "") {
+  const source = String(message || "").trim();
+  if (!source) return false;
+
+  const compact = source
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+  const wordCount = compact.split(" ").filter(Boolean).length;
+
+  if (wordCount > 10) return false;
+  if (!CLARIFY_VAGUE_BUILD_VERB_RE.test(compact)) return false;
+  if (!CLARIFY_VAGUE_BUILD_TARGET_RE.test(compact)) return false;
+  if (CLARIFY_VAGUE_BUILD_SCOPE_HINT_RE.test(compact)) return false;
+
+  return true;
+}
+
+function detectClarifyFallbackLanguageFromText(message = "") {
+  const source = String(message || "").toLowerCase();
+  if (!source) return "en";
+
+  if (
+    /[àèéìíîòóù]/i.test(source) ||
+    /\b(che|quando|dove|vorrei|fammi|crea|costruisci|sito|estensione|automazione)\b/i.test(
+      source,
+    )
+  ) {
+    return "it";
+  }
+
+  if (
+    /[äöüß]/i.test(source) ||
+    /\b(und|oder|ich|bitte|mach|baue|erstell|frage|website|webseite)\b/i.test(
+      source,
+    )
+  ) {
+    return "de";
+  }
+
+  return "en";
+}
+
+function buildClientForcedClarificationFallbackPayload(message = "") {
+  const lang = detectClarifyFallbackLanguageFromText(message);
+
+  if (lang === "de") {
+    return {
+      question: "Worauf soll ich mich zuerst fokussieren?",
+      options: [
+        { id: "A", label: "Website oder Landingpage" },
+        { id: "B", label: "Web-App" },
+        { id: "C", label: "Browser-Erweiterung" },
+        { id: "D", label: "Automatisierung oder Script" },
+        { id: "E", label: "Etwas anderes" },
+      ],
+      allowFreeform: true,
+      freeformPlaceholder: "Kurz beschreiben",
+      skipLabel: "Überspringen",
+      step: 1,
+      totalSteps: 1,
+    };
+  }
+
+  if (lang === "it") {
+    return {
+      question: "Su cosa devo concentrarmi per prima cosa?",
+      options: [
+        { id: "A", label: "Sito web o landing page" },
+        { id: "B", label: "Web app" },
+        { id: "C", label: "Estensione browser" },
+        { id: "D", label: "Automazione o script" },
+        { id: "E", label: "Altro" },
+      ],
+      allowFreeform: true,
+      freeformPlaceholder: "Descrivilo in breve",
+      skipLabel: "Salta",
+      step: 1,
+      totalSteps: 1,
+    };
+  }
+
+  return {
+    question: "What should I focus on first?",
+    options: [
+      { id: "A", label: "Website or landing page" },
+      { id: "B", label: "Web app" },
+      { id: "C", label: "Browser extension" },
+      { id: "D", label: "Automation or script" },
+      { id: "E", label: "Something else" },
+    ],
+    allowFreeform: true,
+    freeformPlaceholder: "Describe briefly",
+    skipLabel: "Skip",
+    step: 1,
+    totalSteps: 1,
+  };
+}
+
+function findClarifyMarkerStart(rawText = "") {
+  const source = String(rawText || "");
+  if (!source) return -1;
+
+  const openMarkerMatch = source.match(CLARIFY_JSON_OPEN_RE);
+  if (
+    openMarkerMatch &&
+    Number.isInteger(openMarkerMatch.index) &&
+    openMarkerMatch.index >= 0
+  ) {
+    return openMarkerMatch.index;
+  }
+
+  const bracketedFragmentIndex = source.toUpperCase().indexOf("[[WIELAND");
+  if (bracketedFragmentIndex >= 0) return bracketedFragmentIndex;
+
+  const tokenMatch = source.match(CLARIFY_JSON_TOKEN_RE);
+  if (tokenMatch && Number.isInteger(tokenMatch.index) && tokenMatch.index >= 0) {
+    return tokenMatch.index;
+  }
+
+  return -1;
+}
+
+function extractFirstJsonObject(rawText = "") {
+  const source = String(rawText || "");
+  const start = source.indexOf("{");
+  if (start < 0) return "";
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < source.length; i++) {
+    const char = source[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === "{") depth += 1;
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return source.slice(start, i + 1);
+      }
+    }
+  }
+
+  return "";
+}
+
+function parseClarifyJsonObject(rawText = "") {
+  const source = String(rawText || "").trim();
+  if (!source) return null;
+
+  const fencedMatch = source.match(/^```(?:json)?\s*([\s\S]*?)```$/i);
+  const normalized = (fencedMatch ? fencedMatch[1] : source).trim();
+
+  try {
+    return JSON.parse(normalized);
+  } catch {
+  }
+
+  const jsonObject = extractFirstJsonObject(normalized);
+  if (!jsonObject) return null;
+
+  try {
+    return JSON.parse(jsonObject);
+  } catch {
+    return null;
+  }
+}
+
+function sanitizeClarifyPayload(payload = {}, fallbackQuestion = "") {
+  const question = toSingleSentenceQuestion(
+    payload?.question || payload?.title || "",
+    fallbackQuestion,
+  );
+  const options = normalizeClarifyOptions(payload?.options || payload?.choices);
+  if (!question || options.length < 2) return null;
+
+  const rawStep = Number(payload?.step);
+  const rawTotal = Number(payload?.totalSteps || payload?.total);
+  const hasSingleStepMeta =
+    Number.isFinite(rawStep) &&
+    Number.isFinite(rawTotal) &&
+    rawStep > 0 &&
+    rawTotal > 0 &&
+    rawTotal <= 1;
+
+  return {
+    question,
+    options,
+    allowFreeform: payload?.allowFreeform !== false,
+    freeformPlaceholder:
+      String(
+        payload?.freeformPlaceholder ||
+          payload?.freeTextPlaceholder ||
+          "Something else",
+      ).trim() || "Something else",
+    skipLabel: String(payload?.skipLabel || "Skip").trim() || "Skip",
+    step: hasSingleStepMeta ? 1 : null,
+    totalSteps: hasSingleStepMeta ? 1 : null,
+  };
+}
+
+function parsePlainTextClarificationFallback(rawText = "") {
+  const source = String(rawText || "").trim();
+  if (!source) return null;
+
+  const lines = source
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const options = [];
+  let firstOptionIndex = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(CLARIFY_OPTION_LINE_RE);
+    if (!match) continue;
+    if (firstOptionIndex < 0) firstOptionIndex = i;
+    options.push({ id: match[1].toUpperCase(), label: match[2].trim() });
+  }
+
+  if (options.length < 2 || firstOptionIndex < 0) return null;
+
+  const question = lines.slice(0, firstOptionIndex).join(" ").trim() || lines[0];
+  const payload = sanitizeClarifyPayload({ question, options }, question);
+  if (!payload) return null;
+
+  const keptLines = lines.filter((line) => !CLARIFY_OPTION_LINE_RE.test(line));
+  const cleanedText = keptLines.join("\n").trim() || payload.question;
+  return { payload, cleanedText };
+}
+
+function extractClarificationPayload(rawText = "") {
+  const source = String(rawText || "");
+  if (!source) return { payload: null, cleanedText: "" };
+
+  const blockMatch = source.match(CLARIFY_JSON_BLOCK_RE);
+  if (blockMatch) {
+    const withoutBlock = source.replace(CLARIFY_JSON_BLOCK_RE, "").trim();
+    const fallbackQuestion = withoutBlock.split(/\r?\n/).find(Boolean) || "";
+
+    const parsed = parseClarifyJsonObject(blockMatch[1]);
+
+    const payload = sanitizeClarifyPayload(parsed || {}, fallbackQuestion);
+    if (payload) {
+      return {
+        payload,
+        cleanedText: withoutBlock || payload.question,
+      };
+    }
+
+    return {
+      payload: null,
+      cleanedText: withoutBlock || source.trim(),
+    };
+  }
+
+  const markerIndex = findClarifyMarkerStart(source);
+  if (markerIndex >= 0) {
+    const visibleText = source.slice(0, markerIndex).trim();
+    const markerTail = source.slice(markerIndex);
+    const openMarkerMatch = markerTail.match(CLARIFY_JSON_OPEN_RE);
+    const afterMarker = openMarkerMatch
+      ? markerTail.slice((openMarkerMatch.index || 0) + openMarkerMatch[0].length)
+      : markerTail;
+    const markerPayloadText = afterMarker.replace(CLARIFY_JSON_CLOSE_RE, "").trim();
+    const fallbackQuestion = visibleText.split(/\r?\n/).find(Boolean) || "";
+
+    const parsed = parseClarifyJsonObject(markerPayloadText);
+    const payload = sanitizeClarifyPayload(parsed || {}, fallbackQuestion);
+    if (payload) {
+      return {
+        payload,
+        cleanedText: visibleText || payload.question,
+      };
+    }
+
+    const combinedFallbackSource = [visibleText, markerPayloadText]
+      .filter(Boolean)
+      .join("\n");
+    const fallbackFromCombined = parsePlainTextClarificationFallback(
+      combinedFallbackSource,
+    );
+    if (fallbackFromCombined) {
+      return {
+        payload: fallbackFromCombined.payload,
+        cleanedText: visibleText || fallbackFromCombined.cleanedText,
+      };
+    }
+
+    return {
+      payload: null,
+      cleanedText: visibleText,
+    };
+  }
+
+  const fallback = parsePlainTextClarificationFallback(source);
+  if (fallback) return fallback;
+
+  return {
+    payload: null,
+    cleanedText: source.trim(),
+  };
+}
+
+function getClarificationStreamPreview(rawText = "") {
+  const source = String(rawText || "");
+  if (!source) return { text: "", suppress: false };
+
+  const markerIndex = findClarifyMarkerStart(source);
+  if (markerIndex >= 0) {
+    return {
+      text: source.slice(0, markerIndex).trimEnd(),
+      suppress: true,
+    };
+  }
+
+  const lines = source.split(/\r?\n/);
+  const firstOptionIndex = lines.findIndex((line) =>
+    CLARIFY_OPTION_LINE_RE.test(line),
+  );
+  if (firstOptionIndex >= 0) {
+    return {
+      text: lines.slice(0, firstOptionIndex).join("\n").trimEnd(),
+      suppress: true,
+    };
+  }
+
+  return { text: source, suppress: false };
+}
+
+function escapeHtmlText(value = "") {
+  return String(value || "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
+    .replace(/>/g, "&gt;");
+}
+
+function encodeCodePayload(value = "") {
+  try {
+    return btoa(unescape(encodeURIComponent(String(value || ""))));
+  } catch {
+    return "";
+  }
+}
+
+function decodeCodePayload(value = "") {
+  try {
+    return decodeURIComponent(escape(atob(String(value || ""))));
+  } catch {
+    return "";
+  }
+}
+
+function renderCodeBlockHtml(code = "", rawLang = "") {
+  const lang = String(rawLang || "").trim() || "text";
+  const payload = encodeCodePayload(code);
+
+  return [
+    '<div class="chat-code-block">',
+    '<div class="chat-code-head">',
+    `<span class="chat-code-lang">${escapeHtmlText(lang)}</span>`,
+    `<button type="button" class="code-copy-btn" data-code="${payload}">Copy</button>`,
+    "</div>",
+    `<pre><code>${escapeHtmlText(code)}</code></pre>`,
+    "</div>",
+  ].join("");
+}
+
+function renderMarkdown(raw = "") {
+  const { cleanedText } = extractClarificationPayload(raw);
+  const source = String(cleanedText || raw || "").replace(/\r\n/g, "\n");
+
+  const codeBlocks = [];
+  const withCodePlaceholders = source.replace(
+    /```([a-zA-Z0-9_+.-]*)\n([\s\S]*?)```/g,
+    (_full, rawLang, rawCode) => {
+      const index =
+        codeBlocks.push({
+          lang: String(rawLang || "").trim(),
+          code: String(rawCode || "").replace(/\n+$/, ""),
+        }) - 1;
+      return `@@CODEBLOCK_${index}@@`;
+    },
+  );
+
+  let html = escapeHtmlText(withCodePlaceholders)
+    .replace(/@@CODEBLOCK_(\d+)@@/g, (_full, indexRaw) => {
+      const index = Number(indexRaw);
+      const block = codeBlocks[index];
+      if (!block) return "";
+      return renderCodeBlockHtml(block.code, block.lang);
+    })
     .replace(/\*\*(.*?)\*\*/gs, "<strong>$1</strong>")
     .replace(/__(.*?)__/gs, "<strong>$1</strong>")
     .replace(/\*(.*?)\*/gs, "<em>$1</em>")
     .replace(/_(.*?)_/gs, "<em>$1</em>")
-    .replace(/`(.*?)`/g, "<code>$1</code>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(
       /\[(.*?)\]\((https?:\/\/[^)]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
     )
+    .replace(/^[-*] (.+)$/gm, "<li>$1</li>")
     .replace(/\n/g, "<br />");
+
+  html = html.replace(/((?:<li>.*?<\/li>(?:<br \/>)?)+)/g, "<ul>$1</ul>");
+  html = html.replace(
+    /<ul>(.*?)<\/ul>/gs,
+    (_full, inner) => `<ul>${String(inner || "").replace(/<br \/>/g, "")}</ul>`,
+  );
+
+  return html;
 }
 
 const stripImg = (text = "") =>
-  text.replace(/!\[.*?\]\([^)]+\)\n\n?/g, "").trim();
+  extractClarificationPayload(
+    text.replace(/!\[.*?\]\([^)]+\)\n\n?/g, "").trim(),
+  ).cleanedText;
 
 const toContextContent = (text = "") =>
   String(text || "")
@@ -215,12 +732,15 @@ export default function ChatInterface({
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [aiStyle, setAiStyle] = useState("formal");
   const [toast, setToast] = useState(null);
+  const [clarifyPopup, setClarifyPopup] = useState(null);
   const [internetAccess, setInternetAccess] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
-      return window.localStorage.getItem("wieland_internet_access") === "1";
+      const stored = window.localStorage.getItem("wieland_internet_access");
+      if (stored == null) return true;
+      return stored === "1" || stored === "true";
     } catch {
-      return false;
+      return true;
     }
   });
   const pendingInputRef = useRef("");
@@ -247,6 +767,28 @@ export default function ChatInterface({
   const modelDropdownRef = useRef(null);
   const modelWarmUntilRef = useRef({});
   const toastTimeoutRef = useRef(null);
+  const sendMessageRef = useRef(null);
+  const pendingClarifyReplyRef = useRef(false);
+  const clarifyPopupTimeoutRef = useRef(null);
+
+  const clearQueuedClarifyPopup = useCallback(() => {
+    if (!clarifyPopupTimeoutRef.current) return;
+    clearTimeout(clarifyPopupTimeoutRef.current);
+    clarifyPopupTimeoutRef.current = null;
+  }, []);
+
+  const queueClarifyPopup = useCallback(
+    (payload, options = {}) => {
+      if (!payload) return;
+      const immediate = options?.immediate === true;
+      clearQueuedClarifyPopup();
+      clarifyPopupTimeoutRef.current = setTimeout(() => {
+        setClarifyPopup(payload);
+        clarifyPopupTimeoutRef.current = null;
+      }, immediate ? 0 : CLARIFY_POPUP_DELAY_MS);
+    },
+    [clearQueuedClarifyPopup],
+  );
 
   const showToast = useCallback((message, type = "success") => {
     if (!message) return;
@@ -258,8 +800,9 @@ export default function ChatInterface({
   useEffect(() => {
     return () => {
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      clearQueuedClarifyPopup();
     };
-  }, []);
+  }, [clearQueuedClarifyPopup]);
 
   const welcomeMessage = useMemo(() => {
     const welcomeMessages = t("chat.welcome", { returnObjects: true });
@@ -308,6 +851,12 @@ export default function ChatInterface({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    if (!clarifyPopup) return;
+    setShowPlusMenu(false);
+    setShowModelDropdown(false);
+  }, [clarifyPopup]);
 
   const uploadImage = useCallback(
     async (file) => {
@@ -442,10 +991,22 @@ export default function ChatInterface({
     const text = input.trim() || (imageFile ? t("chat.describeImage") : "");
     if (!text || isSending) return;
 
+    const clarifyReplyFromPopup = Boolean(clarifyPopup);
+    const requestText = clarifyReplyFromPopup
+      ? formatClarifyReply(clarifyPopup?.question, text)
+      : text;
+
+    clearQueuedClarifyPopup();
+    setClarifyPopup(null);
+
     if (!user) {
-      pendingInputRef.current = input;
+      pendingInputRef.current = requestText;
       setAuthModalOpen(true);
       return;
+    }
+
+    if (clarifyReplyFromPopup) {
+      pendingClarifyReplyRef.current = true;
     }
 
     setIsSending(true);
@@ -463,7 +1024,9 @@ export default function ChatInterface({
       }
     }
 
-    const userContext = imageUrl ? `![Bild](${imageUrl})\n\n${text}` : text;
+    const userContext = imageUrl
+      ? `![Bild](${imageUrl})\n\n${requestText}`
+      : requestText;
     const userMsg = { content: userContext, isUser: true, id: uid() };
 
     const contextSnap = messages.map((m) => ({
@@ -475,7 +1038,7 @@ export default function ChatInterface({
     setMessages(withUser);
 
     await runStream(
-      text,
+      requestText,
       fileCopy,
       contextSnap,
       withUser,
@@ -495,7 +1058,13 @@ export default function ChatInterface({
     aiStyle,
     internetAccess,
     uploadImage,
+    clearQueuedClarifyPopup,
+    clarifyPopup,
   ]);
+
+  useEffect(() => {
+    sendMessageRef.current = sendMessage;
+  }, [sendMessage]);
 
   const handleAuthSuccess = useCallback(() => {
     if (pendingInputRef.current) {
@@ -504,6 +1073,23 @@ export default function ChatInterface({
       setTimeout(() => {}, 50);
     }
   }, []);
+
+  const sendClarifyReply = useCallback(
+    (rawReply) => {
+      const reply = String(rawReply || "").trim();
+      if (!reply || isSending) return;
+
+      clearQueuedClarifyPopup();
+      setClarifyPopup(null);
+      pendingClarifyReplyRef.current = true;
+      setInput(reply);
+
+      setTimeout(() => {
+        sendMessageRef.current?.();
+      }, 0);
+    },
+    [isSending, clearQueuedClarifyPopup],
+  );
 
   const runStream = useCallback(
     async (
@@ -532,6 +1118,13 @@ export default function ChatInterface({
         fd.append("model", model);
         fd.append("aiStyle", style);
         fd.append("internetAccess", useInternet ? "true" : "false");
+
+        const clarifyReply = pendingClarifyReplyRef.current;
+        pendingClarifyReplyRef.current = false;
+        if (clarifyReply) {
+          fd.append("clarifyReply", "true");
+        }
+
         if (file) fd.append("image", file);
 
         const token = localStorage.getItem("wieland_token");
@@ -550,6 +1143,9 @@ export default function ChatInterface({
         const memoryCount = Number(
           res.headers.get("X-Wieland-Memory-Count") || "0",
         );
+        const clarifyForced =
+          res.headers.get("X-Wieland-Clarify-Forced") === "1";
+
         if (memorySaved && memoryCount > 0) {
           showToast(t("chat.memorySaved", { count: memoryCount }), "success");
         }
@@ -561,15 +1157,49 @@ export default function ChatInterface({
           const { done, value } = await reader.read();
           if (done) break;
           fullText += decoder.decode(value, { stream: true });
+
+          const preview = getClarificationStreamPreview(fullText);
+          const previewText = preview.text;
           setMessages((prev) =>
-            prev.map((m) => (m.id === aiId ? { ...m, content: fullText } : m)),
+            prev.map((m) =>
+              m.id === aiId ? { ...m, content: previewText } : m,
+            ),
           );
         }
 
-        const final = [
-          ...baseMessages,
-          { content: fullText, isUser: false, id: aiId },
-        ];
+        const clarification = extractClarificationPayload(fullText);
+        const shouldClientForceClarify =
+          clarifyForced || isLikelyVagueBuildPromptClient(userText);
+        const fallbackClarificationPayload = shouldClientForceClarify
+          ? sanitizeClarifyPayload(
+              buildClientForcedClarificationFallbackPayload(userText),
+              "",
+            )
+          : null;
+        const clarificationPayload =
+          clarification.payload || fallbackClarificationPayload;
+        const finalAssistantText =
+          clarification.cleanedText || fullText || t("chat.shortError");
+
+        if (finalAssistantText !== fullText) {
+          fullText = finalAssistantText;
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === aiId ? { ...m, content: finalAssistantText } : m,
+            ),
+          );
+        }
+
+        if (clarificationPayload) {
+          queueClarifyPopup(clarificationPayload, {
+            immediate: shouldClientForceClarify,
+          });
+        }
+
+        const final = [...baseMessages];
+        if (finalAssistantText) {
+          final.push({ content: finalAssistantText, isUser: false, id: aiId });
+        }
         const isNew = !currentChatRef.current && final.length <= 2;
         await saveChat(final, currentChatRef.current, isNew);
       } catch (err) {
@@ -595,7 +1225,7 @@ export default function ChatInterface({
         setIsSending(false);
       }
     },
-    [saveChat, showToast, t],
+    [saveChat, showToast, t, queueClarifyPopup],
   );
 
   const stopGeneration = () => abortRef.current?.abort();
@@ -609,14 +1239,16 @@ export default function ChatInterface({
 
   const handleNewChat = useCallback(() => {
     abortRef.current?.abort();
+    clearQueuedClarifyPopup();
     setMessages([]);
+    setClarifyPopup(null);
     setCurrentChatId(null);
     currentChatRef.current = null;
     setInput("");
     clearImage();
     setEditingId(null);
     pushUrl(localPath("/"));
-  }, [clearImage]);
+  }, [clearImage, clearQueuedClarifyPopup]);
 
   const lastUserMsg = messages.reduce((last, m) => (m.isUser ? m : last), null);
 
@@ -744,6 +1376,21 @@ export default function ChatInterface({
     [showToast, t],
   );
 
+  const copyCode = useCallback(
+    async (encodedCode) => {
+      const decoded = decodeCodePayload(encodedCode);
+      if (!decoded) return;
+      try {
+        await navigator.clipboard.writeText(decoded);
+        showToast(t("chat.copied"), "success");
+      } catch (err) {
+        console.error(err);
+        showToast(t("chat.errors.server"), "error");
+      }
+    },
+    [showToast, t],
+  );
+
   return (
     <div
       className={`chat-interface-wrapper ${isLoading ? "loading" : ""}`}
@@ -787,6 +1434,7 @@ export default function ChatInterface({
                 onEditSave={saveEdit}
                 onEditCancel={cancelEdit}
                 onCopy={copyText}
+                onCopyCode={copyCode}
                 onRegenerate={regenerate}
               />
             ))
@@ -864,30 +1512,53 @@ export default function ChatInterface({
             </div>
           )}
 
+          {clarifyPopup && (
+            <ClarifyPopup
+              key={`${clarifyPopup.question}-${clarifyPopup.step || 0}-${clarifyPopup.totalSteps || 0}`}
+              data={clarifyPopup}
+              onSelect={sendClarifyReply}
+            />
+          )}
+
           <div
             className="input-row"
             onClick={() => showPlusMenu && setShowPlusMenu(false)}
           >
             <button
-              className="icon-btn plus-btn"
+              className={`icon-btn plus-btn ${clarifyPopup ? "input-deco-btn" : ""}`}
               onClick={(e) => {
+                if (clarifyPopup) return;
                 e.stopPropagation();
                 setShowPlusMenu((v) => !v);
               }}
-              disabled={isSending}
-              aria-label={t("chat.options")}
+              disabled={isSending || Boolean(clarifyPopup)}
+              aria-label={clarifyPopup ? getLocalizedIdeaPlaceholder(i18n.language) : t("chat.options")}
             >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
+              {clarifyPopup ? (
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z" />
+                </svg>
+              ) : (
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              )}
             </button>
 
             <textarea
@@ -899,7 +1570,10 @@ export default function ChatInterface({
                   ? t("chat.placeholderLogin")
                   : imagePreview
                     ? t("chat.placeholderImage")
-                    : t("chat.placeholderMessage")
+                    : clarifyPopup
+                      ? (clarifyPopup.freeformPlaceholder ||
+                        getLocalizedIdeaPlaceholder(i18n.language))
+                      : t("chat.placeholderMessage")
               }
               disabled={isSending}
               className="chat-input-bottom"
@@ -907,54 +1581,69 @@ export default function ChatInterface({
             />
 
             <div className="model-selector-wrapper" ref={modelDropdownRef}>
-              <button
-                className={`model-selector-btn ${showModelDropdown ? "open" : ""}`}
-                onClick={() => setShowModelDropdown((v) => !v)}
-                disabled={isSending}
-              >
-                <span className="model-selector-label">
-                  {AVAILABLE_MODELS.find((m) => m.id === selectedModel)
-                    ? t(
-                        AVAILABLE_MODELS.find((m) => m.id === selectedModel)
-                          .key,
-                      )
-                    : selectedModel}
-                </span>
-                <svg
-                  className="model-selector-arrow"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
+              {clarifyPopup ? (
+                <button
+                  className="model-selector-btn popup-skip-btn"
+                  onClick={() => {
+                    clearQueuedClarifyPopup();
+                    setClarifyPopup(null);
+                  }}
+                  disabled={isSending}
                 >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
+                  {getLocalizedSkipLabel(i18n.language)}
+                </button>
+              ) : (
+                <>
+                  <button
+                    className={`model-selector-btn ${showModelDropdown ? "open" : ""}`}
+                    onClick={() => setShowModelDropdown((v) => !v)}
+                    disabled={isSending}
+                  >
+                    <span className="model-selector-label">
+                      {AVAILABLE_MODELS.find((m) => m.id === selectedModel)
+                        ? t(
+                            AVAILABLE_MODELS.find((m) => m.id === selectedModel)
+                              .key,
+                          )
+                        : selectedModel}
+                    </span>
+                    <svg
+                      className="model-selector-arrow"
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
 
-              {showModelDropdown && (
-                <div className="model-dropdown">
-                  {AVAILABLE_MODELS.map((m) => {
-                    const allowed = isModelAllowed(m.id, user?.plan);
-                    return (
-                      <button
-                        key={m.id}
-                        className={`model-dropdown-item ${selectedModel === m.id ? "active" : ""} ${!allowed ? "disabled" : ""}`}
-                        onClick={() => {
-                          if (allowed) {
-                            setSelectedModel(m.id);
-                            setShowModelDropdown(false);
-                          }
-                        }}
-                        disabled={!allowed}
-                        title={!allowed ? t("chat.planModelLocked") : ""}
-                      >
-                        <span>{m.icon}</span> {t(m.key)}
-                      </button>
-                    );
-                  })}
-                </div>
+                  {showModelDropdown && (
+                    <div className="model-dropdown">
+                      {AVAILABLE_MODELS.map((m) => {
+                        const allowed = isModelAllowed(m.id, user?.plan);
+                        return (
+                          <button
+                            key={m.id}
+                            className={`model-dropdown-item ${selectedModel === m.id ? "active" : ""} ${!allowed ? "disabled" : ""}`}
+                            onClick={() => {
+                              if (allowed) {
+                                setSelectedModel(m.id);
+                                setShowModelDropdown(false);
+                              }
+                            }}
+                            disabled={!allowed}
+                            title={!allowed ? t("chat.planModelLocked") : ""}
+                          >
+                            <span>{m.icon}</span> {t(m.key)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -1007,6 +1696,49 @@ export default function ChatInterface({
   );
 }
 
+function ClarifyPopup({ data, onSelect }) {
+  if (!data) return null;
+
+  const options = Array.isArray(data.options) ? data.options : [];
+  const stepLabel =
+    data.step && data.totalSteps && data.totalSteps > 1
+      ? `${data.step} von ${data.totalSteps}`
+      : "";
+
+  return (
+    <div className="clarify-dock" role="dialog" aria-label={data.question}>
+      <div className="clarify-dock-card">
+        <div className="clarify-dock-head">
+          <h3>{data.question}</h3>
+        </div>
+
+        {stepLabel && <div className="clarify-dock-step">{stepLabel}</div>}
+
+        <div className="clarify-dock-options">
+          {options.map((option, index) => {
+            const optionReply = /^[A-E]$/.test(option.id)
+              ? `${option.id}) ${option.label}`
+              : option.label;
+            const quickReply = formatClarifyReply(data.question, optionReply);
+
+            return (
+              <button
+                key={`${option.id}-${index}`}
+                className="clarify-dock-option"
+                onClick={() => onSelect(quickReply)}
+              >
+                <span className="clarify-dock-option-index">{index + 1}</span>
+                <span className="clarify-dock-option-label">{option.label}</span>
+                <span className="clarify-dock-option-arrow">›</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MessageRow({
   msg,
   isLast,
@@ -1020,11 +1752,20 @@ function MessageRow({
   onEditSave,
   onEditCancel,
   onCopy,
+  onCopyCode,
   onRegenerate,
 }) {
   const { t } = useTranslation();
   const imageUrl = extractImageUrl(msg.content);
   const textOnly = stripImg(msg.content);
+
+  const handleAssistantContentClick = (event) => {
+    const button = event.target.closest(".code-copy-btn");
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    onCopyCode?.(button.getAttribute("data-code") || "");
+  };
 
   return (
     <div className={`message ${msg.isUser ? "user-message" : "ai-message"}`}>
@@ -1069,6 +1810,7 @@ function MessageRow({
               <TypingLoader />
             ) : (
               <div
+                onClick={handleAssistantContentClick}
                 dangerouslySetInnerHTML={{
                   __html: renderMarkdown(msg.content),
                 }}

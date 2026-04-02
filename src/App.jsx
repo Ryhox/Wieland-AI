@@ -193,7 +193,15 @@ function AppRoutes() {
           }
         />
 
-        <Route path="*" element={<NotFound />} />
+        <Route
+          path="*"
+          element={
+            <NotFound
+              isSidebarOpen={isSidebarOpen}
+              onSidebarToggle={setIsSidebarOpen}
+            />
+          }
+        />
       </Routes>
     </>
   );

@@ -11,7 +11,9 @@
     "edit": "Bearbeiten",
     "copy": "Kopieren",
     "send": "Senden",
-    "stop": "Stoppen"
+    "stop": "Stoppen",
+    "refresh": "Aktualisieren",
+    "Refresh": "Aktualisieren"
   },
   "languages": {
     "de": "Deutsch",
@@ -458,6 +460,22 @@
     "initialTag": "Initial",
     "entries": [
       {
+        "version": "v0.2.0",
+        "date": "02 April 2026",
+        "tag": "pink",
+        "title": "AI, Extension & UX Ausbau",
+        "changes": [
+          "Bugfixes",
+          "Extension verbessert mit besserer Verarbeitung von Seitenkontext",
+          "Website-Suche in der Extension verbessert",
+          "AI-Gedächtnis verbessert (Auto-Speicherung, Relevanzabruf, Mehrsprachigkeit)",
+          "Internetzugriff und Intent-Routing verbessert",
+          "Klärungs-Popup in Web und Extension hinzugefügt (Optionen + Freitext)",
+          "Klärungsfluss und Streaming-Ausgabe verbessert",
+          "404-Seite als cineastische 3D-Szene überarbeitet"
+        ]
+      },
+      {
         "version": "v0.1.9",
         "date": "30 März 2026",
         "tag": "green",
@@ -601,6 +619,19 @@
     "cancelSubscription": "Abonnement kündigen",
     "upgradePlan": "Plan upgraden",
     "adminNoCancel": "Als Admin kannst du das Abonnement nicht kündigen.",
+    "memorySection": "Gedächtnis",
+    "memoryLabel": "Gespeicherte Fakten",
+    "memoryDescription": "Hier siehst du, was die AI über dich gespeichert hat. Du kannst einzelne Einträge oder alles löschen.",
+    "openMemory": "Gedächtnis öffnen",
+    "memoryModalTitle": "Dein AI-Gedächtnis",
+    "memoryModalSub": "{{count}} Einträge gespeichert",
+    "memoryEmpty": "Aktuell sind keine gespeicherten Einträge vorhanden.",
+    "memoryCount": "{{count}} Einträge",
+    "memoryDeleteAll": "Alles löschen",
+    "memoryUpdatedAt": "Aktualisiert: {{date}}",
+    "memoryTypeExplicit": "Explizit gespeichert",
+    "memoryTypeAuto": "Automatisch erkannt",
+    "memoryUsage": "{{count}}x verwendet",
     "dangerZone": "Gefahrenzone",
     "deleteAccount": "Konto löschen",
     "deleteDescription": "Dies wird dein Konto und alle zugehörigen Daten dauerhaft löschen.",
@@ -614,12 +645,17 @@
       "passwordLength": "Passwort muss mindestens 8 Zeichen lang sein",
       "passwordUpdate": "Fehler beim Aktualisieren des Passworts",
       "accountDelete": "Fehler beim Löschen des Kontos",
-      "subscriptionCancel": "Fehler beim Kündigen des Abonnements"
+      "subscriptionCancel": "Fehler beim Kündigen des Abonnements",
+      "memoryLoad": "Fehler beim Laden des Gedächtnisses",
+      "memoryDelete": "Eintrag konnte nicht gelöscht werden",
+      "memoryDeleteAll": "Gedächtnis konnte nicht gelöscht werden"
     },
     "success": {
       "emailUpdated": "E-Mail erfolgreich aktualisiert!",
       "passwordUpdated": "Passwort erfolgreich aktualisiert!",
-      "subscriptionCanceled": "Abonnement erfolgreich gekündigt. Du wirst auf Free-Plan zurückgestuft."
+      "subscriptionCanceled": "Abonnement erfolgreich gekündigt. Du wirst auf Free-Plan zurückgestuft.",
+      "memoryDeleted": "Eintrag wurde gelöscht.",
+      "memoryCleared": "Gedächtnis wurde vollständig gelöscht."
     },
     "confirm": {
       "deleteTitle": "Konto löschen?",
@@ -750,7 +786,8 @@
     ]
   },
   "notFound": {
-    "title": "404 - Seite nicht gefunden"
+    "moonMessage": "Sieht so aus, als wärst du auf dem Mond gestrandet...",
+    "returnSafety": "Zurück in Sicherheit"
   },
   "alertModal": {
     "ok": "Okay"

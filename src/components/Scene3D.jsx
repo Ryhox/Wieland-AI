@@ -38,6 +38,9 @@ export default function Scene3D({
   sceneSpin = 0,
   hidePlanet = false,
 }) {
+  const isNotFoundMode = sceneMode === "not-found";
+  const isCinematicMode = sceneMode === "about" || isNotFoundMode;
+
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
@@ -168,6 +171,8 @@ export default function Scene3D({
     const texLoader = new THREE.TextureLoader();
     const fbxLoader = new FBXLoader();
     let cloudMesh = null;
+    let moonOrbit = null;
+    let moonBody = null;
 
     if (!hidePlanet) {
       const planetTex = texLoader.load("/Texture_Planet.png");
@@ -182,11 +187,15 @@ export default function Scene3D({
           const size = new THREE.Vector3();
           box.getSize(size);
           const maxDim = Math.max(size.x, size.y, size.z);
-          const scale = (ER * 2) / maxDim;
+          const baseScale = (ER * 2) / maxDim;
+          const scale = isNotFoundMode ? baseScale * 0.03 : baseScale;
           fbx.scale.setScalar(scale);
           const center = new THREE.Vector3();
           box.getCenter(center);
           fbx.position.sub(center.multiplyScalar(scale));
+          if (isNotFoundMode) {
+            fbx.position.add(new THREE.Vector3(0, -0.08, 0));
+          }
           fbx.traverse((child) => {
             if (child.isMesh) {
               child.castShadow = child.receiveShadow = true;
@@ -211,34 +220,82 @@ export default function Scene3D({
         (err) => console.error("Planet FBX error:", err),
       );
 
-      cloudMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(ER + 0.04, 64, 64),
-        new THREE.MeshStandardMaterial({
-          map: makeCloudTex(),
-          transparent: true,
-          opacity: 0.5,
-          roughness: 0.4,
-          emissive: new THREE.Color(0x88aaff),
-          emissiveIntensity: 0.3,
-          depthWrite: false,
-          blending: THREE.AdditiveBlending,
-        }),
-      );
-      planetGroup.add(cloudMesh);
-
-      planetGroup.add(
-        new THREE.Mesh(
-          new THREE.SphereGeometry(ER + 0.15, 48, 48),
+      if (!isNotFoundMode) {
+        cloudMesh = new THREE.Mesh(
+          new THREE.SphereGeometry(ER + 0.04, 64, 64),
           new THREE.MeshStandardMaterial({
-            color: 0x1500ff,
+            map: makeCloudTex(),
             transparent: true,
-            opacity: 0.1,
-            side: THREE.BackSide,
-            emissive: new THREE.Color(0x0013e3),
+            opacity: 0.5,
+            roughness: 0.4,
+            emissive: new THREE.Color(0x88aaff),
             emissiveIntensity: 0.3,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
           }),
-        ),
-      );
+        );
+        planetGroup.add(cloudMesh);
+
+        planetGroup.add(
+          new THREE.Mesh(
+            new THREE.SphereGeometry(ER + 0.15, 48, 48),
+            new THREE.MeshStandardMaterial({
+              color: 0x1500ff,
+              transparent: true,
+              opacity: 0.1,
+              side: THREE.BackSide,
+              emissive: new THREE.Color(0x0013e3),
+              emissiveIntensity: 0.3,
+            }),
+          ),
+        );
+      }
+
+      if (isNotFoundMode) {
+        const moonTex = texLoader.load("/Texture_moon.jpg");
+        moonTex.encoding = THREE.sRGBEncoding;
+
+        fbxLoader.load(
+          "/moon.fbx",
+          (moonFbx) => {
+            moonOrbit = new THREE.Group();
+            moonOrbit.position.set(0, 0, 0);
+            moonOrbit.rotation.x = 0.34;
+            planetGroup.add(moonOrbit);
+
+            const box = new THREE.Box3().setFromObject(moonFbx);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            const maxDim = Math.max(size.x, size.y, size.z, 0.001);
+            const moonRadius = 0.3;
+            const scale = (moonRadius * 2) / maxDim;
+            moonFbx.scale.setScalar(scale);
+
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            moonFbx.position.sub(center.multiplyScalar(scale));
+            moonFbx.position.set(1.95, 0, 0);
+
+            moonFbx.traverse((child) => {
+              if (!child.isMesh) return;
+              child.castShadow = child.receiveShadow = true;
+              child.material = new THREE.MeshStandardMaterial({
+                map: moonTex,
+                color: 0xffffff,
+                roughness: 0.9,
+                metalness: 0.04,
+                emissive: new THREE.Color(0x1b1f2b),
+                emissiveIntensity: 0.1,
+              });
+            });
+
+            moonOrbit.add(moonFbx);
+            moonBody = moonFbx;
+          },
+          undefined,
+          (err) => console.error("Moon FBX error:", err),
+        );
+      }
     }
 
     const NPART = 180;
@@ -352,7 +409,7 @@ export default function Scene3D({
       (fbx) => {
         fbx.scale.setScalar(0.026);
         fbx.position.set(0, charBaseY.current, 0);
-        if (sceneMode === "about") {
+        if (isCinematicMode) {
           fbx.visible = false;
         }
 
@@ -389,7 +446,7 @@ export default function Scene3D({
 
         scene.add(fbx);
         characterRef.current = fbx;
-        if (sceneMode !== "about") {
+        if (!isCinematicMode) {
           objectsToRotateRef.current.push(fbx);
         }
 
@@ -442,6 +499,19 @@ export default function Scene3D({
     rotSpring.current.reset(0);
 
     const _p = new THREE.Vector3();
+    const moonWorldPos = new THREE.Vector3();
+    const moonPrevWorldPos = new THREE.Vector3();
+    const moonTravelDir = new THREE.Vector3();
+    const cameraSideDir = new THREE.Vector3();
+    const desiredMoonCamPos = new THREE.Vector3();
+    const desiredMoonLook = new THREE.Vector3();
+    const orbitDir = new THREE.Vector3();
+    const cameraOffset = new THREE.Vector3();
+    const cameraLookTarget = new THREE.Vector3();
+    const worldUp = new THREE.Vector3(0, 1, 0);
+    const fallbackMoonOffset = new THREE.Vector3(2.6, 0.12, 0);
+    let moonFollowReady = false;
+
     function w2s(pos) {
       _p.copy(pos).project(camera);
       return new THREE.Vector2(
@@ -466,6 +536,30 @@ export default function Scene3D({
         cloudMesh.rotation.y = el * 0.1;
         cloudMesh.rotation.x = el * 0.02;
       }
+
+      if (moonOrbit) {
+        if (isNotFoundMode && moonBody) {
+          const moonAngle = el * 0.2;
+          const moonRadiusX = 1.95;
+          const moonRadiusZ = 1.65;
+          const moonLift = Math.sin(moonAngle * 0.5) * 0.12;
+
+          moonBody.position.set(
+            Math.cos(moonAngle) * moonRadiusX,
+            moonLift,
+            Math.sin(moonAngle) * moonRadiusZ,
+          );
+          moonBody.lookAt(0, 0, 0);
+          moonOrbit.rotation.z = Math.sin(el * 0.08) * 0.05;
+        } else {
+          moonOrbit.rotation.y = el * 0.2;
+        }
+      }
+
+      if (moonBody) {
+        moonBody.rotation.y = -el * 0.06;
+      }
+
       particles.rotation.y += 0.001;
       planetGlow.intensity =
         (hidePlanet ? 0.8 : 2.4) + 0.25 * Math.sin(el * 0.8);
@@ -499,7 +593,7 @@ export default function Scene3D({
 
       scene.updateMatrixWorld();
 
-      if (sceneMode !== "about" && headBone && origHeadQ) {
+      if (!isCinematicMode && headBone && origHeadQ) {
         const hp = headBone.getWorldPosition(new THREE.Vector3());
         const hs = w2s(hp);
         const dist = mousePx.distanceTo(hs);
@@ -558,19 +652,8 @@ export default function Scene3D({
         }
       }
 
-      if (cameraRef.current) {
-        cameraRef.current.position.x = camSpringX.current.step(dt);
-        if (sceneMode === "about") {
-          const p = sceneProgressRef.current;
-          cameraRef.current.position.y =
-            3.2 + Math.sin(p * Math.PI * 1.1) * 0.1;
-          cameraRef.current.position.z = 8.1 - p * 0.18;
-          cameraRef.current.lookAt(0, -0.55 + p * 0.12, 0);
-        }
-      }
-
       if (characterRef.current) {
-        if (sceneMode !== "about") {
+        if (!isCinematicMode) {
           characterRef.current.position.x = charSpringX.current.step(dt);
           characterRef.current.position.y =
             charBaseY.current + charSpringY.current.step(dt);
@@ -578,18 +661,106 @@ export default function Scene3D({
       }
 
       if (planetGroupRef.current) {
-        const px = planSpringX.current.step(dt);
-        const py = planBaseY.current + planSpringY.current.step(dt);
-        planetGroupRef.current.position.x = px;
-        planetGroupRef.current.position.y = py;
-        partMesh.position.x = px;
-        partMesh.position.y = py;
+        if (isNotFoundMode) {
+          const px = Math.sin(el * 0.06) * 0.14;
+          const py = 1.92 + Math.sin(el * 0.09) * 0.06;
+          const pz = -6.15 + Math.cos(el * 0.05) * 0.28;
+
+          planetGroupRef.current.position.set(px, py, pz);
+          partMesh.position.set(px, py, pz);
+          planetGlow.position.set(px, py + 0.35, pz);
+        } else {
+          const px = planSpringX.current.step(dt);
+          const py = planBaseY.current + planSpringY.current.step(dt);
+          planetGroupRef.current.position.x = px;
+          planetGroupRef.current.position.y = py;
+          partMesh.position.x = px;
+          partMesh.position.y = py;
+        }
       }
 
-      const ry = rotSpring.current.step(dt);
-      currentRotationRef.current = ry;
-      for (const obj of objectsToRotateRef.current) {
-        obj.rotation.y = ry;
+      if (cameraRef.current) {
+        if (isNotFoundMode && planetGroupRef.current) {
+          const center = planetGroupRef.current.position;
+
+          if (moonBody) {
+            planetGroupRef.current.updateMatrixWorld(true);
+            moonBody.getWorldPosition(moonWorldPos);
+
+            if (!moonFollowReady) {
+              moonPrevWorldPos.copy(moonWorldPos);
+              cameraLookTarget.copy(moonWorldPos).lerp(center, 0.2);
+              moonFollowReady = true;
+            }
+
+            orbitDir.subVectors(moonWorldPos, center);
+            if (orbitDir.lengthSq() < 1e-8) orbitDir.set(1, 0, 0);
+            orbitDir.normalize();
+
+            moonTravelDir.subVectors(moonWorldPos, moonPrevWorldPos);
+            if (moonTravelDir.lengthSq() < 1e-8) {
+              moonTravelDir.crossVectors(worldUp, orbitDir);
+            }
+            if (moonTravelDir.lengthSq() < 1e-8) {
+              moonTravelDir.set(0, 0, 1);
+            }
+            moonTravelDir.normalize();
+
+            cameraSideDir.crossVectors(orbitDir, moonTravelDir);
+            if (cameraSideDir.lengthSq() < 1e-8) {
+              cameraSideDir.set(0, 1, 0);
+            }
+            cameraSideDir.normalize();
+
+            desiredMoonCamPos
+              .copy(moonWorldPos)
+              .addScaledVector(moonTravelDir, -1.75)
+              .addScaledVector(orbitDir, 0.42)
+              .addScaledVector(cameraSideDir, 0.14);
+            desiredMoonCamPos.y += 0.62 + Math.sin(el * 0.32) * 0.05;
+
+            cameraRef.current.position.lerp(desiredMoonCamPos, 0.09);
+
+            desiredMoonLook
+              .copy(moonWorldPos)
+              .lerp(center, 0.22)
+              .addScaledVector(moonTravelDir, 0.08);
+            desiredMoonLook.y += 0.03;
+
+            cameraLookTarget.lerp(desiredMoonLook, 0.14);
+            cameraRef.current.lookAt(cameraLookTarget);
+
+            moonPrevWorldPos.copy(moonWorldPos);
+          } else {
+            moonWorldPos.copy(center).add(fallbackMoonOffset);
+
+            desiredMoonCamPos.copy(moonWorldPos);
+            cameraOffset.set(-1.5, 0.65, 1.25);
+            desiredMoonCamPos.add(cameraOffset);
+
+            cameraRef.current.position.lerp(desiredMoonCamPos, 0.08);
+            cameraLookTarget.copy(moonWorldPos).lerp(center, 0.2);
+            cameraLookTarget.y += 0.03;
+            cameraRef.current.lookAt(cameraLookTarget);
+          }
+        } else {
+          cameraRef.current.position.x = camSpringX.current.step(dt);
+          if (isCinematicMode) {
+            const p = sceneProgressRef.current;
+            cameraRef.current.position.y =
+              3.2 + Math.sin(p * Math.PI * 1.1) * 0.1;
+            cameraRef.current.position.z = 8.1 - p * 0.18;
+            cameraRef.current.lookAt(0, -0.55 + p * 0.12, 0);
+          }
+        }
+      }
+
+      if (!isNotFoundMode) {
+        const ry = rotSpring.current.step(dt);
+        currentRotationRef.current = ry;
+        for (const obj of objectsToRotateRef.current) {
+          obj.rotation.y = ry;
+        }
       }
 
       renderer.render(scene, camera);
@@ -612,6 +783,8 @@ export default function Scene3D({
   }, []);
 
   useEffect(() => {
+    if (isNotFoundMode) return;
+
     const CAM_X = -5;
     const ROT_Y = -Math.PI / 4;
 
@@ -622,19 +795,21 @@ export default function Scene3D({
 
     charSpringY.current.target = 0;
     planSpringY.current.target = 0;
-  }, [hasMessages]);
+  }, [hasMessages, isNotFoundMode]);
 
   useEffect(() => {
     sceneProgressRef.current = sceneProgress;
     sceneSpinRef.current = sceneSpin;
 
-    if (sceneMode !== "about") return;
+    if (sceneMode !== "about" && sceneMode !== "not-found") return;
 
     camSpringX.current.target = 0;
-    rotSpring.current.target = sceneSpinRef.current * Math.PI;
+    rotSpring.current.target = isNotFoundMode
+      ? 0
+      : sceneSpinRef.current * Math.PI;
 
     planSpringX.current.target = 0;
-    planSpringY.current.target = 2.6;
+    planSpringY.current.target = isNotFoundMode ? 2.2 : 2.6;
   }, [sceneMode, sceneProgress, sceneSpin]);
 
   return <canvas ref={canvasRef} id="three-canvas" />;

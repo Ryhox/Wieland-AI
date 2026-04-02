@@ -27,6 +27,11 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [alert, setAlert] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
+  const [memoryModalOpen, setMemoryModalOpen] = useState(false);
+  const [memoryItems, setMemoryItems] = useState([]);
+  const [isMemoryLoading, setIsMemoryLoading] = useState(false);
+  const [deletingMemoryId, setDeletingMemoryId] = useState(null);
+  const [isDeletingAllMemory, setIsDeletingAllMemory] = useState(false);
 
   const handleEmailChange = async (e) => {
     e.preventDefault();
@@ -210,6 +215,99 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
         setConfirmModal(null);
       },
     });
+  };
+
+  const fetchMemories = async () => {
+    setIsMemoryLoading(true);
+    try {
+      const response = await authFetch("/api/auth/memories");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || t("profile.errors.memoryLoad"));
+      }
+      const data = await response.json();
+      setMemoryItems(Array.isArray(data.memories) ? data.memories : []);
+    } catch (err) {
+      setAlert({
+        type: "error",
+        title: t("profile.errors.title"),
+        message: err?.message || t("profile.errors.memoryLoad"),
+      });
+    } finally {
+      setIsMemoryLoading(false);
+    }
+  };
+
+  const openMemoryModal = async () => {
+    setMemoryModalOpen(true);
+    await fetchMemories();
+  };
+
+  const closeMemoryModal = () => {
+    if (isMemoryLoading || isDeletingAllMemory || deletingMemoryId) return;
+    setMemoryModalOpen(false);
+  };
+
+  const handleDeleteMemory = async (memoryId) => {
+    if (!memoryId || deletingMemoryId || isDeletingAllMemory) return;
+
+    setDeletingMemoryId(memoryId);
+    try {
+      const response = await authFetch(`/api/auth/memories/${memoryId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || t("profile.errors.memoryDelete"));
+      }
+
+      setMemoryItems((prev) => prev.filter((item) => item.id !== memoryId));
+      setAlert({
+        type: "success",
+        title: t("profile.errors.success"),
+        message: t("profile.success.memoryDeleted"),
+      });
+    } catch (err) {
+      setAlert({
+        type: "error",
+        title: t("profile.errors.title"),
+        message: err?.message || t("profile.errors.memoryDelete"),
+      });
+    } finally {
+      setDeletingMemoryId(null);
+    }
+  };
+
+  const handleDeleteAllMemory = async () => {
+    if (!memoryItems.length || isDeletingAllMemory || deletingMemoryId) return;
+
+    setIsDeletingAllMemory(true);
+    try {
+      const response = await authFetch("/api/auth/memories", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || t("profile.errors.memoryDeleteAll"));
+      }
+
+      setMemoryItems([]);
+      setAlert({
+        type: "success",
+        title: t("profile.errors.success"),
+        message: t("profile.success.memoryCleared"),
+      });
+    } catch (err) {
+      setAlert({
+        type: "error",
+        title: t("profile.errors.title"),
+        message: err?.message || t("profile.errors.memoryDeleteAll"),
+      });
+    } finally {
+      setIsDeletingAllMemory(false);
+    }
   };
 
   return (
@@ -406,6 +504,23 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
 
             <div className="profile-divider-thin" />
 
+            <div className="profile-section">
+              <h2 className="profile-section-title">
+                {t("profile.memorySection")}
+              </h2>
+              <div className="profile-field">
+                <span className="profile-field-label">{t("profile.memoryLabel")}</span>
+                <p className="profile-field-description">
+                  {t("profile.memoryDescription")}
+                </p>
+                <button className="profile-btn-secondary" onClick={openMemoryModal}>
+                  {t("profile.openMemory")}
+                </button>
+              </div>
+            </div>
+
+            <div className="profile-divider-thin" />
+
             <div className="profile-section profile-section-danger">
               <h2 className="profile-section-title">
                 {t("profile.dangerZone")}
@@ -429,7 +544,163 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
         </div>
       </main>
 
+      {memoryModalOpen && (
+        <MemoryModal
+          memories={memoryItems}
+          loading={isMemoryLoading}
+          deletingMemoryId={deletingMemoryId}
+          deletingAll={isDeletingAllMemory}
+          language={i18n.language}
+          onClose={closeMemoryModal}
+          onRefresh={fetchMemories}
+          onDeleteOne={handleDeleteMemory}
+          onDeleteAll={handleDeleteAllMemory}
+        />
+      )}
+
       <Footer />
+    </div>
+  );
+}
+
+function normalizeProfileLocale(language = "de") {
+  const lang = String(language || "de").toLowerCase();
+  if (lang.startsWith("en")) return "en-US";
+  if (lang.startsWith("it")) return "it-IT";
+  return "de-DE";
+}
+
+function fallbackMemoryLabel(key = "") {
+  if (!key) return "-";
+  return String(key)
+    .replace(/^favorite_/i, "favorite ")
+    .replace(/^note_/i, "note ")
+    .replace(/_/g, " ")
+    .trim();
+}
+
+function formatMemoryDate(value, language = "de") {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString(normalizeProfileLocale(language), {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function MemoryModal({
+  memories,
+  loading,
+  deletingMemoryId,
+  deletingAll,
+  language,
+  onClose,
+  onRefresh,
+  onDeleteOne,
+  onDeleteAll,
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="profile-memory-backdrop" onClick={onClose}>
+      <div className="profile-memory-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="profile-memory-modal-header">
+          <div>
+            <h2 className="profile-memory-modal-title">
+              {t("profile.memoryModalTitle")}
+            </h2>
+            <span className="profile-memory-modal-sub">
+              {t("profile.memoryModalSub", { count: memories.length })}
+            </span>
+          </div>
+          <button
+            className="profile-memory-modal-close"
+            onClick={onClose}
+            disabled={loading || deletingAll || Boolean(deletingMemoryId)}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="profile-memory-modal-body">
+          {loading ? (
+            <p className="profile-memory-empty">{t("common.loading")}</p>
+          ) : memories.length === 0 ? (
+            <p className="profile-memory-empty">{t("profile.memoryEmpty")}</p>
+          ) : (
+            <div className="profile-memory-list">
+              {memories.map((memory) => (
+                <div key={memory.id} className="profile-memory-item">
+                  <div className="profile-memory-item-main">
+                    <span className="profile-memory-item-key">
+                      {memory.label || fallbackMemoryLabel(memory.key)}
+                    </span>
+                    <p className="profile-memory-item-value">{memory.value}</p>
+                    <div className="profile-memory-item-meta">
+                      <span>
+                        {t("profile.memoryUpdatedAt", {
+                          date: formatMemoryDate(memory.updatedAt, language),
+                        })}
+                      </span>
+                      <span>
+                        {memory.isExplicit
+                          ? t("profile.memoryTypeExplicit")
+                          : t("profile.memoryTypeAuto")}
+                      </span>
+                      <span>
+                        {t("profile.memoryUsage", {
+                          count: Number(memory.usageCount || 0),
+                        })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    className="profile-memory-btn-danger profile-memory-item-delete"
+                    onClick={() => onDeleteOne(memory.id)}
+                    disabled={deletingAll || deletingMemoryId === memory.id}
+                  >
+                    {deletingMemoryId === memory.id
+                      ? t("common.loading")
+                      : t("common.delete")}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="profile-memory-modal-footer">
+          <span className="profile-memory-count">
+            {t("profile.memoryCount", { count: memories.length })}
+          </span>
+          <div className="profile-memory-footer-actions">
+            <button
+              className="profile-memory-btn-ghost"
+              onClick={onRefresh}
+              disabled={loading || deletingAll || Boolean(deletingMemoryId)}
+            >
+              {t("common.refresh")}
+            </button>
+            <button
+              className="profile-memory-btn-danger"
+              onClick={onDeleteAll}
+              disabled={
+                loading ||
+                deletingAll ||
+                Boolean(deletingMemoryId) ||
+                memories.length === 0
+              }
+            >
+              {deletingAll ? t("common.loading") : t("profile.memoryDeleteAll")}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

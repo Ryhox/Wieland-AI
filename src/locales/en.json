@@ -11,7 +11,9 @@
     "edit": "Edit",
     "copy": "Copy",
     "send": "Send",
-    "stop": "Stop"
+    "stop": "Stop",
+    "refresh": "Refresh",
+    "Refresh": "Refresh"
   },
   "languages": {
     "de": "Deutsch",
@@ -448,6 +450,22 @@
     "initialTag": "Initial",
     "entries": [
       {
+        "version": "v0.2.0",
+        "date": "02 April 2026",
+        "tag": "pink",
+        "title": "AI, Extension & UX Expansion",
+        "changes": [
+          "Bug fixes",
+          "Extension improvements with better page context handling",
+          "Improved website search in the extension",
+          "AI memory improvements (auto save, relevance retrieval, multilingual support)",
+          "Improved internet access and intent routing",
+          "Added clarification popup modal in web and extension (options + free text)",
+          "Improved clarification flow and cleaner streamed output",
+          "Cinematic 404 page redesign with updated 3D scene"
+        ]
+      },
+      {
         "version": "v0.1.9",
         "date": "30 March 2026",
         "tag": "green",
@@ -591,6 +609,19 @@
     "cancelSubscription": "Cancel subscription",
     "upgradePlan": "Upgrade plan",
     "adminNoCancel": "As admin you cannot cancel subscription.",
+    "memorySection": "Memory",
+    "memoryLabel": "Saved facts",
+    "memoryDescription": "See what the AI has stored about you. You can delete single entries or clear everything.",
+    "openMemory": "Open memory",
+    "memoryModalTitle": "Your AI memory",
+    "memoryModalSub": "{{count}} entries saved",
+    "memoryEmpty": "No memory entries are currently stored.",
+    "memoryCount": "{{count}} entries",
+    "memoryDeleteAll": "Delete all",
+    "memoryUpdatedAt": "Updated: {{date}}",
+    "memoryTypeExplicit": "Saved explicitly",
+    "memoryTypeAuto": "Detected automatically",
+    "memoryUsage": "Used {{count}}x",
     "dangerZone": "Danger zone",
     "deleteAccount": "Delete account",
     "deleteDescription": "This will permanently delete your account and related data.",
@@ -604,12 +635,17 @@
       "passwordLength": "Password must be at least 8 characters",
       "passwordUpdate": "Failed to update password",
       "accountDelete": "Failed to delete account",
-      "subscriptionCancel": "Failed to cancel subscription"
+      "subscriptionCancel": "Failed to cancel subscription",
+      "memoryLoad": "Failed to load memory",
+      "memoryDelete": "Failed to delete memory entry",
+      "memoryDeleteAll": "Failed to clear memory"
     },
     "success": {
       "emailUpdated": "Email updated successfully!",
       "passwordUpdated": "Password updated successfully!",
-      "subscriptionCanceled": "Subscription cancelled successfully. You will be moved to Free plan."
+      "subscriptionCanceled": "Subscription cancelled successfully. You will be moved to Free plan.",
+      "memoryDeleted": "Memory entry deleted.",
+      "memoryCleared": "Memory cleared completely."
     },
     "confirm": {
       "deleteTitle": "Delete account?",
@@ -735,7 +771,10 @@
       }
     ]
   },
-  "notFound": { "title": "404 - Page not found" },
+  "notFound": {
+    "moonMessage": "Seems like you stranded on the moon...",
+    "returnSafety": "Return to safety"
+  },
   "alertModal": { "ok": "Okay" },
   "confirmModal": { "cancel": "Cancel", "confirm": "Confirm" },
   "payment": {

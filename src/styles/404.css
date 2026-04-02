@@ -1,0 +1,222 @@
+.nf-page-shell {
+  position: relative;
+  min-height: 100svh;
+  height: 100svh;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      980px 620px at 84% 8%,
+      rgba(232, 35, 250, 0.16),
+      transparent 58%
+    ),
+    radial-gradient(
+      860px 560px at 8% 58%,
+      rgba(76, 221, 255, 0.12),
+      transparent 55%
+    ),
+    #070a11;
+}
+
+.nf-page-shell.page-wrapper {
+  overflow-y: hidden;
+}
+
+.nf-page-shell .page-content {
+  padding-top: 60px;
+}
+
+.nf-page-shell .page-container {
+  padding: 0 24px;
+}
+
+.nf-bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.nf-page-shell #stars-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  will-change: opacity;
+}
+
+.nf-page-shell #three-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  filter: saturate(1.06) contrast(0.94);
+  will-change: transform, opacity;
+}
+
+.nf-ambient-glow {
+  position: fixed;
+  width: 58vmin;
+  height: 58vmin;
+  right: -14vmin;
+  top: 6vmin;
+  z-index: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(232, 35, 250, 0.2),
+    rgba(76, 221, 255, 0.08) 55%,
+    transparent 74%
+  );
+  filter: blur(18px);
+  will-change: transform, opacity;
+}
+
+.nf-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 50% 44%,
+      rgba(7, 10, 17, 0) 14%,
+      rgba(7, 10, 17, 0.6) 74%,
+      rgba(7, 10, 17, 0.88) 100%
+    );
+}
+
+.nf-content-layer {
+  position: relative;
+  z-index: 3;
+  padding-top: 0;
+  display: flex;
+  align-items: center;
+}
+
+.nf-container {
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.nf-hero {
+  width: min(760px, 100%);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+
+
+.nf-code-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 -8px;
+}
+
+.nf-code {
+  margin: 0;
+  font-family: "DM Mono", monospace;
+  font-size: clamp(74px, 16vw, 148px);
+  line-height: 0.9;
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow:
+    0 0 36px rgba(232, 35, 250, 0.24),
+    0 0 66px rgba(76, 221, 255, 0.14);
+}
+
+.nf-title {
+  margin: -2px 0 0;
+  color: #fff;
+  font-size: clamp(24px, 3.4vw, 38px);
+  line-height: 1.16;
+  letter-spacing: -0.35px;
+  font-weight: 500;
+  max-width: 22ch;
+}
+
+.nf-actions {
+  margin-top: 6px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.nf-btn {
+  border-radius: 999px;
+  padding: 11px 24px;
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.nf-btn-primary {
+  border: 1px solid rgba(232, 35, 250, 0.48);
+  color: #fff;
+  background: rgba(232, 35, 250, 0.18);
+}
+
+.nf-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(95, 26, 132, 0.38);
+  background: rgba(232, 35, 250, 0.25);
+}
+
+.nf-btn-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nf-btn-secondary:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.nf-btn:focus-visible {
+  outline: 2px solid rgba(76, 221, 255, 0.8);
+  outline-offset: 2px;
+}
+
+.nf-page-shell .footer {
+  position: relative;
+  z-index: 5;
+  background: rgba(7, 10, 17, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+@media (max-width: 760px) {
+  .nf-page-shell .page-content {
+    padding-top: 60px;
+  }
+
+  .nf-page-shell .page-container {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 460px) {
+  .nf-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .nf-btn {
+    width: min(260px, 100%);
+  }
+}

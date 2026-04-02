@@ -360,6 +360,9 @@ function applyStaticTranslations() {
   }
 
   updateInternetToggleUI();
+  updateMainInputPlaceholder();
+  updateInputIconState();
+  updateModelButtonState();
 
   setAuthMode(authMode);
   renderMessages();
@@ -367,6 +370,506 @@ function applyStaticTranslations() {
 
 const WEBSITE_SUMMARY_PROMPT_RE =
   /(webseite|website|seite|zusammenfass|wichtigste|hauptpunkte|zusammenfassung|summar(y|ize)|key\s*points)/i;
+const PAGE_REFERENCE_PROMPT_RE =
+  /(auf\s+(dieser|der)\s+seite|auf\s+(dieser|der)\s+webseite|hier\s+auf\s+der\s+seite|auf\s+dem\s+artikel|on\s+(this|the)\s+page|on\s+this\s+website|in\s+this\s+article|su\s+questa\s+pagina|in\s+questo\s+articolo)/i;
+const FACT_QUESTION_PROMPT_RE =
+  /\b(wann|when|quando|wo|where|dove|wer|who|chi|was|what|che)\b/i;
+const CLARIFY_JSON_BLOCK_RE =
+  /\[\[\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]([\s\S]*?)\[\[\s*\/\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
+const CLARIFY_JSON_OPEN_RE =
+  /\[\[\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
+const CLARIFY_JSON_CLOSE_RE =
+  /\[\[\s*\/\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
+const CLARIFY_JSON_TOKEN_RE = /WIELAND[\s_-]*CLARIFY[\s_-]*JSON/i;
+const CLARIFY_OPTION_LINE_RE = /^\s*([A-E])[)\].:-]\s*(.+)$/i;
+const CLARIFY_OPTION_IDS = ["A", "B", "C", "D", "E"];
+const CLARIFY_POPUP_DELAY_MS = 240;
+const CLARIFY_VAGUE_BUILD_VERB_RE =
+  /\b(mach|mache|build|make|create|generate|generat|generier|erstell\w*|baue?\b|program\w*|entwickl\w*|crea|sviluppa|fai)\b/i;
+const CLARIFY_VAGUE_BUILD_TARGET_RE =
+  /\b(app|website|webseite|landing\s+page|tool|projekt|project|bot|script|programm|program|dashboard|automation|automatisierung|extension)\b/i;
+const CLARIFY_VAGUE_BUILD_SCOPE_HINT_RE =
+  /\b(react|vue|svelte|html|css|javascript|typescript|node|python|java|single\s+file|mehrere\s+dateien|backend|frontend|api|mobile|ios|android|chrome\s+extension|browser\s+extension|deadline|budget|zielgruppe|target\s+audience)\b/i;
+const POPUP_IDEA_PLACEHOLDER_BY_LANG = {
+  de: "Beschreibe deine Idee",
+  en: "Describe your idea",
+  it: "Descrivi la tua idea",
+};
+const POPUP_SKIP_LABEL_BY_LANG = {
+  de: "Überspringen",
+  en: "Skip",
+  it: "Salta",
+};
+const CONTEXT_MATCH_STOPWORDS = new Set([
+  "und",
+  "oder",
+  "der",
+  "die",
+  "das",
+  "ein",
+  "eine",
+  "einer",
+  "einem",
+  "den",
+  "dem",
+  "des",
+  "auf",
+  "mit",
+  "von",
+  "ist",
+  "war",
+  "wurde",
+  "wann",
+  "wer",
+  "wo",
+  "was",
+  "the",
+  "and",
+  "for",
+  "with",
+  "this",
+  "that",
+  "from",
+  "when",
+  "where",
+  "who",
+  "what",
+  "how",
+  "was",
+  "is",
+  "are",
+  "di",
+  "del",
+  "della",
+  "delle",
+  "dei",
+  "degli",
+  "dello",
+  "che",
+  "chi",
+  "quando",
+  "dove",
+  "con",
+  "per",
+  "una",
+  "uno",
+  "un",
+  "il",
+  "la",
+  "lo",
+]);
+
+function normalizeClarifyOptions(rawOptions = []) {
+  const out = [];
+  const list = Array.isArray(rawOptions) ? rawOptions : [];
+
+  for (const item of list) {
+    if (out.length >= 5) break;
+
+    let id = "";
+    let label = "";
+
+    if (typeof item === "string") {
+      label = item.trim();
+      id = CLARIFY_OPTION_IDS[out.length] || "";
+    } else {
+      id = String(item?.id || item?.key || "")
+        .trim()
+        .toUpperCase();
+      label = String(item?.label || item?.text || item?.value || "").trim();
+    }
+
+    if (!label) continue;
+    if (!/^[A-E]$/.test(id)) id = CLARIFY_OPTION_IDS[out.length] || "";
+    if (!id) continue;
+
+    out.push({ id, label });
+  }
+
+  return out;
+}
+
+function toSingleSentenceQuestion(value = "", fallback = "") {
+  const source = String(value || fallback || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!source) return "";
+
+  const sentenceMatch = source.match(/^[^.!?]+[.!?]?/);
+  let question = sentenceMatch ? sentenceMatch[0].trim() : source;
+
+  if (question.length > 140) {
+    question = `${question.slice(0, 137).trimEnd()}...`;
+  }
+
+  return question;
+}
+
+function isClarifyQaReplyText(value = "") {
+  const source = String(value || "").trim();
+  if (!source) return false;
+
+  return /^q\s*:/i.test(source) && /(?:^|\n)\s*a\s*:/im.test(source);
+}
+
+function formatClarifyReply(question = "", answer = "") {
+  const cleanAnswer = String(answer || "").trim();
+  if (!cleanAnswer) return "";
+  if (isClarifyQaReplyText(cleanAnswer)) return cleanAnswer;
+
+  const cleanQuestion = String(question || "").trim();
+  if (!cleanQuestion) return cleanAnswer;
+
+  return `Q: ${cleanQuestion}\nA: ${cleanAnswer}`;
+}
+
+function isLikelyVagueBuildPromptClient(message = "") {
+  const source = String(message || "").trim();
+  if (!source) return false;
+
+  const compact = source
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+  const wordCount = compact.split(" ").filter(Boolean).length;
+
+  if (wordCount > 10) return false;
+  if (!CLARIFY_VAGUE_BUILD_VERB_RE.test(compact)) return false;
+  if (!CLARIFY_VAGUE_BUILD_TARGET_RE.test(compact)) return false;
+  if (CLARIFY_VAGUE_BUILD_SCOPE_HINT_RE.test(compact)) return false;
+
+  return true;
+}
+
+function detectClarifyFallbackLanguageFromText(message = "") {
+  const source = String(message || "").toLowerCase();
+  if (!source) return "en";
+
+  if (
+    /[àèéìíîòóù]/i.test(source) ||
+    /\b(che|quando|dove|vorrei|fammi|crea|costruisci|sito|estensione|automazione)\b/i.test(
+      source,
+    )
+  ) {
+    return "it";
+  }
+
+  if (
+    /[äöüß]/i.test(source) ||
+    /\b(und|oder|ich|bitte|mach|baue|erstell|frage|website|webseite)\b/i.test(
+      source,
+    )
+  ) {
+    return "de";
+  }
+
+  return "en";
+}
+
+function buildClientForcedClarificationFallbackPayload(message = "") {
+  const lang = detectClarifyFallbackLanguageFromText(message);
+
+  if (lang === "de") {
+    return {
+      question: "Worauf soll ich mich zuerst fokussieren?",
+      options: [
+        { id: "A", label: "Website oder Landingpage" },
+        { id: "B", label: "Web-App" },
+        { id: "C", label: "Browser-Erweiterung" },
+        { id: "D", label: "Automatisierung oder Script" },
+        { id: "E", label: "Etwas anderes" },
+      ],
+      allowFreeform: true,
+      freeformPlaceholder: "Kurz beschreiben",
+      skipLabel: "Überspringen",
+      step: 1,
+      totalSteps: 1,
+    };
+  }
+
+  if (lang === "it") {
+    return {
+      question: "Su cosa devo concentrarmi per prima cosa?",
+      options: [
+        { id: "A", label: "Sito web o landing page" },
+        { id: "B", label: "Web app" },
+        { id: "C", label: "Estensione browser" },
+        { id: "D", label: "Automazione o script" },
+        { id: "E", label: "Altro" },
+      ],
+      allowFreeform: true,
+      freeformPlaceholder: "Descrivilo in breve",
+      skipLabel: "Salta",
+      step: 1,
+      totalSteps: 1,
+    };
+  }
+
+  return {
+    question: "What should I focus on first?",
+    options: [
+      { id: "A", label: "Website or landing page" },
+      { id: "B", label: "Web app" },
+      { id: "C", label: "Browser extension" },
+      { id: "D", label: "Automation or script" },
+      { id: "E", label: "Something else" },
+    ],
+    allowFreeform: true,
+    freeformPlaceholder: "Describe briefly",
+    skipLabel: "Skip",
+    step: 1,
+    totalSteps: 1,
+  };
+}
+
+function findClarifyMarkerStart(rawText = "") {
+  const source = String(rawText || "");
+  if (!source) return -1;
+
+  const openMarkerMatch = source.match(CLARIFY_JSON_OPEN_RE);
+  if (
+    openMarkerMatch &&
+    Number.isInteger(openMarkerMatch.index) &&
+    openMarkerMatch.index >= 0
+  ) {
+    return openMarkerMatch.index;
+  }
+
+  const bracketedFragmentIndex = source.toUpperCase().indexOf("[[WIELAND");
+  if (bracketedFragmentIndex >= 0) return bracketedFragmentIndex;
+
+  const tokenMatch = source.match(CLARIFY_JSON_TOKEN_RE);
+  if (tokenMatch && Number.isInteger(tokenMatch.index) && tokenMatch.index >= 0) {
+    return tokenMatch.index;
+  }
+
+  return -1;
+}
+
+function extractFirstJsonObject(rawText = "") {
+  const source = String(rawText || "");
+  const start = source.indexOf("{");
+  if (start < 0) return "";
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < source.length; i++) {
+    const char = source[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === "{") depth += 1;
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return source.slice(start, i + 1);
+      }
+    }
+  }
+
+  return "";
+}
+
+function parseClarifyJsonObject(rawText = "") {
+  const source = String(rawText || "").trim();
+  if (!source) return null;
+
+  const fencedMatch = source.match(/^```(?:json)?\s*([\s\S]*?)```$/i);
+  const normalized = (fencedMatch ? fencedMatch[1] : source).trim();
+
+  try {
+    return JSON.parse(normalized);
+  } catch {
+  }
+
+  const jsonObject = extractFirstJsonObject(normalized);
+  if (!jsonObject) return null;
+
+  try {
+    return JSON.parse(jsonObject);
+  } catch {
+    return null;
+  }
+}
+
+function sanitizeClarifyPayload(payload = {}, fallbackQuestion = "") {
+  const question = toSingleSentenceQuestion(
+    payload?.question || payload?.title || "",
+    fallbackQuestion,
+  );
+  const options = normalizeClarifyOptions(payload?.options || payload?.choices);
+  if (!question || options.length < 2) return null;
+
+  const rawStep = Number(payload?.step);
+  const rawTotal = Number(payload?.totalSteps || payload?.total);
+  const hasSingleStepMeta =
+    Number.isFinite(rawStep) &&
+    Number.isFinite(rawTotal) &&
+    rawStep > 0 &&
+    rawTotal > 0 &&
+    rawTotal <= 1;
+
+  return {
+    question,
+    options,
+    allowFreeform: payload?.allowFreeform !== false,
+    freeformPlaceholder:
+      String(
+        payload?.freeformPlaceholder ||
+          payload?.freeTextPlaceholder ||
+          "Etwas anderes",
+      ).trim() || "Etwas anderes",
+    skipLabel: String(payload?.skipLabel || "Überspringen").trim() ||
+      "Überspringen",
+    step: hasSingleStepMeta ? 1 : null,
+    totalSteps: hasSingleStepMeta ? 1 : null,
+  };
+}
+
+function parsePlainTextClarificationFallback(rawText = "") {
+  const source = String(rawText || "").trim();
+  if (!source) return null;
+
+  const lines = source
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const options = [];
+  let firstOptionIndex = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(CLARIFY_OPTION_LINE_RE);
+    if (!match) continue;
+    if (firstOptionIndex < 0) firstOptionIndex = i;
+    options.push({ id: match[1].toUpperCase(), label: match[2].trim() });
+  }
+
+  if (options.length < 2 || firstOptionIndex < 0) return null;
+
+  const question = lines.slice(0, firstOptionIndex).join(" ").trim() || lines[0];
+  const payload = sanitizeClarifyPayload({ question, options }, question);
+  if (!payload) return null;
+
+  const keptLines = lines.filter((line) => !CLARIFY_OPTION_LINE_RE.test(line));
+  const cleanedText = keptLines.join("\n").trim() || payload.question;
+  return { payload, cleanedText };
+}
+
+function extractClarificationPayload(rawText = "") {
+  const source = String(rawText || "");
+  if (!source) return { payload: null, cleanedText: "" };
+
+  const blockMatch = source.match(CLARIFY_JSON_BLOCK_RE);
+  if (blockMatch) {
+    const withoutBlock = source.replace(CLARIFY_JSON_BLOCK_RE, "").trim();
+    const fallbackQuestion = withoutBlock.split(/\r?\n/).find(Boolean) || "";
+
+    const parsed = parseClarifyJsonObject(blockMatch[1]);
+
+    const payload = sanitizeClarifyPayload(parsed || {}, fallbackQuestion);
+    if (payload) {
+      return {
+        payload,
+        cleanedText: withoutBlock || payload.question,
+      };
+    }
+
+    return {
+      payload: null,
+      cleanedText: withoutBlock || source.trim(),
+    };
+  }
+
+  const markerIndex = findClarifyMarkerStart(source);
+  if (markerIndex >= 0) {
+    const visibleText = source.slice(0, markerIndex).trim();
+    const markerTail = source.slice(markerIndex);
+    const openMarkerMatch = markerTail.match(CLARIFY_JSON_OPEN_RE);
+    const afterMarker = openMarkerMatch
+      ? markerTail.slice((openMarkerMatch.index || 0) + openMarkerMatch[0].length)
+      : markerTail;
+    const markerPayloadText = afterMarker.replace(CLARIFY_JSON_CLOSE_RE, "").trim();
+    const fallbackQuestion = visibleText.split(/\r?\n/).find(Boolean) || "";
+
+    const parsed = parseClarifyJsonObject(markerPayloadText);
+    const payload = sanitizeClarifyPayload(parsed || {}, fallbackQuestion);
+    if (payload) {
+      return {
+        payload,
+        cleanedText: visibleText || payload.question,
+      };
+    }
+
+    const combinedFallbackSource = [visibleText, markerPayloadText]
+      .filter(Boolean)
+      .join("\n");
+    const fallbackFromCombined = parsePlainTextClarificationFallback(
+      combinedFallbackSource,
+    );
+    if (fallbackFromCombined) {
+      return {
+        payload: fallbackFromCombined.payload,
+        cleanedText: visibleText || fallbackFromCombined.cleanedText,
+      };
+    }
+
+    return {
+      payload: null,
+      cleanedText: visibleText,
+    };
+  }
+
+  const fallback = parsePlainTextClarificationFallback(source);
+  if (fallback) return fallback;
+
+  return {
+    payload: null,
+    cleanedText: source.trim(),
+  };
+}
+
+function getClarificationStreamPreview(rawText = "") {
+  const source = String(rawText || "");
+  if (!source) return { text: "", suppress: false };
+
+  const markerIndex = findClarifyMarkerStart(source);
+  if (markerIndex >= 0) {
+    return {
+      text: source.slice(0, markerIndex).trimEnd(),
+      suppress: true,
+    };
+  }
+
+  const lines = source.split(/\r?\n/);
+  const firstOptionIndex = lines.findIndex((line) =>
+    CLARIFY_OPTION_LINE_RE.test(line),
+  );
+  if (firstOptionIndex >= 0) {
+    return {
+      text: lines.slice(0, firstOptionIndex).join("\n").trimEnd(),
+      suppress: true,
+    };
+  }
+
+  return { text: source, suppress: false };
+}
 
 let token = null;
 let user = null;
@@ -376,10 +879,13 @@ let isSending = false;
 let abortController = null;
 let selectedModel = "qwen3-vl:2b-instruct";
 let aiStyle = "formal";
-let internetAccess = false;
+let internetAccess = true;
 let imageFile = null;
 let imagePreview = null;
 let sidebarOpen = false;
+let pendingClarifyReply = false;
+let clarifyPopupTimer = null;
+let activeClarifyPopup = null;
 const modelWarmUntil = new Map();
 
 const $ = (sel) => document.querySelector(sel);
@@ -433,8 +939,60 @@ const sidebarAvatar = $("#sidebar-avatar");
 const sidebarName = $("#sidebar-name");
 const sidebarPlan = $("#sidebar-plan");
 const btnLogout = $("#btn-logout");
+const clarifyPopup = $("#clarify-popup");
+const clarifyPopupQuestion = $("#clarify-popup-question");
+const clarifyPopupStep = $("#clarify-popup-step");
+const clarifyPopupOptions = $("#clarify-popup-options");
 
 let authMode = "login";
+
+function isClarifyPopupOpen() {
+  return !!clarifyPopup && !clarifyPopup.classList.contains("hidden");
+}
+
+function getLocalizedIdeaPlaceholder() {
+  return (
+    POPUP_IDEA_PLACEHOLDER_BY_LANG[currentLang] ||
+    POPUP_IDEA_PLACEHOLDER_BY_LANG.de
+  );
+}
+
+function getLocalizedSkipLabel() {
+  return POPUP_SKIP_LABEL_BY_LANG[currentLang] || POPUP_SKIP_LABEL_BY_LANG.de;
+}
+
+function getClarifyInputPlaceholder() {
+  return activeClarifyPopup?.freeformPlaceholder || getLocalizedIdeaPlaceholder();
+}
+
+function updateMainInputPlaceholder() {
+  if (!chatInput) return;
+  chatInput.placeholder = isClarifyPopupOpen()
+    ? getClarifyInputPlaceholder()
+    : tr("chat.placeholder");
+}
+
+function updateInputIconState() {
+  if (!btnPlus) return;
+  const popupMode = isClarifyPopupOpen();
+  btnPlus.classList.toggle("input-icon-popup-mode", popupMode);
+  btnPlus.disabled = popupMode;
+  btnPlus.title = popupMode ? getLocalizedIdeaPlaceholder() : tr("chat.options");
+}
+
+function updateModelButtonState() {
+  if (!btnModel || !modelLabelEl) return;
+
+  if (isClarifyPopupOpen()) {
+    btnModel.classList.add("clarify-skip-mode");
+    modelLabelEl.textContent = getLocalizedSkipLabel();
+    modelDropdown?.classList.add("hidden");
+    return;
+  }
+
+  btnModel.classList.remove("clarify-skip-mode");
+  modelLabelEl.textContent = modelLabelFor(selectedModel);
+}
 
 function updateInternetToggleUI() {
   if (btnToggleInternet) {
@@ -444,6 +1002,107 @@ function updateInternetToggleUI() {
       internetAccess ? tr("chat.internetOn") : tr("chat.internetOff"),
     );
   }
+}
+
+function clearQueuedClarifyPopup() {
+  if (!clarifyPopupTimer) return;
+  clearTimeout(clarifyPopupTimer);
+  clarifyPopupTimer = null;
+}
+
+function queueClarifyPopup(payload, options = {}) {
+  if (!payload) return;
+  const immediate = options?.immediate === true;
+  clearQueuedClarifyPopup();
+  clarifyPopupTimer = setTimeout(() => {
+    clarifyPopupTimer = null;
+    openClarifyPopup(payload);
+  }, immediate ? 0 : CLARIFY_POPUP_DELAY_MS);
+}
+
+function hideClarifyPopup() {
+  clearQueuedClarifyPopup();
+  if (!clarifyPopup) return;
+  activeClarifyPopup = null;
+  clarifyPopup.classList.add("hidden");
+  clarifyPopup.setAttribute("aria-hidden", "true");
+  if (clarifyPopupOptions) clarifyPopupOptions.innerHTML = "";
+  if (clarifyPopupQuestion) clarifyPopupQuestion.textContent = "";
+  if (clarifyPopupStep) {
+    clarifyPopupStep.textContent = "";
+    clarifyPopupStep.classList.add("hidden");
+  }
+  updateMainInputPlaceholder();
+  updateInputIconState();
+  updateModelButtonState();
+}
+
+function sendClarifyReply(rawValue = "") {
+  const value = String(rawValue || "").trim();
+  if (!value || isSending) return;
+
+  hideClarifyPopup();
+  pendingClarifyReply = true;
+  chatInput.value = value;
+  chatInput.dispatchEvent(new Event("input", { bubbles: true }));
+  void sendMessage();
+}
+
+function openClarifyPopup(payload) {
+  if (!clarifyPopup || !payload?.question || !Array.isArray(payload?.options))
+    return;
+
+  clearQueuedClarifyPopup();
+  activeClarifyPopup = payload;
+  clarifyPopupQuestion.textContent = payload.question;
+  clarifyPopup.setAttribute("aria-label", payload.question);
+
+  if (
+    payload.step &&
+    payload.totalSteps &&
+    payload.totalSteps > 1 &&
+    Number.isFinite(payload.step) &&
+    Number.isFinite(payload.totalSteps)
+  ) {
+    clarifyPopupStep.textContent = `${payload.step} von ${payload.totalSteps}`;
+    clarifyPopupStep.classList.remove("hidden");
+  } else {
+    clarifyPopupStep.textContent = "";
+    clarifyPopupStep.classList.add("hidden");
+  }
+
+  clarifyPopupOptions.innerHTML = "";
+  payload.options.forEach((option, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "clarify-popup-option";
+
+    const badge = document.createElement("span");
+    badge.className = "clarify-popup-option-badge";
+    badge.textContent = String(index + 1);
+
+    const label = document.createElement("span");
+    label.className = "clarify-popup-option-label";
+    label.textContent = option.label;
+
+    button.appendChild(badge);
+    button.appendChild(label);
+    button.addEventListener("click", () => {
+      const optionReply = /^[A-E]$/.test(option.id)
+        ? `${option.id}) ${option.label}`
+        : option.label;
+      const quickReply = formatClarifyReply(payload.question, optionReply);
+      sendClarifyReply(quickReply);
+    });
+
+    clarifyPopupOptions.appendChild(button);
+  });
+
+  clarifyPopup.classList.remove("hidden");
+  clarifyPopup.setAttribute("aria-hidden", "false");
+  updateMainInputPlaceholder();
+  updateInputIconState();
+  updateModelButtonState();
 }
 
 function initStarsBackground() {
@@ -548,7 +1207,16 @@ async function init() {
   const stored = await chromeGet([TOKEN_KEY, USER_KEY, EXT_WEB_ACCESS_KEY]);
   token = stored[TOKEN_KEY] || getAuthCookie();
   user = stored[USER_KEY] || null;
-  internetAccess = parseBoolean(stored[EXT_WEB_ACCESS_KEY]);
+  const hasStoredInternetPreference = Object.prototype.hasOwnProperty.call(
+    stored,
+    EXT_WEB_ACCESS_KEY,
+  );
+  internetAccess = hasStoredInternetPreference
+    ? parseBoolean(stored[EXT_WEB_ACCESS_KEY])
+    : true;
+  if (!hasStoredInternetPreference) {
+    await chromeSet({ [EXT_WEB_ACCESS_KEY]: true });
+  }
   updateInternetToggleUI();
 
   if (token) {
@@ -761,7 +1429,7 @@ function updateModelForPlan() {
   if (rank >= 2) selectedModel = "qwen3-vl:8b-instruct";
   else if (rank >= 1) selectedModel = "qwen3-vl:4b-instruct";
   else selectedModel = "qwen3-vl:2b-instruct";
-  modelLabelEl.textContent = modelLabelFor(selectedModel);
+  updateModelButtonState();
 }
 
 function modelLabelFor(modelId) {
@@ -775,14 +1443,16 @@ function updateModelDropdown() {
     opt.classList.toggle("active", opt.dataset.model === selectedModel);
     opt.classList.toggle("locked", model && model.rank > rank);
   });
-  if (modelLabelEl) {
-    modelLabelEl.textContent = modelLabelFor(selectedModel);
-  }
+  updateModelButtonState();
 }
 
-btnModel.addEventListener("click", () =>
-  modelDropdown.classList.toggle("hidden"),
-);
+btnModel.addEventListener("click", () => {
+  if (isClarifyPopupOpen()) {
+    hideClarifyPopup();
+    return;
+  }
+  modelDropdown.classList.toggle("hidden");
+});
 document.addEventListener("click", (e) => {
   if (!btnModel.contains(e.target) && !modelDropdown.contains(e.target))
     modelDropdown.classList.add("hidden");
@@ -903,6 +1573,7 @@ async function deleteChat(filename) {
 
 function handleNewChat() {
   if (abortController) abortController.abort();
+  hideClarifyPopup();
   messages = [];
   currentChatId = null;
   isSending = false;
@@ -913,6 +1584,7 @@ function handleNewChat() {
 }
 
 btnPlus.addEventListener("click", (e) => {
+  if (btnPlus.disabled) return;
   e.stopPropagation();
   plusMenu.classList.toggle("hidden");
 });
@@ -977,23 +1649,59 @@ function clearImage() {
   fileInput.value = "";
 }
 
-function shouldAttachWebsiteContext(text = "") {
-  return WEBSITE_SUMMARY_PROMPT_RE.test(text);
+function normalizeForContextMatch(value = "") {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
-function buildWebsiteContextPrompt(page) {
-  const title = (page?.title || "").trim();
-  const url = (page?.url || "").trim();
-  const content = (page?.content || "").trim();
-  if (!content) return "";
-  return [
-    "",
-    tr("chat.ctxIntro"),
-    tr("chat.ctxTitle", { value: title || tr("chat.unknown") }),
-    tr("chat.ctxUrl", { value: url || tr("chat.unknown") }),
-    tr("chat.ctxContent"),
-    content,
-  ].join("\n");
+function extractContextMatchTokens(value = "") {
+  const normalized = normalizeForContextMatch(value);
+  if (!normalized) return [];
+
+  const words = normalized.split(" ").filter(Boolean);
+  const out = [];
+  const seen = new Set();
+
+  for (const word of words) {
+    if (word.length < 4) continue;
+    if (CONTEXT_MATCH_STOPWORDS.has(word)) continue;
+    if (seen.has(word)) continue;
+    seen.add(word);
+    out.push(word);
+  }
+
+  return out;
+}
+
+function hasMeaningfulTitleOverlap(prompt = "", title = "") {
+  const promptTokens = extractContextMatchTokens(prompt);
+  const titleTokens = extractContextMatchTokens(title);
+  if (!promptTokens.length || !titleTokens.length) return false;
+
+  const titleTokenSet = new Set(titleTokens);
+  let overlapCount = 0;
+  for (const token of promptTokens) {
+    if (!titleTokenSet.has(token)) continue;
+    overlapCount++;
+    if (overlapCount >= 2) return true;
+  }
+
+  return overlapCount >= 1 && FACT_QUESTION_PROMPT_RE.test(prompt);
+}
+
+function shouldAttachWebsiteContext(text = "", page = null) {
+  if (!text) return false;
+  if (WEBSITE_SUMMARY_PROMPT_RE.test(text)) return true;
+  if (PAGE_REFERENCE_PROMPT_RE.test(text)) return true;
+
+  const title = String(page?.title || "").trim();
+  if (!title) return false;
+
+  return hasMeaningfulTitleOverlap(text, title);
 }
 
 async function getActivePageContext() {
@@ -1033,7 +1741,7 @@ async function getActivePageContext() {
           .replace(/\s+\n/g, "\n")
           .replace(/\n{3,}/g, "\n\n")
           .trim();
-        if (content.length > 12000) content = content.slice(0, 12000);
+        if (content.length > 4500) content = content.slice(0, 4500);
 
         return { title, url, content };
       },
@@ -1066,6 +1774,16 @@ async function sendMessage() {
     chatInput.value.trim() || (imageFile ? tr("chat.describeImage") : "");
   if (!text || isSending) return;
 
+  const clarifyReplyFromPopup = isClarifyPopupOpen();
+  const requestText = clarifyReplyFromPopup
+    ? formatClarifyReply(activeClarifyPopup?.question, text)
+    : text;
+
+  if (clarifyReplyFromPopup) {
+    pendingClarifyReply = true;
+  }
+  hideClarifyPopup();
+
   isSending = true;
   chatInput.value = "";
   chatInput.style.height = "auto";
@@ -1075,13 +1793,22 @@ async function sendMessage() {
 
   let imageUrl = null;
   const fileCopy = imageFile;
-  let requestText = text;
+  let pageContext = null;
 
-  if (shouldAttachWebsiteContext(text)) {
-    const page = await getActivePageContext();
-    const pageBlock = buildWebsiteContextPrompt(page);
-    if (pageBlock) requestText = `${text}${pageBlock}`;
-    else toast(tr("chat.readPageFailed"), "error");
+  const page = await getActivePageContext();
+  const shouldUsePageContext = shouldAttachWebsiteContext(requestText, page);
+  const explicitlyAskedForPage =
+    WEBSITE_SUMMARY_PROMPT_RE.test(requestText) ||
+    PAGE_REFERENCE_PROMPT_RE.test(requestText);
+
+  if (shouldUsePageContext && page?.content) {
+    pageContext = {
+      title: String(page.title || "").trim(),
+      url: String(page.url || "").trim(),
+      content: String(page.content || "").trim(),
+    };
+  } else if (explicitlyAskedForPage) {
+    toast(tr("chat.readPageFailed"), "error");
   }
 
   if (fileCopy) {
@@ -1121,8 +1848,8 @@ async function sendMessage() {
   }
 
   const userContent = imageUrl
-    ? `![${tr("chat.image")}](${imageUrl})\n\n${text}`
-    : text;
+    ? `![${tr("chat.image")}](${imageUrl})\n\n${requestText}`
+    : requestText;
   const userMsg = { content: userContent, isUser: true, id: uid() };
   messages.push(userMsg);
   renderMessages();
@@ -1148,6 +1875,17 @@ async function sendMessage() {
     fd.append("model", selectedModel);
     fd.append("aiStyle", aiStyle);
     fd.append("internetAccess", internetAccess ? "true" : "false");
+
+    const clarifyReply = pendingClarifyReply;
+    pendingClarifyReply = false;
+    if (clarifyReply) {
+      fd.append("clarifyReply", "true");
+    }
+
+    if (pageContext) {
+      fd.append("pageContext", JSON.stringify(pageContext));
+      fd.append("preferPageContext", "true");
+    }
     if (fileCopy) fd.append("image", fileCopy);
 
     const res = await fetch(`${API_BASE}/api/chat/stream`, {
@@ -1163,6 +1901,9 @@ async function sendMessage() {
     const memoryCount = Number(
       res.headers.get("X-Wieland-Memory-Count") || "0",
     );
+    const clarifyForced =
+      res.headers.get("X-Wieland-Clarify-Forced") === "1";
+
     if (memorySaved && memoryCount > 0) {
       toast(tr("chat.memorySaved", { count: memoryCount }), "success");
     }
@@ -1174,8 +1915,38 @@ async function sendMessage() {
       const { done, value } = await reader.read();
       if (done) break;
       fullText += decoder.decode(value, { stream: true });
-      updateMessage(aiId, fullText);
+
+      const preview = getClarificationStreamPreview(fullText);
+      const previewText = preview.text;
+
+      updateMessage(aiId, previewText);
       scrollToBottom();
+    }
+
+    const clarification = extractClarificationPayload(fullText);
+    const shouldClientForceClarify =
+      clarifyForced || isLikelyVagueBuildPromptClient(requestText);
+    const fallbackClarificationPayload = shouldClientForceClarify
+      ? sanitizeClarifyPayload(
+          buildClientForcedClarificationFallbackPayload(requestText),
+          "",
+        )
+      : null;
+    const clarificationPayload =
+      clarification.payload || fallbackClarificationPayload;
+    const finalAssistantText =
+      clarification.cleanedText || fullText || tr("chat.shortError");
+
+    if (finalAssistantText !== fullText) {
+      fullText = finalAssistantText;
+      updateMessage(aiId, finalAssistantText);
+      scrollToBottom();
+    }
+
+    if (clarificationPayload) {
+      queueClarifyPopup(clarificationPayload, {
+        immediate: shouldClientForceClarify,
+      });
     }
 
     const isNew =
@@ -1204,7 +1975,10 @@ function updateMessage(id, content) {
   const msg = messages.find((m) => m.id === id);
   if (msg) msg.content = content;
   const el = document.querySelector(`[data-msg-id="${id}"] .message-bubble`);
-  if (el) el.innerHTML = content ? renderMarkdown(content) : typingLoaderHTML();
+  if (el) {
+    el.innerHTML = content ? renderMarkdown(content) : typingLoaderHTML();
+    bindCodeCopyButtons(el);
+  }
 }
 
 async function saveChat(generateTitle = false) {
@@ -1297,6 +2071,9 @@ function createMessageEl(msg, idx) {
     });
   });
 
+  const bubbleEl = div.querySelector(".message-bubble");
+  if (bubbleEl) bindCodeCopyButtons(bubbleEl);
+
   return div;
 }
 
@@ -1314,6 +2091,7 @@ async function regenerate() {
 
   const userMsg = messages[uIdx];
   messages = messages.slice(0, aiIdx);
+  hideClarifyPopup();
   renderMessages();
 
   isSending = true;
@@ -1331,13 +2109,18 @@ async function regenerate() {
   }));
 
   let fullText = "";
+  
   try {
     const fd = new FormData();
     let requestText = toContextContent(userMsg.content);
-    if (shouldAttachWebsiteContext(requestText)) {
-      const page = await getActivePageContext();
-      const pageBlock = buildWebsiteContextPrompt(page);
-      if (pageBlock) requestText = `${requestText}${pageBlock}`;
+    let pageContext = null;
+    const page = await getActivePageContext();
+    if (shouldAttachWebsiteContext(requestText, page) && page?.content) {
+      pageContext = {
+        title: String(page.title || "").trim(),
+        url: String(page.url || "").trim(),
+        content: String(page.content || "").trim(),
+      };
     }
 
     fd.append("message", requestText);
@@ -1345,6 +2128,10 @@ async function regenerate() {
     fd.append("model", selectedModel);
     fd.append("aiStyle", aiStyle);
     fd.append("internetAccess", internetAccess ? "true" : "false");
+    if (pageContext) {
+      fd.append("pageContext", JSON.stringify(pageContext));
+      fd.append("preferPageContext", "true");
+    }
 
     const res = await fetch(`${API_BASE}/api/chat/stream`, {
       method: "POST",
@@ -1358,6 +2145,9 @@ async function regenerate() {
     const memoryCount = Number(
       res.headers.get("X-Wieland-Memory-Count") || "0",
     );
+    const clarifyForced =
+      res.headers.get("X-Wieland-Clarify-Forced") === "1";
+
     if (memorySaved && memoryCount > 0) {
       toast(tr("chat.memorySaved", { count: memoryCount }), "success");
     }
@@ -1368,8 +2158,38 @@ async function regenerate() {
       const { done, value } = await reader.read();
       if (done) break;
       fullText += decoder.decode(value, { stream: true });
-      updateMessage(aiId, fullText);
+
+      const preview = getClarificationStreamPreview(fullText);
+      const previewText = preview.text;
+
+      updateMessage(aiId, previewText);
       scrollToBottom();
+    }
+
+    const clarification = extractClarificationPayload(fullText);
+    const shouldClientForceClarify =
+      clarifyForced || isLikelyVagueBuildPromptClient(requestText);
+    const fallbackClarificationPayload = shouldClientForceClarify
+      ? sanitizeClarifyPayload(
+          buildClientForcedClarificationFallbackPayload(requestText),
+          "",
+        )
+      : null;
+    const clarificationPayload =
+      clarification.payload || fallbackClarificationPayload;
+    const finalAssistantText =
+      clarification.cleanedText || fullText || tr("chat.shortError");
+
+    if (finalAssistantText !== fullText) {
+      fullText = finalAssistantText;
+      updateMessage(aiId, finalAssistantText);
+      scrollToBottom();
+    }
+
+    if (clarificationPayload) {
+      queueClarifyPopup(clarificationPayload, {
+        immediate: shouldClientForceClarify,
+      });
     }
 
     await saveChat(false);
@@ -1387,14 +2207,29 @@ async function regenerate() {
 }
 
 function renderMarkdown(raw = "") {
-  let html = raw
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(
-      /```(\w*)\n([\s\S]*?)```/g,
-      (_, lang, code) => `<pre><code>${code.trim()}</code></pre>`,
-    )
+  const { cleanedText } = extractClarificationPayload(raw);
+  const source = String(cleanedText || raw || "").replace(/\r\n/g, "\n");
+
+  const codeBlocks = [];
+  const withCodePlaceholders = source.replace(
+    /```([a-zA-Z0-9_+.-]*)\n([\s\S]*?)```/g,
+    (_full, rawLang, rawCode) => {
+      const index =
+        codeBlocks.push({
+          lang: String(rawLang || "").trim(),
+          code: String(rawCode || "").replace(/\n+$/, ""),
+        }) - 1;
+      return `@@CODEBLOCK_${index}@@`;
+    },
+  );
+
+  let html = escapeHtmlText(withCodePlaceholders)
+    .replace(/@@CODEBLOCK_(\d+)@@/g, (_full, indexRaw) => {
+      const index = Number(indexRaw);
+      const block = codeBlocks[index];
+      if (!block) return "";
+      return renderCodeBlockHtml(block.code, block.lang);
+    })
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*(.*?)\*\*/gs, "<strong>$1</strong>")
     .replace(/__(.*?)__/gs, "<strong>$1</strong>")
@@ -1416,12 +2251,75 @@ function renderMarkdown(raw = "") {
   return html;
 }
 
+function escapeHtmlText(value = "") {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function encodeCodePayload(value = "") {
+  try {
+    return btoa(unescape(encodeURIComponent(String(value || ""))));
+  } catch {
+    return "";
+  }
+}
+
+function decodeCodePayload(value = "") {
+  try {
+    return decodeURIComponent(escape(atob(String(value || ""))));
+  } catch {
+    return "";
+  }
+}
+
+function renderCodeBlockHtml(code = "", rawLang = "") {
+  const lang = String(rawLang || "").trim() || "text";
+  const payload = encodeCodePayload(code);
+
+  return [
+    '<div class="chat-code-block">',
+    '<div class="chat-code-head">',
+    `<span class="chat-code-lang">${escapeHtmlText(lang)}</span>`,
+    `<button type="button" class="code-copy-btn" data-code="${payload}" title="Copy code">Copy</button>`,
+    "</div>",
+    `<pre><code>${escapeHtmlText(code)}</code></pre>`,
+    "</div>",
+  ].join("");
+}
+
+function bindCodeCopyButtons(rootEl) {
+  if (!rootEl) return;
+
+  rootEl.querySelectorAll(".code-copy-btn").forEach((button) => {
+    if (button.dataset.boundCopy === "1") return;
+    button.dataset.boundCopy = "1";
+
+    button.addEventListener("click", async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const encoded = button.getAttribute("data-code") || "";
+      const decoded = decodeCodePayload(encoded);
+      if (!decoded) return;
+
+      try {
+        await navigator.clipboard.writeText(decoded);
+        toast(tr("chat.copied"), "success");
+      } catch {
+        toast(tr("chat.shortError"), "error");
+      }
+    });
+  });
+}
+
 function typingLoaderHTML() {
-  return `<div class="typing-loader">
-    <div class="circle"><div class="dot"></div></div>
-    <div class="circle"><div class="dot"></div></div>
-    <div class="circle"><div class="dot"></div></div>
-    <div class="circle"><div class="dot"></div></div>
+  return `<div class="loader">
+    <div class="circle"><div class="dot"></div><div class="outline"></div></div>
+    <div class="circle"><div class="dot"></div><div class="outline"></div></div>
+    <div class="circle"><div class="dot"></div><div class="outline"></div></div>
+    <div class="circle"><div class="dot"></div><div class="outline"></div></div>
   </div>`;
 }
 
@@ -1436,7 +2334,8 @@ function escapeHtml(s) {
 }
 
 function stripImg(text = "") {
-  return text.replace(/!\[.*?\]\([^)]+\)\n\n?/g, "").trim();
+  const withoutImage = text.replace(/!\[.*?\]\([^)]+\)\n\n?/g, "").trim();
+  return extractClarificationPayload(withoutImage).cleanedText;
 }
 
 function toContextContent(text = "") {

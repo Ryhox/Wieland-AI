@@ -590,6 +590,73 @@ app.delete("/api/auth/delete-account", requireAuth, async (req, res) => {
   }
 });
 
+app.get("/api/auth/memories", requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, memory_key, memory_value, is_explicit, usage_count,
+              last_used_at, created_at, updated_at
+       FROM user_memories
+       WHERE user_id = $1
+       ORDER BY updated_at DESC, id DESC`,
+      [req.userId],
+    );
+
+    const memories = (result.rows || []).map((row) => ({
+      id: row.id,
+      key: row.memory_key,
+      label: formatMemoryLabel(row.memory_key),
+      value: row.memory_value,
+      isExplicit: Boolean(row.is_explicit),
+      usageCount: Number(row.usage_count || 0),
+      lastUsedAt: row.last_used_at || null,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+
+    res.json({ memories });
+  } catch (err) {
+    console.error("List memories error:", err.message);
+    res.status(500).json({ error: "Failed to load memories" });
+  }
+});
+
+app.delete("/api/auth/memories/:id", requireAuth, async (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isFinite(id) || id <= 0) {
+    return res.status(400).json({ error: "Invalid memory id" });
+  }
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM user_memories WHERE id = $1 AND user_id = $2 RETURNING id`,
+      [id, req.userId],
+    );
+
+    if (!result.rowCount) {
+      return res.status(404).json({ error: "Memory entry not found" });
+    }
+
+    res.json({ success: true, id });
+  } catch (err) {
+    console.error("Delete memory error:", err.message);
+    res.status(500).json({ error: "Failed to delete memory entry" });
+  }
+});
+
+app.delete("/api/auth/memories", requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `DELETE FROM user_memories WHERE user_id = $1`,
+      [req.userId],
+    );
+
+    res.json({ success: true, deleted: Number(result.rowCount || 0) });
+  } catch (err) {
+    console.error("Clear memories error:", err.message);
+    res.status(500).json({ error: "Failed to clear memories" });
+  }
+});
+
 function requireAdmin(req, res, next) {
   pool
     .query(`SELECT plan FROM users WHERE id = $1`, [req.userId])
@@ -805,11 +872,14 @@ app.get(
 );
 const SYSTEM_BASE = `You are a LOCAL AI assistant named "Wieland".
 - You CAN analyze images provided in this conversation.
+- You CAN generate complete website/app/code solutions when asked.
+- Do not claim you cannot create websites or code.
 - You do NOT represent any company (Alibaba, OpenAI, Anthropic, etc.).
 - Internet snippets can be provided by the server. Use them only when present.
 - Answer only what the user asked. Skip unrelated prefaces and meta commentary.
 - Do not mention date/time/timezone/calendar details unless the user explicitly asks for them.
 - Do not narrate internal actions (for example: "checks the clock" or "checks the server clock").
+- Never guess specific factual values (for example birth dates, death dates, places, or statistics). If unsure, say you are unsure.
 - Keep answers concise by default. Expand only when the user asks for more detail.
 Always respond in the exact language of the user's last message.`;
 
@@ -818,6 +888,12 @@ const MAX_CONTEXT_IMAGES = 4;
 const WEB_SEARCH_TIMEOUT_MS = 7_000;
 const MAX_WEB_SOURCES = 4;
 const MAX_WEB_SNIPPET_CHARS = 320;
+const MAX_PAGE_CONTEXT_CONTENT_CHARS = 4_500;
+const CLARIFY_JSON_BLOCK_START = "[[WIELAND_CLARIFY_JSON]]";
+const CLARIFY_JSON_BLOCK_END = "[[/WIELAND_CLARIFY_JSON]]";
+const CLARIFY_JSON_BLOCK_ANY_RE =
+  /\[\[\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]([\s\S]*?)\[\[\s*\/\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
+const CLARIFY_OPTION_LINE_RE = /^\s*[A-E][)\].:-]\s*.+$/i;
 const SERVER_TIMEZONE =
   process.env.RUNTIME_TIMEZONE ||
   Intl.DateTimeFormat().resolvedOptions().timeZone ||
@@ -1042,6 +1118,109 @@ const INTENT_WEB_LOOKUP_PHRASES = [
   "quellen",
   "con fonti",
   "fonti",
+];
+
+const INTENT_FACT_LOOKUP_PHRASES = [
+  "wann wurde",
+  "wann ist",
+  "wann starb",
+  "wann ist gestorben",
+  "wann war",
+  "when was",
+  "when did",
+  "when is",
+  "when died",
+  "born",
+  "birth date",
+  "birth year",
+  "geboren",
+  "geburtsdatum",
+  "geburtsjahr",
+  "gestorben",
+  "todesdatum",
+  "todesjahr",
+  "wer ist",
+  "who is",
+  "who was",
+  "where was",
+  "wo wurde",
+  "wo ist",
+  "quando e nato",
+  "quando nacque",
+  "quando e morto",
+  "chi e",
+  "chi era",
+  "dove e nato",
+  "dove e",
+  "nato",
+  "morto",
+];
+
+const CLARIFY_BUILD_VERB_PHRASES = [
+  "mach",
+  "mache",
+  "build",
+  "make",
+  "create",
+  "generate",
+  "generat",
+  "generier",
+  "genera",
+  "erstell",
+  "baue",
+  "program",
+  "entwickl",
+  "crea",
+  "sviluppa",
+  "fai",
+];
+
+const CLARIFY_BROAD_TARGET_PHRASES = [
+  "eine app",
+  "ein app",
+  "an app",
+  "app",
+  "website",
+  "webseite",
+  "landing page",
+  "tool",
+  "projekt",
+  "project",
+  "bot",
+  "script",
+  "programm",
+  "program",
+  "dashboard",
+  "automation",
+  "automatisierung",
+  "extension",
+];
+
+const CLARIFY_SPECIFIC_SCOPE_HINT_PHRASES = [
+  "react",
+  "vue",
+  "svelte",
+  "html",
+  "css",
+  "javascript",
+  "typescript",
+  "node",
+  "python",
+  "java",
+  "single file",
+  "mehrere dateien",
+  "backend",
+  "frontend",
+  "api",
+  "mobile",
+  "ios",
+  "android",
+  "chrome extension",
+  "browser extension",
+  "deadline",
+  "budget",
+  "zielgruppe",
+  "target audience",
 ];
 
 const INTENT_MEMORY_QUERY_PHRASES = [
@@ -1510,7 +1689,35 @@ function shouldIncludeRuntimeClockContext(
   return intent.asksTime;
 }
 
-function shouldRunWebLookup(message = "", _context = [], intentSignals = null) {
+function isLikelyFactualLookupQuery(message = "") {
+  const text = compactIntentText(message, 420);
+  if (!text) return false;
+
+  if (containsAnyPhrase(text, INTENT_FACT_LOOKUP_PHRASES)) return true;
+
+  const startsWithWhWord =
+    text.startsWith("when ") ||
+    text.startsWith("wann ") ||
+    text.startsWith("quando ") ||
+    text.startsWith("where ") ||
+    text.startsWith("wo ") ||
+    text.startsWith("dove ") ||
+    text.startsWith("who ") ||
+    text.startsWith("wer ") ||
+    text.startsWith("chi ");
+
+  const words = text.split(" ").filter(Boolean);
+  const mathLike = /^[\d\s+\-*/().=]+$/.test(text);
+
+  return startsWithWhWord && words.length >= 3 && !mathLike;
+}
+
+function shouldRunWebLookup(
+  message = "",
+  _context = [],
+  intentSignals = null,
+  options = {},
+) {
   const query = String(message || "").trim();
   if (!query) return false;
 
@@ -1519,6 +1726,10 @@ function shouldRunWebLookup(message = "", _context = [], intentSignals = null) {
     intentSignals || emptyMessageIntentSignals(),
   );
 
+  const pageContextAvailable = options?.pageContextAvailable === true;
+  const preferPageContext = options?.preferPageContext === true;
+  const shouldPreferPageContext = pageContextAvailable && preferPageContext;
+
   if (intent.asksTodayEvents) return true;
   if (intent.liveFollowup) return true;
   if (intent.explicitWebLookup) return true;
@@ -1526,6 +1737,146 @@ function shouldRunWebLookup(message = "", _context = [], intentSignals = null) {
   if (intent.asksTime) return false;
 
   if (intent.asksLiveWeb) return true;
+
+  if (shouldPreferPageContext) return false;
+
+  if (isLikelyFactualLookupQuery(query)) return true;
+
+  return false;
+}
+
+function isLikelyVagueBuildRequest(message = "", context = []) {
+  const text = compactIntentText(message, 420);
+  if (!text) return false;
+
+  const wordCount = text.split(" ").filter(Boolean).length;
+  const hasBuildVerb = containsAnyPhrase(text, CLARIFY_BUILD_VERB_PHRASES);
+  const hasBroadTarget = containsAnyPhrase(text, CLARIFY_BROAD_TARGET_PHRASES);
+  const hasSpecificScopeHint = containsAnyPhrase(
+    text,
+    CLARIFY_SPECIFIC_SCOPE_HINT_PHRASES,
+  );
+
+  const isLikelyFirstTurn = !Array.isArray(context) || context.length <= 2;
+
+  if (hasBuildVerb && hasBroadTarget && !hasSpecificScopeHint && wordCount <= 10) {
+    return true;
+  }
+
+  if (isLikelyFirstTurn && hasBuildVerb && wordCount <= 6) {
+    return true;
+  }
+
+  return false;
+}
+
+function isSingleClarifyOptionReply(message = "") {
+  const text = compactIntentText(message, 80);
+  if (!text) return false;
+
+  if (/^[abcde]$/.test(text)) return true;
+  if (/^option\s+[abcde]$/.test(text)) return true;
+  if (/^wahl\s+[abcde]$/.test(text)) return true;
+  if (/^scelta\s+[abcde]$/.test(text)) return true;
+
+  const qaOptionMatch = text.match(
+    /\ba\s*:\s*(?:option\s+|wahl\s+|scelta\s+)?([abcde])(?:[)\].:-]|\b)/,
+  );
+  if (qaOptionMatch) return true;
+
+  return false;
+}
+
+function detectClarifyLanguage(message = "") {
+  const text = compactIntentText(message, 300);
+  if (!text) return "en";
+
+  if (
+    /[àèéìíîòóù]/i.test(text) ||
+    /\b(che|quando|dove|vorrei|fammi|crea|costruisci|sito|estensione|automazione)\b/i.test(text)
+  ) {
+    return "it";
+  }
+
+  if (
+    /[äöüß]/i.test(text) ||
+    /\b(und|oder|ich|bitte|mach|baue|erstell|frage|website|webseite)\b/i.test(text)
+  ) {
+    return "de";
+  }
+
+  return "en";
+}
+
+function buildForcedClarificationFallbackPayload(message = "") {
+  const lang = detectClarifyLanguage(message);
+
+  if (lang === "de") {
+    return {
+      question: "Worauf soll ich mich zuerst fokussieren?",
+      options: [
+        { id: "A", label: "Website oder Landingpage" },
+        { id: "B", label: "Web-App" },
+        { id: "C", label: "Browser-Erweiterung" },
+        { id: "D", label: "Automatisierung oder Script" },
+        { id: "E", label: "Etwas anderes" },
+      ],
+      allowFreeform: true,
+      freeformPlaceholder: "Kurz beschreiben",
+      skipLabel: "Überspringen",
+      step: 1,
+      totalSteps: 1,
+    };
+  }
+
+  if (lang === "it") {
+    return {
+      question: "Su cosa devo concentrarmi per prima cosa?",
+      options: [
+        { id: "A", label: "Sito web o landing page" },
+        { id: "B", label: "Web app" },
+        { id: "C", label: "Estensione browser" },
+        { id: "D", label: "Automazione o script" },
+        { id: "E", label: "Altro" },
+      ],
+      allowFreeform: true,
+      freeformPlaceholder: "Descrivilo in breve",
+      skipLabel: "Salta",
+      step: 1,
+      totalSteps: 1,
+    };
+  }
+
+  return {
+    question: "What should I focus on first?",
+    options: [
+      { id: "A", label: "Website or landing page" },
+      { id: "B", label: "Web app" },
+      { id: "C", label: "Browser extension" },
+      { id: "D", label: "Automation or script" },
+      { id: "E", label: "Something else" },
+    ],
+    allowFreeform: true,
+    freeformPlaceholder: "Describe briefly",
+    skipLabel: "Skip",
+    step: 1,
+    totalSteps: 1,
+  };
+}
+
+function hasClarificationPayload(text = "") {
+  const source = String(text || "");
+  if (!source.trim()) return false;
+
+  if (CLARIFY_JSON_BLOCK_ANY_RE.test(source)) return true;
+
+  let optionCount = 0;
+  const lines = source.split(/\r?\n/);
+  for (const line of lines) {
+    if (!CLARIFY_OPTION_LINE_RE.test(line)) continue;
+    optionCount += 1;
+    if (optionCount >= 2) return true;
+  }
 
   return false;
 }
@@ -1736,6 +2087,22 @@ function getIntentNluModel() {
   return "qwen3-vl:2b-instruct";
 }
 
+const ROUTER_ACTION_VALUES = new Set([
+  "CHAT",
+  "MEMORY_STORE",
+  "MEMORY_QUERY",
+  "SEARCH_WEB",
+  "READ_PAGE",
+  "POPUP_ACTION",
+]);
+
+function normalizeRouterAction(value = "") {
+  const action = String(value || "")
+    .trim()
+    .toUpperCase();
+  return ROUTER_ACTION_VALUES.has(action) ? action : "";
+}
+
 async function analyzeMessageIntentWithModel(message, previousUserMessage = "") {
   const emptyIntent = emptyMessageIntentSignals();
   if (!INTENT_NLU_ENABLED) return emptyIntent;
@@ -1748,35 +2115,31 @@ async function analyzeMessageIntentWithModel(message, previousUserMessage = "") 
   if (!userText) return emptyIntent;
 
   const systemInstruction = [
-    "Analyze a user message in ANY language.",
+    "You are an intelligent request router for a browser assistant.",
+    "Analyze the user's message and choose exactly one action.",
+    "Understand intent, not keywords.",
+    "Work in any language and tolerate slang, typos, and casual phrasing.",
     "Use previous_user_message only as optional context for short follow-ups.",
     "Return ONLY strict JSON with this schema:",
-    '{"asks_time": boolean, "asks_today_events": boolean, "asks_live_web": boolean, "explicit_web_lookup": boolean, "live_followup": boolean, "needs_memory_context": boolean, "explicit_remember": boolean, "memory_hint_keys": string[], "memory_items": [{"key": string, "value": string, "explicit": boolean}]}.',
-    "asks_time: user asks for current time/date/day/week/timezone.",
-    "asks_today_events: user asks what happened/is happening today (events/news), not clock-time.",
-    "asks_live_web: user needs up-to-date external information (news, weather, prices, traffic, match results, releases).",
-    "explicit_web_lookup: user explicitly requests internet/search/sources/citations.",
-    "live_followup: short follow-up confirmations like yes/continue/do it.",
-    "needs_memory_context: user asks about profile/preferences/past remembered facts.",
-    "explicit_remember: user explicitly asks you to remember something.",
-    "memory_hint_keys: optional keys to retrieve (name, age, location, birthday, timezone, occupation, favorite, note).",
-    "memory_items: durable personal facts to store from this message only.",
-    "When user corrects a prior fact, store the corrected value (latest wins).",
-    "Do not infer or guess. If no facts exist, return memory_items as [].",
-    "Examples:",
-    '- "whats the time" => asks_time=true',
-    '- "kannst du mir die news von heute sagen?" => asks_today_events=true, asks_live_web=true',
-    '- "ich bin 20 jahre alt" => needs_memory_context=true, memory_items includes {key:"age", value:"20"}',
-    '- "nein, ich bin 19" => memory_items includes {key:"age", value:"19"}',
-    '- "merk dir, dass ich katzen mag" => explicit_remember=true, memory_items includes {key:"favorite_animals", value:"cats"}',
-    '- "was mag ich?" => needs_memory_context=true, memory_hint_keys includes "favorite" or "note"',
+    '{"action": "CHAT|MEMORY_STORE|MEMORY_QUERY|SEARCH_WEB|READ_PAGE|POPUP_ACTION", "reason": string, "memory": string, "search_query": string, "confidence": number}.',
+    "Action policy:",
+    "- MEMORY_STORE: only when user shares stable, useful personal info (name, preferences, goals). Ignore temporary states.",
+    "- MEMORY_QUERY: user asks what you know/remember about them.",
+    "- SEARCH_WEB: up-to-date info or external facts are required (news, prices, latest updates, factual lookup).",
+    "- READ_PAGE: user refers to current page content (for example summarize this page / what does this site say).",
+    "- POPUP_ACTION: user interacts with extension UI (open settings, change theme, toggle memory).",
+    "- CHAT: default fallback.",
+    "reason must be short.",
+    "confidence must be a number in [0,1].",
+    "If action is not MEMORY_STORE, return memory as an empty string.",
+    "If action is not SEARCH_WEB, return search_query as an empty string.",
     "No markdown. No explanation. JSON only.",
   ].join("\n");
 
   const compactFallbackInstruction = [
     "Analyze a user message in ANY language.",
     "Return ONLY strict JSON with this minimal schema:",
-    '{"asks_time": boolean, "asks_today_events": boolean, "asks_live_web": boolean, "explicit_web_lookup": boolean, "live_followup": boolean, "needs_memory_context": boolean, "explicit_remember": boolean, "memory_hint_keys": [], "memory_items": []}.',
+    '{"action": "CHAT|MEMORY_STORE|MEMORY_QUERY|SEARCH_WEB|READ_PAGE|POPUP_ACTION", "reason": string, "memory": string, "search_query": string, "confidence": number}.',
     "If unsure, choose the most likely intent from the message.",
     "No markdown. No explanation. JSON only.",
   ].join("\n");
@@ -1842,6 +2205,8 @@ async function analyzeMessageIntentWithModel(message, previousUserMessage = "") 
     }
     if (!parsed) return emptyIntent;
 
+    const routerAction = normalizeRouterAction(parsed?.action);
+
     const defaultExplicit =
       toIntentBoolean(parsed?.explicit_remember) ||
       toIntentBoolean(parsed?.explicit);
@@ -1850,10 +2215,35 @@ async function analyzeMessageIntentWithModel(message, previousUserMessage = "") 
       : Array.isArray(parsed.items)
         ? parsed.items
         : [];
-    const memoryItems = memoryItemsRaw
+    let memoryItems = memoryItemsRaw
       .slice(0, INTENT_NLU_MAX_MEMORY_ITEMS)
       .map((item) => sanitizeMemoryCandidate(item, defaultExplicit))
       .filter(Boolean);
+
+    if (routerAction === "MEMORY_STORE") {
+      let memoryValue = "";
+      let memoryKey = "note";
+
+      if (typeof parsed?.memory === "string") {
+        memoryValue = parsed.memory;
+      } else if (parsed?.memory && typeof parsed.memory === "object") {
+        memoryKey = String(parsed.memory.key || "note");
+        memoryValue = String(parsed.memory.value || parsed.memory.text || "");
+      }
+
+      const candidate = sanitizeMemoryCandidate(
+        {
+          key: memoryKey,
+          value: memoryValue,
+          explicit: true,
+        },
+        true,
+      );
+
+      if (candidate) {
+        memoryItems = mergeMemoryCandidates([candidate], memoryItems);
+      }
+    }
 
     const rawHintKeys = Array.isArray(parsed.memory_hint_keys)
       ? parsed.memory_hint_keys
@@ -1861,16 +2251,50 @@ async function analyzeMessageIntentWithModel(message, previousUserMessage = "") 
         ? parsed.hint_keys
         : [];
 
+    const actionHintKeys =
+      routerAction === "MEMORY_QUERY"
+        ? [
+            "name",
+            "age",
+            "location",
+            "birthday",
+            "timezone",
+            "occupation",
+            "favorite",
+            "note",
+          ]
+        : [];
+
     const modelIntent = emptyMessageIntentSignals();
-    modelIntent.asksTime = toIntentBoolean(parsed.asks_time);
-    modelIntent.asksTodayEvents = toIntentBoolean(parsed.asks_today_events);
-    modelIntent.asksLiveWeb = toIntentBoolean(parsed.asks_live_web);
-    modelIntent.explicitWebLookup = toIntentBoolean(parsed.explicit_web_lookup);
+
+    if (routerAction === "MEMORY_STORE") {
+      modelIntent.needsMemoryContext = true;
+      modelIntent.explicitRemember = true;
+    } else if (routerAction === "MEMORY_QUERY") {
+      modelIntent.needsMemoryContext = true;
+    } else if (routerAction === "SEARCH_WEB") {
+      modelIntent.asksLiveWeb = true;
+      modelIntent.explicitWebLookup = true;
+    } else if (routerAction === "POPUP_ACTION") {
+      modelIntent.liveFollowup = !!previousText;
+    }
+
+    modelIntent.asksTime = modelIntent.asksTime || toIntentBoolean(parsed.asks_time);
+    modelIntent.asksTodayEvents =
+      modelIntent.asksTodayEvents || toIntentBoolean(parsed.asks_today_events);
+    modelIntent.asksLiveWeb = modelIntent.asksLiveWeb || toIntentBoolean(parsed.asks_live_web);
+    modelIntent.explicitWebLookup =
+      modelIntent.explicitWebLookup || toIntentBoolean(parsed.explicit_web_lookup);
     modelIntent.liveFollowup =
-      toIntentBoolean(parsed.live_followup) && !!previousText;
-    modelIntent.needsMemoryContext = toIntentBoolean(parsed.needs_memory_context);
-    modelIntent.explicitRemember = toIntentBoolean(parsed.explicit_remember) || defaultExplicit;
-    modelIntent.memoryHintKeys = toUniqueHintKeys(rawHintKeys);
+      modelIntent.liveFollowup || (toIntentBoolean(parsed.live_followup) && !!previousText);
+    modelIntent.needsMemoryContext =
+      modelIntent.needsMemoryContext || toIntentBoolean(parsed.needs_memory_context);
+    modelIntent.explicitRemember =
+      modelIntent.explicitRemember || toIntentBoolean(parsed.explicit_remember) || defaultExplicit;
+    modelIntent.memoryHintKeys = toUniqueHintKeys([
+      ...actionHintKeys,
+      ...rawHintKeys,
+    ]);
     modelIntent.memoryItems = memoryItems;
 
     return modelIntent;
@@ -2212,6 +2636,156 @@ function buildWebContextSystemMessage(sources) {
   return lines.join("\n");
 }
 
+function buildClarificationStyleSystemMessage() {
+  return [
+    "Clarification behavior for build/coding requests only:",
+    "- Only ask a clarification question with options when the user is asking to build/create software, websites, apps, scripts, or extensions and key scope details are missing.",
+    "- For non-build requests, answer directly without option lists.",
+    "- If language understanding is uncertain, ask for a short rephrase and do not output option lists or clarification JSON.",
+    "- If user intent is too vague, risky, or has competing output goals, ask a clarification question before delivering a final solution.",
+    "- Use exactly one concise question sentence and provide 3-5 labeled options: A), B), C), D) (optional E)).",
+    "- Add one final line that invites a freeform reply as an alternative to choosing an option.",
+    "- If the user replies with only a letter (for example A or C), treat it as the selected option and continue.",
+    `- When you ask a clarification question, append exactly one machine-readable JSON block between ${CLARIFY_JSON_BLOCK_START} and ${CLARIFY_JSON_BLOCK_END}.`,
+    '- JSON schema: {"question": string, "options": [{"id": "A", "label": string}], "allowFreeform": true, "freeformPlaceholder": string, "skipLabel": string, "step": number, "totalSteps": number}.',
+    "- The question field must be one short sentence only (max 120 characters).",
+    "- Clarification popup flow is single-step only; always set step: 1 and totalSteps: 1 when included.",
+    "- Keep option ids as uppercase letters (A, B, C, D, optional E).",
+    "- Keep question/options/labels in the user's language.",
+    "- Do not wrap the JSON block in markdown code fences.",
+    "- Avoid repeated clarification popups. After the user picks an option, continue with a concrete answer.",
+    "- If the request is already specific, skip clarification and answer directly.",
+    "- If no clarification is needed, do not output the JSON block.",
+  ].join("\n");
+}
+
+function buildForcedClarificationSystemMessage() {
+  return [
+    "The current request is too vague for a useful final output.",
+    "Do not provide the final solution yet.",
+    "Ask one concise clarification question now with options A), B), C), D) (optional E)).",
+    "Visible output should be one short sentence only.",
+    `Then append exactly one JSON block between ${CLARIFY_JSON_BLOCK_START} and ${CLARIFY_JSON_BLOCK_END}.`,
+    '- JSON schema: {"question": string, "options": [{"id": "A", "label": string}], "allowFreeform": true, "freeformPlaceholder": string, "skipLabel": string, "step": number, "totalSteps": number}.',
+    "The question field must be one short sentence only (max 120 characters).",
+    "Clarification popup flow is single-step only; always set step: 1 and totalSteps: 1.",
+    "Use 3-5 options and keep all text in the user's language.",
+    "After the user responds with an option or free text, continue with a concrete answer and avoid another popup unless absolutely blocked.",
+    "Do not use markdown code fences for that JSON block.",
+  ].join("\n");
+}
+
+function buildClarificationContinueSystemMessage(optionReply = false) {
+  const lines = [
+    "The user is replying to a previous clarification popup.",
+    optionReply
+      ? "The reply is an option selection. Continue directly with a concrete answer."
+      : "The reply provides additional details. Continue directly with a concrete answer.",
+    "Do not output another clarification JSON block unless solving the task remains impossible without one critical missing detail.",
+  ];
+
+  return lines.join("\n");
+}
+
+function buildFactualSafetySystemMessage({
+  internetAccessEnabled = false,
+  shouldLookupWeb = false,
+  webSourcesCount = 0,
+  hasPageContext = false,
+  webUnavailable = false,
+} = {}) {
+  const lines = [
+    "Factual safety behavior:",
+    "- Never invent exact facts (dates, places, numbers, statistics, names).",
+    "- If confidence is low, say uncertainty in one short sentence.",
+  ];
+
+  if (hasPageContext) {
+    lines.push("- If relevant, prioritize the provided page context before other knowledge.");
+  }
+
+  if (webSourcesCount > 0) {
+    lines.push("- Prefer exact factual claims from provided web snippets.");
+  } else if (internetAccessEnabled && shouldLookupWeb && webUnavailable) {
+    lines.push("- Mention that live internet lookup is currently unavailable and offer a retry.");
+  } else if (internetAccessEnabled) {
+    lines.push("- Offer an internet/source lookup when verification is needed.");
+  } else {
+    lines.push("- Internet mode is off; offer to continue with internet lookup if the user wants verified facts.");
+  }
+
+  lines.push("- Keep uncertainty plus next-step offer concise.");
+
+  return lines.join("\n");
+}
+
+function parseClientPageContext(rawContext) {
+  if (!rawContext) return null;
+
+  let payload = rawContext;
+  if (typeof rawContext === "string") {
+    const trimmed = rawContext.trim();
+    if (!trimmed) return null;
+    try {
+      payload = JSON.parse(trimmed);
+    } catch {
+      return null;
+    }
+  }
+
+  if (!payload || typeof payload !== "object") return null;
+
+  const title = String(payload.title || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 220);
+
+  const rawUrl = String(payload.url || "").trim();
+  let url = rawUrl.slice(0, 420);
+  if (rawUrl) {
+    try {
+      url = new URL(rawUrl).toString().slice(0, 420);
+    } catch {
+      url = rawUrl.slice(0, 420);
+    }
+  }
+
+  let content = String(payload.content || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  if (!content) return null;
+  if (content.length > MAX_PAGE_CONTEXT_CONTENT_CHARS) {
+    content = content.slice(0, MAX_PAGE_CONTEXT_CONTENT_CHARS);
+  }
+
+  return {
+    title,
+    url,
+    content,
+  };
+}
+
+function buildPageContextSystemMessage(pageContext) {
+  if (!pageContext?.content) return "";
+
+  const lines = [
+    "Active page context was supplied by the browser extension.",
+    "If the user asks about this page topic, prioritize this page context before model memory or web snippets.",
+    "If the answer is missing from this page context, say that briefly and then continue with best available knowledge.",
+  ];
+
+  if (pageContext.title) lines.push(`Page title: ${pageContext.title}`);
+  if (pageContext.url) lines.push(`Page URL: ${pageContext.url}`);
+
+  lines.push("Page content:");
+  lines.push(pageContext.content);
+
+  return lines.join("\n");
+}
+
 function escapeMarkdownLinkText(text) {
   return String(text || "")
     .replace(/[\[\]]/g, "")
@@ -2462,7 +3036,9 @@ async function prewarmModelsOnStartup() {
 
 async function pipeOllamaChatStream(ollamaRes, expressRes, abortSignal) {
   const body = ollamaRes.body;
-  if (!body) return;
+  if (!body) return "";
+
+  let fullText = "";
 
   const onLine = (line) => {
     if (!line.trim()) return;
@@ -2470,6 +3046,7 @@ async function pipeOllamaChatStream(ollamaRes, expressRes, abortSignal) {
       const chunk = JSON.parse(line);
       const token = chunk?.message?.content ?? "";
       if (token && !expressRes.writableEnded && !expressRes.destroyed) {
+        fullText += token;
         expressRes.write(token);
       }
     } catch {}
@@ -2552,6 +3129,8 @@ async function pipeOllamaChatStream(ollamaRes, expressRes, abortSignal) {
       });
     });
   }
+
+  return fullText;
 }
 
 async function generateChatTitle(firstUserMessage) {
@@ -2678,6 +3257,9 @@ app.post(
       : defaultModel;
     const aiStyle = req.body.aiStyle || "formal";
     const internetAccessEnabled = parseBooleanFlag(req.body.internetAccess);
+    const clarifyReply = parseBooleanFlag(req.body.clarifyReply);
+    const pageContext = parseClientPageContext(req.body.pageContext);
+    const preferPageContext = parseBooleanFlag(req.body.preferPageContext);
     const options = getOptionsForModel(model);
 
     let context = [];
@@ -2695,16 +3277,15 @@ app.post(
     );
 
     let modelIntent = emptyMessageIntentSignals();
-    if (message && !hasAnyIntentSignal(deterministicIntent)) {
+    if (message) {
       modelIntent = await analyzeMessageIntentWithModel(
         message,
         previousUserMessage,
       );
     }
-    const intentSignals = mergeMessageIntentSignals(
-      deterministicIntent,
-      modelIntent,
-    );
+    const intentSignals = hasAnyIntentSignal(modelIntent)
+      ? mergeMessageIntentSignals(deterministicIntent, modelIntent)
+      : deterministicIntent;
 
     if (INTENT_NLU_DEBUG) {
       console.log(
@@ -2770,22 +3351,34 @@ app.post(
       }
     }
 
+    let webSources = [];
+    let webUnavailable = false;
+    const vagueBuildRequest = isLikelyVagueBuildRequest(message, context);
+    const optionClarifyReply =
+      clarifyReply && isSingleClarifyOptionReply(message);
+    const shouldForceClarification = vagueBuildRequest && !clarifyReply;
+    const shouldAttachClarificationStyleMessage =
+      clarifyReply || vagueBuildRequest;
+    const shouldLookupWeb =
+      internetAccessEnabled &&
+      !shouldForceClarification &&
+      shouldRunWebLookup(message, context, intentSignals, {
+        pageContextAvailable: !!pageContext,
+        preferPageContext,
+      });
+    const likelyFactualQuery = isLikelyFactualLookupQuery(message);
+
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
     res.setHeader("X-Accel-Buffering", "no");
     res.setHeader("X-Wieland-Memory-Saved", memorySavedCount > 0 ? "1" : "0");
     res.setHeader("X-Wieland-Memory-Count", String(memorySavedCount));
+    res.setHeader("X-Wieland-Clarify-Forced", shouldForceClarification ? "1" : "0");
     res.setHeader(
       "Access-Control-Expose-Headers",
-      "X-Wieland-Memory-Saved, X-Wieland-Memory-Count",
+      "X-Wieland-Memory-Saved, X-Wieland-Memory-Count, X-Wieland-Clarify-Forced",
     );
-
-    let webSources = [];
-    let webUnavailable = false;
-    const shouldLookupWeb =
-      internetAccessEnabled &&
-      shouldRunWebLookup(message, context, intentSignals);
 
     if (shouldLookupWeb && message) {
       try {
@@ -2801,6 +3394,16 @@ app.post(
 
     const systemPrompt = getSystemPrompt(aiStyle);
     const modelResponseGuidance = getModelResponseGuidance(model);
+    const clarificationStyleSystemMessage = buildClarificationStyleSystemMessage();
+    const factualSafetySystemMessage = likelyFactualQuery
+      ? buildFactualSafetySystemMessage({
+          internetAccessEnabled,
+          shouldLookupWeb,
+          webSourcesCount: webSources.length,
+          hasPageContext: !!pageContext,
+          webUnavailable,
+        })
+      : "";
     const includeRuntimeSystemContext = shouldIncludeRuntimeClockContext(
       message,
       context,
@@ -2812,6 +3415,23 @@ app.post(
     const ollamaMessages = [
       { role: "system", content: systemPrompt },
       { role: "system", content: modelResponseGuidance },
+      ...(shouldAttachClarificationStyleMessage
+        ? [{ role: "system", content: clarificationStyleSystemMessage }]
+        : []),
+      ...(clarifyReply
+        ? [
+            {
+              role: "system",
+              content: buildClarificationContinueSystemMessage(optionClarifyReply),
+            },
+          ]
+        : []),
+      ...(shouldForceClarification
+        ? [{ role: "system", content: buildForcedClarificationSystemMessage() }]
+        : []),
+      ...(factualSafetySystemMessage
+        ? [{ role: "system", content: factualSafetySystemMessage }]
+        : []),
       ...(relevantUserMemories.length
         ? [
             {
@@ -2822,6 +3442,14 @@ app.post(
         : []),
       ...(runtimeSystemContext
         ? [{ role: "system", content: runtimeSystemContext }]
+        : []),
+      ...(pageContext
+        ? [
+            {
+              role: "system",
+              content: buildPageContextSystemMessage(pageContext),
+            },
+          ]
         : []),
       ...(webSources.length
         ? [
@@ -2889,7 +3517,27 @@ app.post(
         return res.status(502).end("Upstream model error");
       }
 
-      await pipeOllamaChatStream(ollamaRes, res, upstreamAbort.signal);
+      const streamedAssistantText = await pipeOllamaChatStream(
+        ollamaRes,
+        res,
+        upstreamAbort.signal,
+      );
+
+      if (
+        shouldForceClarification &&
+        !res.writableEnded &&
+        !res.destroyed &&
+        !hasClarificationPayload(streamedAssistantText)
+      ) {
+        const fallbackPayload = buildForcedClarificationFallbackPayload(message);
+        const separator = streamedAssistantText.trim() ? "\n" : "";
+        const fallbackBlock =
+          CLARIFY_JSON_BLOCK_START +
+          JSON.stringify(fallbackPayload) +
+          CLARIFY_JSON_BLOCK_END;
+        res.write(`${separator}${fallbackBlock}`);
+      }
+
       if (!res.writableEnded && !res.destroyed && webSources.length) {
         res.write(formatWebSourcesMarkdown(webSources));
       }

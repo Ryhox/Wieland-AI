@@ -11,7 +11,9 @@
     "edit": "Modifica",
     "copy": "Copia",
     "send": "Invia",
-    "stop": "Interrompi"
+    "stop": "Interrompi",
+    "refresh": "Aggiorna",
+    "Refresh": "Aggiorna"
   },
   "languages": {
     "de": "Deutsch",
@@ -452,6 +454,22 @@
     "initialTag": "Iniziale",
     "entries": [
       {
+        "version": "v0.2.0",
+        "date": "02 aprile 2026",
+        "tag": "pink",
+        "title": "Espansione AI, Estensione e UX",
+        "changes": [
+          "Correzioni bug",
+          "Migliorata l'estensione con gestione migliore del contesto pagina",
+          "Migliorata la ricerca siti nell'estensione",
+          "Memoria AI migliorata (salvataggio automatico, rilevanza, supporto multilingue)",
+          "Migliorati accesso internet e intent routing",
+          "Aggiunta modal popup di chiarimento in web ed estensione (opzioni + testo libero)",
+          "Migliorato il flusso di chiarimento e pulizia dell'output in streaming",
+          "Pagina 404 rifatta in stile cinematografico con nuova scena 3D"
+        ]
+      },
+      {
         "version": "v0.1.9",
         "date": "30 marzo 2026",
         "tag": "green",
@@ -595,6 +613,19 @@
     "cancelSubscription": "Annulla abbonamento",
     "upgradePlan": "Passa di piano",
     "adminNoCancel": "Come admin non puoi annullare l'abbonamento.",
+    "memorySection": "Memoria",
+    "memoryLabel": "Fatti salvati",
+    "memoryDescription": "Qui vedi cosa la AI ha salvato su di te. Puoi eliminare singoli elementi o tutto.",
+    "openMemory": "Apri memoria",
+    "memoryModalTitle": "La tua memoria AI",
+    "memoryModalSub": "{{count}} elementi salvati",
+    "memoryEmpty": "Al momento non ci sono elementi salvati.",
+    "memoryCount": "{{count}} elementi",
+    "memoryDeleteAll": "Elimina tutto",
+    "memoryUpdatedAt": "Aggiornato: {{date}}",
+    "memoryTypeExplicit": "Salvato esplicitamente",
+    "memoryTypeAuto": "Rilevato automaticamente",
+    "memoryUsage": "Usato {{count}}x",
     "dangerZone": "Zona pericolosa",
     "deleteAccount": "Elimina account",
     "deleteDescription": "Questo eliminera definitivamente il tuo account e i dati associati.",
@@ -608,12 +639,17 @@
       "passwordLength": "La password deve avere almeno 8 caratteri",
       "passwordUpdate": "Errore durante l'aggiornamento password",
       "accountDelete": "Errore durante l'eliminazione account",
-      "subscriptionCancel": "Errore durante l'annullamento abbonamento"
+      "subscriptionCancel": "Errore durante l'annullamento abbonamento",
+      "memoryLoad": "Errore durante il caricamento della memoria",
+      "memoryDelete": "Impossibile eliminare l'elemento di memoria",
+      "memoryDeleteAll": "Impossibile eliminare tutta la memoria"
     },
     "success": {
       "emailUpdated": "Email aggiornata con successo!",
       "passwordUpdated": "Password aggiornata con successo!",
-      "subscriptionCanceled": "Abbonamento annullato con successo. Passerai al piano Free."
+      "subscriptionCanceled": "Abbonamento annullato con successo. Passerai al piano Free.",
+      "memoryDeleted": "Elemento di memoria eliminato.",
+      "memoryCleared": "Memoria eliminata completamente."
     },
     "confirm": {
       "deleteTitle": "Eliminare account?",
@@ -741,7 +777,10 @@
       }
     ]
   },
-  "notFound": { "title": "404 - Pagina non trovata" },
+  "notFound": {
+    "moonMessage": "Sembra che tu sia rimasto bloccato sulla luna...",
+    "returnSafety": "Torna al sicuro"
+  },
   "alertModal": { "ok": "OK" },
   "confirmModal": { "cancel": "Annulla", "confirm": "Conferma" },
   "payment": {
