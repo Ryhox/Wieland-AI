@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 
+// pagination: nav component für table seiten mit prev/next buttons
 function Pagination({ page, total, pageSize, onChange }) {
   const totalPages = Math.ceil(total / pageSize);
   if (totalPages <= 1) return null;
@@ -10,7 +11,7 @@ function Pagination({ page, total, pageSize, onChange }) {
         disabled={page === 1}
         onClick={() => onChange(page - 1)}
       >
-        ‹
+        ←
       </button>
       <span className="db-page-info">
         {page} / {totalPages}
@@ -20,12 +21,13 @@ function Pagination({ page, total, pageSize, onChange }) {
         disabled={page === totalPages}
         onClick={() => onChange(page + 1)}
       >
-        ›
+        →
       </button>
     </div>
   );
 }
 
+// users table: admin list view mit pagination, edit/delete actions, last login
 export default function UsersTable({
   users,
   total,
@@ -45,7 +47,7 @@ export default function UsersTable({
           month: "short",
           year: "numeric",
         })
-      : "—";
+      : "---";
 
   return (
     <div className="db-table-section">
@@ -113,14 +115,37 @@ export default function UsersTable({
                         onClick={() => onViewChats(u)}
                         title={t("dashboard.table.viewChats")}
                       >
-                        💬
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
                       </button>
                       <button
                         className="db-icon-btn edit"
                         onClick={() => onEdit(u)}
                         title={t("common.edit")}
                       >
-                        ✎
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
                       </button>
                       <button
                         className="db-icon-btn del"

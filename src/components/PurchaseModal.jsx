@@ -3,11 +3,13 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import "../styles/PurchaseModal.css";
 
+// purchase modal: process plan upgrade with loading + success animation
 export default function PurchaseModal({ plan, onComplete, onClose }) {
   const { t } = useTranslation();
   const { setUser, authFetch } = useAuth();
   const [step, setStep] = useState("processing");
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {

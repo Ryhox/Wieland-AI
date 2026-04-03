@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
+// chat viewer: modal zur anzeige aller messages aus einem chat, mit scroll auto-load
+// renderMarkdown helper für message content
 function renderMarkdown(raw = "") {
   return raw
     .replace(/&/g, "&amp;")
@@ -25,6 +27,7 @@ export default function ChatViewer({
   const [error, setError] = useState("");
   const endRef = useRef(null);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     if (!chat) return;
     setLoading(true);
@@ -41,13 +44,14 @@ export default function ChatViewer({
       });
   }, [chat]);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   if (!chat) return null;
 
-  const fmtDate = (d) => (d ? new Date(d).toLocaleString("de-DE") : "—");
+  const fmtDate = (d) => (d ? new Date(d).toLocaleString("de-DE") : "---");
 
   return (
     <div className="db-modal-backdrop" onClick={onClose}>
@@ -81,13 +85,13 @@ export default function ChatViewer({
                   {chat.username}
                 </button>
               )}
-              <span className="db-meta-sep">·</span>
+              <span className="db-meta-sep">•</span>
               <span className="db-meta-info">
                 {t("dashboard.table.totalMessagesShort", {
                   count: chat.message_count ?? messages.length,
                 })}
               </span>
-              <span className="db-meta-sep">·</span>
+              <span className="db-meta-sep">•</span>
               <span className="db-meta-info">{fmtDate(chat.updated_at)}</span>
             </div>
           </div>
@@ -123,7 +127,7 @@ export default function ChatViewer({
               </svg>
             </button>
             <button className="db-modal-close" onClick={onClose}>
-              ✕
+              {"\u00D7"}
             </button>
           </div>
         </div>
@@ -183,7 +187,7 @@ export default function ChatViewer({
             {t("dashboard.table.totalMessagesShort", {
               count: messages.length,
             })}{" "}
-            · {chat.filename}
+            - {chat.filename}
           </span>
         </div>
       </div>

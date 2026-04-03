@@ -1,3 +1,4 @@
+/* FAQ Page Layout */
 .faq-page-wrapper {
   position: relative;
   overflow-x: hidden;
@@ -316,6 +317,7 @@
   text-decoration: underline;
 }
 
+/* mobile tweaks ab hier getrennt, sonst wirds schnell unklar */
 @media (max-width: 600px) {
   .faq-ambient-glow {
     width: 72vmin;

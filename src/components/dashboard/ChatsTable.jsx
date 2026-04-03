@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 
+// pagination: nav component für table seiten mit prev/next buttons
 function Pagination({ page, total, pageSize, onChange }) {
   const totalPages = Math.ceil(total / pageSize);
   if (totalPages <= 1) return null;
@@ -10,7 +11,7 @@ function Pagination({ page, total, pageSize, onChange }) {
         disabled={page === 1}
         onClick={() => onChange(page - 1)}
       >
-        ‹
+        ←
       </button>
       <span className="db-page-info">
         {page} / {totalPages}
@@ -20,12 +21,13 @@ function Pagination({ page, total, pageSize, onChange }) {
         disabled={page === totalPages}
         onClick={() => onChange(page + 1)}
       >
-        ›
+        →
       </button>
     </div>
   );
 }
 
+// chats table: admin chats list view mit pagination, delete + view actions, timestamps
 export default function ChatsTable({
   chats,
   total,
@@ -47,7 +49,7 @@ export default function ChatsTable({
           hour: "2-digit",
           minute: "2-digit",
         })
-      : "—";
+      : "---";
 
   return (
     <div className="db-table-section">
@@ -96,7 +98,7 @@ export default function ChatsTable({
                   </td>
                   <td>
                     <div className="db-chat-title-cell">
-                      <span className="db-chat-title">{c.title || "—"}</span>
+                      <span className="db-chat-title">{c.title || "---"}</span>
                       <span className="db-chat-filename">{c.filename}</span>
                     </div>
                   </td>
@@ -130,7 +132,19 @@ export default function ChatsTable({
                         onClick={() => onView(c)}
                         title={t("dashboard.table.view")}
                       >
-                        👁
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
                       </button>
                       <button
                         className="db-icon-btn del"

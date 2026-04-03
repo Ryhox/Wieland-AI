@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+// confirm modal: deletion confirmation dialog mit busy state für async delete
 export default function ConfirmModal({ label, onConfirm, onClose }) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
 
+  // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handleConfirm = async () => {
     setBusy(true);
     try {
@@ -25,7 +27,7 @@ export default function ConfirmModal({ label, onConfirm, onClose }) {
             {t("dashboard.confirmModal.title")}
           </h2>
           <button className="db-modal-close" onClick={onClose}>
-            ✕
+            {"\u00D7"}
           </button>
         </div>
         <div className="db-modal-body">

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import gsap from "gsap";
 import { useTranslation } from "react-i18next";
 import "../styles/Contact.css";
@@ -8,9 +8,14 @@ import Footer from "../components/Footer";
 import Sidebar from "../components/Sidebar";
 import { useAuth } from "../context/AuthContext";
 
+// kontakt-form seite: voll klient-seitig validiert + GSAP animationen + success modal
 function Contact({ isSidebarOpen, onSidebarToggle }) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const rootRef = useRef(null);
+  const introTl = useRef(null);
+
+  // form state: name + email + subject + message + checkbox
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -26,54 +31,66 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
   const formRef = useRef(null);
   const infoRef = useRef(null);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.set(".contact-hero > *", { opacity: 0, y: 44 });
-      gsap.set(".contact-divider", { opacity: 0, x: -24 });
-      gsap.set(".contact-form-wrapper", { opacity: 0, y: 44 });
-      gsap.set(".contact-info-section", { opacity: 0, y: 44 });
+  // animation und side-effects hier gebündelt, cleanup ist wichtig :/
+  useLayoutEffect(() => {
+    if (!rootRef.current) return;
 
-      const tl = gsap.timeline();
-      tl.to(".contact-hero > *", {
-        opacity: 1,
-        y: 0,
-        duration: 0.55,
-        stagger: 0.07,
-        ease: "power3.out",
-      })
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (prefersReduced) return;
+
+    const ctx = gsap.context(() => {
+      gsap.set(".contact-hero > *", { opacity: 0, y: 12 });
+      gsap.set(".contact-divider", { opacity: 0 });
+      gsap.set(".contact-form-wrapper", { opacity: 0, y: 10 });
+      gsap.set(".contact-info-section", { opacity: 0, y: 10 });
+
+      introTl.current = gsap
+        .timeline({ paused: true, defaults: { ease: "power2.out" } })
+        .to(".contact-hero > *", {
+          opacity: 1,
+          y: 0,
+          duration: 0.22,
+          stagger: 0.025,
+          ease: "power2.out",
+        })
         .to(
           ".contact-divider",
           {
             opacity: 1,
-            x: 0,
-            duration: 0.15,
+            duration: 0.14,
             ease: "power2.out",
           },
-          "-=0.15",
+          "-=0.08",
         )
         .to(
           ".contact-form-wrapper",
           {
             opacity: 1,
             y: 0,
-            duration: 0.65,
-            ease: "power3.out",
+            duration: 0.2,
+            ease: "power2.out",
           },
-          "+=0.1",
+          "-=0.04",
         )
         .to(
           ".contact-info-section",
           {
             opacity: 1,
             y: 0,
-            duration: 0.65,
-            ease: "power3.out",
+            duration: 0.18,
+            ease: "power2.out",
           },
-          "-=0.3",
+          "-=0.1",
         );
-    });
+    }, rootRef);
 
     return () => ctx.revert();
+  }, []);
+
+  useEffect(() => {
+    introTl.current?.play();
   }, []);
 
   const showSuccessModal = () => {
@@ -110,6 +127,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
   };
 
   const validateField = (name, value) => {
+    // field-validierung: mindestlänge, email format, checkbox status
     let error = "";
 
     switch (name) {
@@ -146,11 +164,13 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
     return error;
   };
 
+  // user-action flow: validierung beim eintippen (real-time error clearing)
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     const fieldValue = type === "checkbox" ? checked : value;
     setFormData((prev) => ({ ...prev, [name]: fieldValue }));
 
+    // wenn feld vorher fehlerhaft war: error clearen sobald user tippt
     if (errors[name]) {
       const error = validateField(name, fieldValue);
       if (!error) {
@@ -159,6 +179,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
     }
   };
 
+  // handler separat halten, sonst wird die render-logik schnell wirr
   const handleBlur = (e) => {
     const { name, value, type, checked } = e.target;
     const fieldValue = type === "checkbox" ? checked : value;
@@ -174,6 +195,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
     }
   };
 
+  // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -290,6 +312,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
   return (
     <div
       className={`page-wrapper content-page ${isSidebarOpen ? "sidebar-open" : ""}`}
+      ref={rootRef}
     >
       <Header isSidebarOpen={isSidebarOpen} onSidebarToggle={onSidebarToggle} />
       {user && (
@@ -465,23 +488,23 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
             <div className="contact-info-grid">
               <div className="contact-info-card">
                 <span className="contact-info-label">
-                  📍 {t("contact.location")}
+                  {t("contact.location")}
                 </span>
                 <p>
-                  Wieland Headquarters
+                  Wielandstrasse 11
                   <br />
-                  Italy
+                  39042 Brixen Italy
                 </p>
               </div>
               <div className="contact-info-card">
-                <span className="contact-info-label">📧 E-Mail</span>
+                <span className="contact-info-label">E-Mail</span>
                 <p>
                   <a href="mailto:info@wieland.ai">info@wieland.ai</a>
                 </p>
               </div>
               <div className="contact-info-card">
                 <span className="contact-info-label">
-                  📞 {t("contact.support")}
+                  {t("contact.support")}
                 </span>
                 <p>{t("contact.supportText")}</p>
               </div>
@@ -499,9 +522,9 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="contact-success-header">
-              <div className="contact-success-icon">✓</div>
+              <div className="contact-success-icon">?"??o</div>
               <button className="contact-success-close" onClick={closeModal}>
-                ✕
+                {"\u00D7"}
               </button>
             </div>
             <div className="contact-success-content">

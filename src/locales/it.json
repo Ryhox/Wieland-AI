@@ -25,6 +25,7 @@
     "about": "/about",
     "faq": "/faq",
     "changelogs": "/changelogs",
+    "conclusion": "/conclusion",
     "pricing": "/pricing",
     "download": "/download",
     "contact": "/contact",
@@ -43,12 +44,14 @@
     "navAbout": "Chi siamo",
     "navFaq": "FAQ",
     "navChangelogs": "Changelog",
+    "navConclusion": "Conclusione",
     "navPricing": "Prezzi",
     "downloadExtension": "Scarica estensione",
     "login": "Accedi"
   },
   "footer": {
     "contact": "Contatto",
+    "conclusion": "Conclusione",
     "legalNotice": "Note legali",
     "privacy": "Privacy",
     "terms": "Termini di servizio",
@@ -90,12 +93,50 @@
   "loadingAnimation": { "text": "Caricamento..." },
   "protectedRoute": { "loading": "Caricamento..." },
   "chat": {
-    "welcome": [
-      "Cosa hai in mente oggi?",
-      "Cosa c'e in programma oggi?",
-      "Come posso aiutarti oggi?",
-      "Felice di vederti qui!",
-      "Di cosa vuoi parlare?"
+    "nameFallback": "amico",
+    "welcomeGuest": [
+      "Che bello vederti qui.",
+      "Su cosa ti va di lavorare oggi?",
+      "Raccontami al volo cosa devi fare.",
+      "Se vuoi, partiamo con calma.",
+      "Hai un'idea da mettere meglio a fuoco?",
+      "Ti serve una mano per fare ordine?",
+      "Mandami pure la versione grezza, la sistemiamo insieme.",
+      "Quale sarebbe un buon risultato per oggi?",
+      "Preferisci brainstorming o esecuzione diretta?",
+      "Se qualcosa si e bloccato, lo sblocchiamo passo passo.",
+      "Su cosa stai lavorando in questo momento?",
+      "Possiamo farla breve oppure andare a fondo.",
+      "Ti aiuto volentieri con scrittura, codice o organizzazione.",
+      "Trasformiamo le tue idee in un prossimo passo chiaro.",
+      "Dammi il contesto e ci muoviamo veloci.",
+      "Che risultato vorresti ottenere da questa chat?",
+      "Per iniziare basta anche una sola frase.",
+      "Vuoi che faccia anche un controllo critico del piano?",
+      "Nessuna fretta, lo facciamo insieme.",
+      "Quando vuoi, io ci sono."
+    ],
+    "welcomeLoggedIn": [
+      "Ehi {{name}}, che piacere rivederti.",
+      "Bentornato {{name}}. Come vuoi impostare la giornata?",
+      "Ciao {{name}}, riprendiamo da dove eri rimasto?",
+      "Felice di vederti, {{name}}. Da cosa partiamo?",
+      "Ehi {{name}}, sono pronto quando vuoi.",
+      "{{name}}, quale sarebbe un buon passo avanti oggi?",
+      "Ciao {{name}}, mandami la bozza e la rifiniamo insieme.",
+      "Bentornato {{name}}. Preferisci velocita o approfondimento?",
+      "Grande rivederti, {{name}}. Qual e la priorita adesso?",
+      "{{name}}, se qualcosa si e incastrato lo sblocchiamo insieme.",
+      "Ciao {{name}}, vuoi ottimizzare qualcosa o ripartire da zero?",
+      "Ehi {{name}}, vuoi che lo divida in passaggi chiari?",
+      "Bentornato {{name}}. Facciamo progressi puliti e concreti.",
+      "{{name}}, quale risultato vuoi portarti a casa oggi?",
+      "Ciao {{name}}, teniamola semplice e focalizzata.",
+      "Ehi {{name}}, dammi il contesto e ci penso io alla struttura.",
+      "Bello riaverti qui, {{name}}. Continuiamo?",
+      "{{name}}, ti serve piu rapidita, piu dettaglio o un mix?",
+      "Bentornato {{name}}. Qual e la prima cosa da risolvere?",
+      "Felice che tu sia qui, {{name}}. Mettiamoci al lavoro."
     ],
     "models": {
       "free": "2B - Free",
@@ -110,7 +151,7 @@
     "errors": {
       "notImage": "\"{{name}}\" non e un'immagine.",
       "tooLarge": "Immagine troppo grande (max {{max}} MB).",
-      "server": "Errore di comunicazione con il server."
+      "server": "Server offline."
     },
     "placeholderLogin": "Accedi per scrivere...",
     "placeholderImage": "Scrivi un messaggio sull'immagine...",
@@ -129,7 +170,6 @@
     "memorySaved": "Salvato in memoria ({{count}}).",
     "regenerate": "Rigenera",
     "planModelLocked": "Questo modello e impostato automaticamente dal tuo piano.",
-    "demoFallback": "**Ciao! Sono Wieland** - il tuo assistente AI locale.\n\nQuesta e una **demo**. Nell'uso reale qui gira un modello locale (Wieland AI).\n\n*Per risparmiare risorse, qui non gira una vera AI*",
     "aiStyle": "Stile AI"
   },
   "sidebar": {
@@ -444,7 +484,19 @@
     "extensionTitle": "Wieland AI Extension",
     "desc": "Usa Wieland AI ovunque nel browser.",
     "button": "Scarica",
-    "runsOn": "Disponibile su"
+    "runsOn": "Disponibile su",
+    "howTo": {
+      "title": "Come scaricarla",
+      "step1": "Scarica e salva il file ZIP.",
+      "step2": "Estrai il file scaricato.",
+      "step3": "Apri la pagina estensioni del browser:",
+      "browserListLabel": "Pagine estensioni dei browser supportati",
+      "chrome": "Chrome: chrome://extensions/",
+      "edge": "Edge: edge://extensions/",
+      "firefox": "Firefox: about:debugging#/runtime/this-firefox",
+      "developerMode": "Attiva la Modalità sviluppatore (Chrome ed Edge).",
+      "step4": "Seleziona la cartella che hai appena scaricato."
+    }
   },
   "changelogs": {
     "eyebrow": "Changelog",
@@ -453,6 +505,23 @@
     "lead": "Tutte le versioni, fix e funzionalita.",
     "initialTag": "Iniziale",
     "entries": [
+      {
+        "version": "v0.2.1",
+        "date": "03 aprile 2026",
+        "tag": "green",
+        "title": "Aggiornamento Backend & UX",
+        "changes": [
+          "Correzioni bug",
+          "Routing intent rifatto (web vs estensione, contesto pagina, input immagine, risposte popup)",
+          "Web lookup piu preciso: temi live su SEARCH_WEB, richieste legate alla pagina su READ_PAGE",
+          "Flusso di chiarimento migliorato su web ed estensione (prompt piu chiari, payload stabili, popup duplicati rimossi)",
+          "Streaming piu robusto con auto-continue su cutoff di lunghezza e pulizia markdown/code-fence",
+          "JWT ora include il piano attivo e i cambi piano restituiscono subito un token aggiornato",
+          "Layer SQLite e transazioni cronologia rafforzati (rollback piu affidabile)",
+          "Recupero memoria migliorato con hint filtering lato SQL",
+          "Rifiniture profilo/UI: pagina Profilo ridisegnata, piano piu leggibile, layering welcome corretto e primo stile AI attivo di default nell'estensione"
+        ]
+      },
       {
         "version": "v0.2.0",
         "date": "02 aprile 2026",
@@ -594,11 +663,138 @@
       }
     ]
   },
+  "conclusion": {
+    "eyebrow": "Capitolo finale",
+    "title": "Conclusione:",
+    "titleAccent": "Dal caos al sistema.",
+    "lead": "Questa è la mia conclusione onesta del progetto. Non costruita per \"fare bella figura\", ma per raccontare com'è andata davvero: tanti giri lunghi, tante correzioni e, alla fine, un sistema molto più solido rispetto all'inizio.",
+    "leadSecondary": "Non volevo fare il classico recap pieno di buzzword vuote. Volevo mostrare il percorso che di solito non si vede nei commit e nei log: decisioni sotto pressione, rotture tecniche e lezioni concrete.",
+    "pills": [
+      "Web app + estensione",
+      "Node / Express",
+      "SQLite invece di PostgreSQL",
+      "Prima esperienza con Three.js",
+      "Prodotto invece di demo"
+    ],
+    "acts": [
+      {
+        "kicker": "Atto I",
+        "title": "L'inizio è stato più duro del previsto",
+        "offset": false,
+        "paragraphs": [
+          "[[React all'inizio era un vero cantiere]]. Avevo troppe dipendenze tra componenti, state drift tra web app ed estensione e diversi flussi che si sovrascrivevano a vicenda.",
+          "Nel chat questo era chiarissimo: streaming, modifica, regenerate, upload immagini, cronologia e auth dovevano funzionare insieme in modo corretto. All'inizio spesso funzionava \"più o meno\", ma non in modo affidabile.",
+          "Il punto di svolta è stato separare le responsabilità con disciplina: confini più chiari tra componenti, flussi utente riproducibili e meno quick fix direttamente nella UI. Solo da lì il progetto ha iniziato a sembrare un vero prodotto e non una demo con pezzi scollegati."
+        ]
+      },
+      {
+        "kicker": "Atto II",
+        "title": "Realtà database: da PostgreSQL a SQLite",
+        "offset": true,
+        "paragraphs": [
+          "PostgreSQL era il percorso che avevo pianificato all'inizio. Nella pratica però proprio lì continuavano a emergere attriti: setup locale, migrazioni, coerenza tra macchine diverse e complessità inutile per lo stato reale del prodotto.",
+          "Il passaggio a [[SQLite con WAL]] non è stato un ripiego, ma una scelta di prodotto consapevole. Volevo una base dati locale, veloce, stabile e senza battaglie secondarie.",
+          "Il risultato si è sentito subito: meno tempo perso con lo stress infrastrutturale, più tempo per funzionalità vere, bugfix e coerenza. In questa fase del progetto, quella scelta era quella giusta."
+        ]
+      },
+      {
+        "kicker": "Atto III",
+        "title": "Prima volta con Three.js e asset 3D",
+        "offset": false,
+        "paragraphs": [
+          "[[Three.js per me era completamente nuovo]]. Ho dovuto imparare FBX import, gestione materiali, logica camera, performance ed errori di rendering nello stesso momento, mentre il resto dell'app andava avanti in parallelo.",
+          "All'inizio è stato puro trial and error: texture non caricate, scene troppo scure, animazioni artificiali o instabili. Ma proprio quella fase è stata decisiva, perché mi ha insegnato quali scelte di camera e movimento risultano davvero cinematografiche e quali sono solo rumorose.",
+          "Alla fine ne è uscita una lingua visiva non intercambiabile: più atmosfera, più regia, ma comunque abbastanza controllata tecnicamente da mantenere la pagina stabile."
+        ]
+      },
+      {
+        "kicker": "Atto IV",
+        "title": "Il vero salto: qualità nei dettagli",
+        "offset": true,
+        "paragraphs": [
+          "Il progresso più grande non è arrivato da una singola nuova funzione, ma dai cantieri \"invisibili\": intent routing pulito, clarification flow senza overtrigger, lingua di risposta coerente, streaming robusto e fallback di errore chiari.",
+          "È lì che si decide se un prodotto AI impressiona soltanto oppure funziona davvero nella pratica quotidiana. Se routing, lingua, contesto e UI non sono allineati, il miglior modello non basta.",
+          "La lezione principale di questo atto: [[non basta costruire feature, bisogna rendere stabile il comportamento]]. Solo così nasce fiducia nel prodotto."
+        ]
+      },
+      {
+        "kicker": "Atto V",
+        "title": "Tenere sincronizzati due mondi: web app ed estensione",
+        "offset": false,
+        "paragraphs": [
+          "Un punto che avevo sottovalutato: mantenere [[la stessa logica stabile su due interfacce diverse]]. Tra web app ed estensione, piccole differenze fanno subito percepire due prodotti diversi se lingua, popup, stato input o testi errore non coincidono perfettamente.",
+          "Per questo ho [[uniformato molte cose]]: stesse regole di clarification, percorsi coerenti di rendering markdown/codice, fallback puliti e comportamento uguale durante interruzioni di streaming. Non era spettacolare, ma ha alzato moltissimo la qualità percepita.",
+          "La lezione di questo atto è stata netta: quando un prodotto vive su più superfici, [[la coerenza non è opzionale, è una funzione centrale]]."
+        ]
+      },
+      {
+        "kicker": "Atto VI",
+        "title": "Pressione di rilascio, passi indietro e decisioni pulite",
+        "offset": true,
+        "paragraphs": [
+          "Verso la fine non si trattava più di \"un'altra feature\", ma di [[prioritizzazione]]. Ho dovuto decidere più volte cosa non costruire, per garantire che ciò che rimaneva fosse davvero stabile. Soprattutto [[sotto pressione di tempo]] è più difficile di quanto sembri.",
+          "Ci sono stati anche passi indietro: cose che nel breve sembravano buone hanno creato effetti collaterali e sono state rimosse. Tornare indietro all'inizio è stato frustrante, ma necessario per [[mantenere una linea tecnica chiara]].",
+          "Forse l'effetto più importante di questa fase: oggi penso molto più in [[manutenibilità e comportamento nel tempo]], non solo in \"funziona adesso\"."
+        ]
+      }
+    ],
+    "reflection": {
+      "sectionLabel": "Epilogo",
+      "title": "Cosa ha cambiato in me questo progetto",
+      "intro": "Se oggi riassumo tutto il percorso, la differenza più grande non si vede solo nel risultato, ma soprattutto in [[come affronto i problemi]].",
+      "quickTitle": "Se lo riduco a quattro punti:",
+      "quick": [
+        "[[Il pensiero di sistema batte il puro pensiero per feature.]]",
+        "[[Correggere la rotta è forza, non debolezza.]]",
+        "[[La qualità nasce nei casi limite e nelle transizioni.]]",
+        "[[Il debugging è un processo centrale, non una modalità di emergenza.]]"
+      ],
+      "chapters": [
+        {
+          "title": "1) Dal pensiero per schermate al pensiero di sistema",
+          "paragraphs": [
+            "Oggi ragiono molto più in sistemi che in singole schermate. Una buona schermata è importante, ma [[senza flussi dati stabili, routing chiaro e gestione stato pulita]] resta solo superficie. Questa è stata probabilmente la crescita più grande dell'intero progetto.",
+            "Guardando indietro, vedo meno le singole feature e più il cambio di mentalità: da \"costruisco qualcosa che in qualche modo gira\" a [[\"progetto qualcosa che si comporta in modo affidabile\"]]."
+          ]
+        },
+        {
+          "title": "2) Coraggio di cambiare rotta",
+          "paragraphs": [
+            "Allo stesso tempo ho imparato a correggere con decisione le scelte tecniche. Il passaggio PostgreSQL-SQLite è stato un esempio chiaro: non restare attaccato a un piano solo perché all'inizio sembrava \"giusto\", ma [[scegliere ciò che è davvero sensato per lo stato attuale del prodotto]].",
+            "A posteriori, è stata decisiva proprio questa combinazione: sensibilità frontend, disciplina backend e disponibilità a ripensare l'architettura quando la realtà lo richiede. Prima avrei difeso alcune decisioni troppo a lungo, oggi [[correggo prima e meglio]]."
+          ]
+        },
+        {
+          "title": "3) La qualità nasce tra un passaggio e l'altro",
+          "paragraphs": [
+            "Ho capito che la qualità di prodotto nasce spesso nelle transizioni: timeout, testi di errore, logica di reconnect, coerenza linguistica e proprio nei momenti in cui gli utenti non seguono l'happy path. È lì che si decide se [[la fiducia cresce o si rompe]].",
+            "E sul piano personale, Three.js è stata la parte che mi ha fatto crescere di più: non perché tutto funzionasse subito, ma perché i problemi reali mi hanno insegnato a [[unire qualità visiva e stabilità tecnica]]."
+          ]
+        },
+        {
+          "title": "4) Il metodo batte la motivazione",
+          "paragraphs": [
+            "Sul piano professionale porto con me che il debugging non è una \"modalità emergenza\", ma un processo di sviluppo normale. Log buoni, passi riproducibili e fix piccoli ma mirati hanno fatto avanzare questo progetto più di grandi refactor rischiosi.",
+            "Sul piano personale porto con me che un progetto di questa dimensione non si regge solo sulla motivazione, ma su [[metodo]]: fissare priorità, documentare decisioni, chiudere un blocco prima di aprire il successivo."
+          ]
+        }
+      ],
+      "keyline": "Nella pratica, il progresso raramente appare spettacolare. Nasce da tante decisioni pulite che, insieme, fanno sentire un [[grande salto]]."
+    },
+    "finale": [
+      "La mia conclusione in una frase: [[Wieland AI non è diventato forte grazie a un singolo colpo di scena, ma grazie a molte decisioni dure e concrete prese sotto pressione reale]].",
+      "Per questo, per me questa conclusione non sembra una fine, ma il punto in cui gli esperimenti sono diventati una direzione chiara."
+    ]
+  },
   "profile": {
     "eyebrow": "Profilo",
     "title": "Gestisci",
     "titleAccent": "il tuo account.",
     "lead": "Email, password, abbonamento - tutto in un unico posto.",
+    "accountSection": "Account",
+    "contactSection": "Contatti",
+    "securitySection": "Sicurezza",
+    "displayNameLabel": "Nome visualizzato",
     "emailSection": "Email",
     "yourEmail": "La tua email",
     "change": "Modifica",
@@ -613,6 +809,8 @@
     "cancelSubscription": "Annulla abbonamento",
     "upgradePlan": "Passa di piano",
     "adminNoCancel": "Come admin non puoi annullare l'abbonamento.",
+    "subscriptionPaidHint": "Puoi annullare l'abbonamento in qualsiasi momento.",
+    "subscriptionFreeHint": "Passa a un piano superiore per più potenza e funzioni.",
     "memorySection": "Memoria",
     "memoryLabel": "Fatti salvati",
     "memoryDescription": "Qui vedi cosa la AI ha salvato su di te. Puoi eliminare singoli elementi o tutto.",
@@ -633,6 +831,7 @@
       "title": "Errore",
       "success": "Successo",
       "emailSame": "Email invariata o vuota",
+      "displayNameUnavailable": "La modifica del nome visualizzato non è al momento disponibile.",
       "emailUpdate": "Errore durante l'aggiornamento email",
       "passwordFields": "Tutti i campi sono obbligatori",
       "passwordMismatch": "Le nuove password non coincidono",
@@ -791,8 +990,10 @@
     "plan": "Piano:",
     "duration": "Durata:",
     "monthlyCancelable": "Annullabile mensilmente",
+    "dueNow": "da pagare ora",
     "perMonth": "/mese",
     "tax": "Tasse escluse",
+    "proratedNote": "Upgrade prorata. Dal prossimo ciclo di fatturazione: ${{fullPrice}}/mese.",
     "confirmUpgrade": "Conferma upgrade",
     "methods": {
       "card": "Carta di credito",
@@ -807,8 +1008,15 @@
   "purchase": {
     "processing": "Pagamento in elaborazione...",
     "upgrading": "Upgrade al piano {{plan}}",
+    "downgrading": "Passaggio al piano {{plan}}",
+    "downgradeProcessing": "Aggiornamento abbonamento in corso...",
     "success": "Upgrade completato!",
     "welcome": "Benvenuto nel piano {{plan}}. Buon lavoro!",
+    "downgradeConfirmTitle": "Conferma downgrade",
+    "downgradeConfirmText": "Stai per passare a {{plan}}. Il piano {{plan}} sarà attivo solo dal prossimo mese.",
+    "confirmDowngrade": "Conferma downgrade",
+    "downgradeSuccess": "Downgrade completato!",
+    "downgradeWelcome": "Ora sei nel piano {{plan}}.",
     "close": "Chiudi"
   },
   "dashboard": {

@@ -8,8 +8,12 @@ import { withLang } from "../utils/i18nRouting";
 
 const MAX_IMAGE_MB = 10;
 const MODEL_PRELOAD_REFRESH_MS = 10 * 60 * 1000;
-const CLARIFY_POPUP_DELAY_MS = 240;
+const CLARIFY_POPUP_DELAY_MS = 0;
+const CLARIFY_TYPE_INTERVAL_MS = 18;
+const CLARIFY_QUESTION_CHARS_PER_TICK = 1;
+const CLARIFY_OPTION_CHARS_PER_TICK = 1;
 
+// hier hängt der komplette seitenflow dran, also lieber klar halten
 function normalizeUiLang(value = "") {
   const lang = String(value || "").toLowerCase();
   if (lang.startsWith("en")) return "en";
@@ -17,6 +21,7 @@ function normalizeUiLang(value = "") {
   return "de";
 }
 
+// get localized idea placeholder: return language-specific placeholder text for input box
 function getLocalizedIdeaPlaceholder(language = "de") {
   const lang = normalizeUiLang(language);
   if (lang === "en") return "Describe your idea";
@@ -24,6 +29,7 @@ function getLocalizedIdeaPlaceholder(language = "de") {
   return "Beschreibe deine Idee";
 }
 
+// get localized skip label: return language-specific label for skip button
 function getLocalizedSkipLabel(language = "de") {
   const lang = normalizeUiLang(language);
   if (lang === "en") return "Skip";
@@ -31,6 +37,7 @@ function getLocalizedSkipLabel(language = "de") {
   return "Überspringen";
 }
 
+// svg icon: target circle (used for model selection)
 const TargetIcon = () => (
   <svg
     width="16"
@@ -45,6 +52,8 @@ const TargetIcon = () => (
     <circle cx="12" cy="12" r="1" />
   </svg>
 );
+
+// svg icon: lightning bolt (used for pro model tier)
 const LightningIcon = () => (
   <svg
     width="16"
@@ -57,6 +66,8 @@ const LightningIcon = () => (
     <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
   </svg>
 );
+
+// svg icon: robot (used for free/basic model icon)
 const BotIcon = () => (
   <svg
     width="16"
@@ -72,6 +83,8 @@ const BotIcon = () => (
     <circle cx="15" cy="14" r="1" />
   </svg>
 );
+
+// svg icon: spark/lightning (used for AI style selector)
 const SparkIcon = () => (
   <svg
     width="16"
@@ -84,6 +97,8 @@ const SparkIcon = () => (
     <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
   </svg>
 );
+
+// svg icon: globe (used for internet access toggle)
 const GlobeIcon = () => (
   <svg
     width="16"
@@ -114,6 +129,7 @@ const AVAILABLE_MODELS = [
   },
 ];
 
+// normalize plan: coerce plan value to canonical tier (admin/max/pro/free)
 const normalizePlan = (plan) => {
   const value = String(plan || "Free").toLowerCase();
   if (value === "admin") return "admin";
@@ -122,6 +138,7 @@ const normalizePlan = (plan) => {
   return "free";
 };
 
+// get plan rank: numeric comparison (0=free, 1=pro, 2=admin/max)
 const getPlanRank = (plan) => {
   const normalized = normalizePlan(plan);
   if (normalized === "admin" || normalized === "max") return 2;
@@ -129,12 +146,14 @@ const getPlanRank = (plan) => {
   return 0;
 };
 
+// get model rank: numeric tier comparison (0=2b, 1=4b, 2=8b)
 const getModelRank = (modelId) => {
   if (modelId === "qwen3-vl:8b-instruct") return 2;
   if (modelId === "qwen3-vl:4b-instruct") return 1;
   return 0;
 };
 
+// get plan model: return highest model available for user's plan tier
 const getPlanModel = (plan) => {
   const normalized = normalizePlan(plan);
   if (normalized === "admin" || normalized === "max")
@@ -149,25 +168,47 @@ const AI_STYLES = [
   { id: "precise", key: "chat.styles.precise", icon: <SparkIcon /> },
 ];
 
+// regex patterns for parsing [[WIELAND_CLARIFY_JSON]] markers and extracting embedded clarification payloads
 const CLARIFY_JSON_BLOCK_RE =
   /\[\[\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]([\s\S]*?)\[\[\s*\/\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
-const CLARIFY_JSON_OPEN_RE =
-  /\[\[\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
+const CLARIFY_JSON_OPEN_RE = /\[\[\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
 const CLARIFY_JSON_CLOSE_RE =
   /\[\[\s*\/\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
 const CLARIFY_JSON_TOKEN_RE = /WIELAND[\s_-]*CLARIFY[\s_-]*JSON/i;
 const CLARIFY_OPTION_LINE_RE = /^\s*([A-E])[)\].:-]\s*(.+)$/i;
 const CLARIFY_OPTION_IDS = ["A", "B", "C", "D", "E"];
-const CLARIFY_VAGUE_BUILD_VERB_RE =
-  /\b(mach|mache|build|make|create|generate|generat|generier|erstell\w*|baue?\b|program\w*|entwickl\w*|crea|sviluppa|fai)\b/i;
-const CLARIFY_VAGUE_BUILD_TARGET_RE =
-  /\b(app|website|webseite|landing\s+page|tool|projekt|project|bot|script|programm|program|dashboard|automation|automatisierung|extension)\b/i;
-const CLARIFY_VAGUE_BUILD_SCOPE_HINT_RE =
-  /\b(react|vue|svelte|html|css|javascript|typescript|node|python|java|single\s+file|mehrere\s+dateien|backend|frontend|api|mobile|ios|android|chrome\s+extension|browser\s+extension|deadline|budget|zielgruppe|target\s+audience)\b/i;
 
+// normalize clarify label key: strip accents + whitespace to canonicalize option labels
+function normalizeClarifyLabelKey(value = "") {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+// is disallowed clarify option label: filter out generic labels like "other", "explain", "more details"
+function isDisallowedClarifyOptionLabel(value = "") {
+  const labelKey = normalizeClarifyLabelKey(value);
+  if (!labelKey) return true;
+
+  return (
+    /^(other|others|something else|anything else|custom|free text|explain|explanation|more details?|details?)$/.test(
+      labelKey,
+    ) ||
+    /^(etwas anderes|anderes|sonstiges|freitext|eigene angabe|eigene eingabe|erklaren|erklaeren|erklarung)$/.test(
+      labelKey,
+    ) ||
+    /^(altro|qualcos altro|spiega|spiegami)$/.test(labelKey)
+  );
+}
+
+// normalize clarify options: coerce raw option list into canonical [{id, label}] format, dedup, validate
 function normalizeClarifyOptions(rawOptions = []) {
   const out = [];
   const list = Array.isArray(rawOptions) ? rawOptions : [];
+  const seenLabelKeys = new Set();
 
   for (const item of list) {
     if (out.length >= 5) break;
@@ -186,8 +227,13 @@ function normalizeClarifyOptions(rawOptions = []) {
     }
 
     if (!label) continue;
+    if (isDisallowedClarifyOptionLabel(label)) continue;
     if (!/^[A-E]$/.test(id)) id = CLARIFY_OPTION_IDS[out.length] || "";
     if (!id) continue;
+
+    const labelKey = normalizeClarifyLabelKey(label);
+    if (labelKey && seenLabelKeys.has(labelKey)) continue;
+    if (labelKey) seenLabelKeys.add(labelKey);
 
     out.push({ id, label });
   }
@@ -195,6 +241,7 @@ function normalizeClarifyOptions(rawOptions = []) {
   return out;
 }
 
+// to single sentence question: truncate question to 140 chars, keep only first sentence
 function toSingleSentenceQuestion(value = "", fallback = "") {
   const source = String(value || fallback || "")
     .replace(/\s+/g, " ")
@@ -211,6 +258,25 @@ function toSingleSentenceQuestion(value = "", fallback = "") {
   return question;
 }
 
+// get clarify payload signature: compute stable hash of clarification payload for deduplication
+function getClarifyPayloadSignature(payload = null) {
+  if (!payload || typeof payload !== "object") return "";
+
+  const options = Array.isArray(payload.options) ? payload.options : [];
+  return JSON.stringify({
+    question: String(payload.question || "").trim(),
+    options: options.map((option) => ({
+      id: String(option?.id || "")
+        .trim()
+        .toUpperCase(),
+      label: String(option?.label || "").trim(),
+    })),
+    step: Number(payload.step) || null,
+    totalSteps: Number(payload.totalSteps) || null,
+  });
+}
+
+// is clarify qa reply text: detect if text is Q: ..., A: ... format
 function isClarifyQaReplyText(value = "") {
   const source = String(value || "").trim();
   if (!source) return false;
@@ -218,6 +284,7 @@ function isClarifyQaReplyText(value = "") {
   return /^q\s*:/i.test(source) && /(?:^|\n)\s*a\s*:/im.test(source);
 }
 
+// format clarify reply: format user answer as Q: {...} A: {...} format
 function formatClarifyReply(question = "", answer = "") {
   const cleanAnswer = String(answer || "").trim();
   if (!cleanAnswer) return "";
@@ -229,105 +296,7 @@ function formatClarifyReply(question = "", answer = "") {
   return `Q: ${cleanQuestion}\nA: ${cleanAnswer}`;
 }
 
-function isLikelyVagueBuildPromptClient(message = "") {
-  const source = String(message || "").trim();
-  if (!source) return false;
-
-  const compact = source
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-  const wordCount = compact.split(" ").filter(Boolean).length;
-
-  if (wordCount > 10) return false;
-  if (!CLARIFY_VAGUE_BUILD_VERB_RE.test(compact)) return false;
-  if (!CLARIFY_VAGUE_BUILD_TARGET_RE.test(compact)) return false;
-  if (CLARIFY_VAGUE_BUILD_SCOPE_HINT_RE.test(compact)) return false;
-
-  return true;
-}
-
-function detectClarifyFallbackLanguageFromText(message = "") {
-  const source = String(message || "").toLowerCase();
-  if (!source) return "en";
-
-  if (
-    /[àèéìíîòóù]/i.test(source) ||
-    /\b(che|quando|dove|vorrei|fammi|crea|costruisci|sito|estensione|automazione)\b/i.test(
-      source,
-    )
-  ) {
-    return "it";
-  }
-
-  if (
-    /[äöüß]/i.test(source) ||
-    /\b(und|oder|ich|bitte|mach|baue|erstell|frage|website|webseite)\b/i.test(
-      source,
-    )
-  ) {
-    return "de";
-  }
-
-  return "en";
-}
-
-function buildClientForcedClarificationFallbackPayload(message = "") {
-  const lang = detectClarifyFallbackLanguageFromText(message);
-
-  if (lang === "de") {
-    return {
-      question: "Worauf soll ich mich zuerst fokussieren?",
-      options: [
-        { id: "A", label: "Website oder Landingpage" },
-        { id: "B", label: "Web-App" },
-        { id: "C", label: "Browser-Erweiterung" },
-        { id: "D", label: "Automatisierung oder Script" },
-        { id: "E", label: "Etwas anderes" },
-      ],
-      allowFreeform: true,
-      freeformPlaceholder: "Kurz beschreiben",
-      skipLabel: "Überspringen",
-      step: 1,
-      totalSteps: 1,
-    };
-  }
-
-  if (lang === "it") {
-    return {
-      question: "Su cosa devo concentrarmi per prima cosa?",
-      options: [
-        { id: "A", label: "Sito web o landing page" },
-        { id: "B", label: "Web app" },
-        { id: "C", label: "Estensione browser" },
-        { id: "D", label: "Automazione o script" },
-        { id: "E", label: "Altro" },
-      ],
-      allowFreeform: true,
-      freeformPlaceholder: "Descrivilo in breve",
-      skipLabel: "Salta",
-      step: 1,
-      totalSteps: 1,
-    };
-  }
-
-  return {
-    question: "What should I focus on first?",
-    options: [
-      { id: "A", label: "Website or landing page" },
-      { id: "B", label: "Web app" },
-      { id: "C", label: "Browser extension" },
-      { id: "D", label: "Automation or script" },
-      { id: "E", label: "Something else" },
-    ],
-    allowFreeform: true,
-    freeformPlaceholder: "Describe briefly",
-    skipLabel: "Skip",
-    step: 1,
-    totalSteps: 1,
-  };
-}
-
+// find clarify marker start: detect where [[WIELAND_CLARIFY_JSON]] block begins in text
 function findClarifyMarkerStart(rawText = "") {
   const source = String(rawText || "");
   if (!source) return -1;
@@ -345,13 +314,18 @@ function findClarifyMarkerStart(rawText = "") {
   if (bracketedFragmentIndex >= 0) return bracketedFragmentIndex;
 
   const tokenMatch = source.match(CLARIFY_JSON_TOKEN_RE);
-  if (tokenMatch && Number.isInteger(tokenMatch.index) && tokenMatch.index >= 0) {
+  if (
+    tokenMatch &&
+    Number.isInteger(tokenMatch.index) &&
+    tokenMatch.index >= 0
+  ) {
     return tokenMatch.index;
   }
 
   return -1;
 }
 
+// extract first json object: parse JSON from text by tracking brace depth + string literals
 function extractFirstJsonObject(rawText = "") {
   const source = String(rawText || "");
   const start = source.indexOf("{");
@@ -392,6 +366,7 @@ function extractFirstJsonObject(rawText = "") {
   return "";
 }
 
+// parse clarify json object: extract JSON from fenced code blocks or raw string
 function parseClarifyJsonObject(rawText = "") {
   const source = String(rawText || "").trim();
   if (!source) return null;
@@ -401,8 +376,7 @@ function parseClarifyJsonObject(rawText = "") {
 
   try {
     return JSON.parse(normalized);
-  } catch {
-  }
+  } catch {}
 
   const jsonObject = extractFirstJsonObject(normalized);
   if (!jsonObject) return null;
@@ -414,6 +388,7 @@ function parseClarifyJsonObject(rawText = "") {
   }
 }
 
+// sanitize clarify payload: validate + normalize clarification structure (question, options, steps)
 function sanitizeClarifyPayload(payload = {}, fallbackQuestion = "") {
   const question = toSingleSentenceQuestion(
     payload?.question || payload?.title || "",
@@ -435,18 +410,16 @@ function sanitizeClarifyPayload(payload = {}, fallbackQuestion = "") {
     question,
     options,
     allowFreeform: payload?.allowFreeform !== false,
-    freeformPlaceholder:
-      String(
-        payload?.freeformPlaceholder ||
-          payload?.freeTextPlaceholder ||
-          "Something else",
-      ).trim() || "Something else",
+    freeformPlaceholder: String(
+      payload?.freeformPlaceholder || payload?.freeTextPlaceholder || "",
+    ).trim(),
     skipLabel: String(payload?.skipLabel || "Skip").trim() || "Skip",
     step: hasSingleStepMeta ? 1 : null,
     totalSteps: hasSingleStepMeta ? 1 : null,
   };
 }
 
+// parse plain text clarification fallback: extract Q/A from plain text if JSON parsing fails
 function parsePlainTextClarificationFallback(rawText = "") {
   const source = String(rawText || "").trim();
   if (!source) return null;
@@ -468,7 +441,8 @@ function parsePlainTextClarificationFallback(rawText = "") {
 
   if (options.length < 2 || firstOptionIndex < 0) return null;
 
-  const question = lines.slice(0, firstOptionIndex).join(" ").trim() || lines[0];
+  const question =
+    lines.slice(0, firstOptionIndex).join(" ").trim() || lines[0];
   const payload = sanitizeClarifyPayload({ question, options }, question);
   if (!payload) return null;
 
@@ -477,28 +451,33 @@ function parsePlainTextClarificationFallback(rawText = "") {
   return { payload, cleanedText };
 }
 
+// extract clarification payload: parse [[WIELAND_CLARIFY_JSON]] blocks from response text
 function extractClarificationPayload(rawText = "") {
   const source = String(rawText || "");
   if (!source) return { payload: null, cleanedText: "" };
 
-  const blockMatch = source.match(CLARIFY_JSON_BLOCK_RE);
-  if (blockMatch) {
-    const withoutBlock = source.replace(CLARIFY_JSON_BLOCK_RE, "").trim();
-    const fallbackQuestion = withoutBlock.split(/\r?\n/).find(Boolean) || "";
+  const blockPattern = new RegExp(CLARIFY_JSON_BLOCK_RE.source, "gi");
+  const blockMatches = [...source.matchAll(blockPattern)];
+  if (blockMatches.length) {
+    const withoutBlocks = source
+      .replace(new RegExp(CLARIFY_JSON_BLOCK_RE.source, "gi"), "")
+      .trim();
+    const fallbackQuestion = withoutBlocks.split(/\r?\n/).find(Boolean) || "";
 
-    const parsed = parseClarifyJsonObject(blockMatch[1]);
+    for (let i = blockMatches.length - 1; i >= 0; i--) {
+      const parsed = parseClarifyJsonObject(blockMatches[i]?.[1] || "");
+      const payload = sanitizeClarifyPayload(parsed || {}, fallbackQuestion);
+      if (!payload) continue;
 
-    const payload = sanitizeClarifyPayload(parsed || {}, fallbackQuestion);
-    if (payload) {
       return {
         payload,
-        cleanedText: withoutBlock || payload.question,
+        cleanedText: withoutBlocks || payload.question,
       };
     }
 
     return {
       payload: null,
-      cleanedText: withoutBlock || source.trim(),
+      cleanedText: withoutBlocks || source.trim(),
     };
   }
 
@@ -508,9 +487,13 @@ function extractClarificationPayload(rawText = "") {
     const markerTail = source.slice(markerIndex);
     const openMarkerMatch = markerTail.match(CLARIFY_JSON_OPEN_RE);
     const afterMarker = openMarkerMatch
-      ? markerTail.slice((openMarkerMatch.index || 0) + openMarkerMatch[0].length)
+      ? markerTail.slice(
+          (openMarkerMatch.index || 0) + openMarkerMatch[0].length,
+        )
       : markerTail;
-    const markerPayloadText = afterMarker.replace(CLARIFY_JSON_CLOSE_RE, "").trim();
+    const markerPayloadText = afterMarker
+      .replace(CLARIFY_JSON_CLOSE_RE, "")
+      .trim();
     const fallbackQuestion = visibleText.split(/\r?\n/).find(Boolean) || "";
 
     const parsed = parseClarifyJsonObject(markerPayloadText);
@@ -550,6 +533,7 @@ function extractClarificationPayload(rawText = "") {
   };
 }
 
+// get clarification stream preview: extract visible text before clarification markers (hide loading animation)
 function getClarificationStreamPreview(rawText = "") {
   const source = String(rawText || "");
   if (!source) return { text: "", suppress: false };
@@ -576,6 +560,7 @@ function getClarificationStreamPreview(rawText = "") {
   return { text: source, suppress: false };
 }
 
+// escape html text: prevent XSS by escaping <, >, &
 function escapeHtmlText(value = "") {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -583,6 +568,7 @@ function escapeHtmlText(value = "") {
     .replace(/>/g, "&gt;");
 }
 
+// encode code payload: base64 encode code for data attribute (copy button)
 function encodeCodePayload(value = "") {
   try {
     return btoa(unescape(encodeURIComponent(String(value || ""))));
@@ -591,6 +577,7 @@ function encodeCodePayload(value = "") {
   }
 }
 
+// decode code payload: base64 decode extracted code
 function decodeCodePayload(value = "") {
   try {
     return decodeURIComponent(escape(atob(String(value || ""))));
@@ -599,6 +586,7 @@ function decodeCodePayload(value = "") {
   }
 }
 
+// render code block html: build <pre><code> with language badge + copy button
 function renderCodeBlockHtml(code = "", rawLang = "") {
   const lang = String(rawLang || "").trim() || "text";
   const payload = encodeCodePayload(code);
@@ -614,9 +602,64 @@ function renderCodeBlockHtml(code = "", rawLang = "") {
   ].join("");
 }
 
+// regex to match markdown code fence opening lines (```) with optional language tag
+const CODE_FENCE_LINE_RE = /^```([a-zA-Z0-9_+.-]*)\s*$/;
+
+// normalize markdown code fences: fix streaming artifacts (duplicate/mismatched language tags)
+function normalizeMarkdownCodeFences(raw = "") {
+  const source = String(raw || "").replace(/\r\n/g, "\n");
+  if (!source) return "";
+
+  const lines = source.split("\n");
+  const out = [];
+  let inFence = false;
+  let activeLang = "";
+
+  for (const line of lines) {
+    const match = line.match(CODE_FENCE_LINE_RE);
+    if (!match) {
+      out.push(line);
+      continue;
+    }
+
+    const fenceLang = String(match[1] || "")
+      .trim()
+      .toLowerCase();
+
+    if (!inFence) {
+      inFence = true;
+      activeLang = fenceLang;
+      out.push(line);
+      continue;
+    }
+
+    if (!fenceLang) {
+      inFence = false;
+      activeLang = "";
+      out.push("```");
+      continue;
+    }
+
+    if (activeLang && fenceLang === activeLang) {
+      // Common streaming artifact: continuation re-opens the same fence.
+      continue;
+    }
+
+    out.push(line);
+  }
+
+  if (inFence) {
+    out.push("```");
+  }
+
+  return out.join("\n");
+}
+
+// render markdown: convert markdown syntax to HTML (bold, italic, lists, links, code blocks)
 function renderMarkdown(raw = "") {
+  // markdown erst normalisieren damit stream reste keinen html müll bauen
   const { cleanedText } = extractClarificationPayload(raw);
-  const source = String(cleanedText || raw || "").replace(/\r\n/g, "\n");
+  const source = normalizeMarkdownCodeFences(String(cleanedText || raw || ""));
 
   const codeBlocks = [];
   const withCodePlaceholders = source.replace(
@@ -647,7 +690,7 @@ function renderMarkdown(raw = "") {
       /\[(.*?)\]\((https?:\/\/[^)]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
     )
-    .replace(/^[-*] (.+)$/gm, "<li>$1</li>")
+    .replace(/^\s*[-*•]\s+(.+)$/gm, "<li>$1</li>")
     .replace(/\n/g, "<br />");
 
   html = html.replace(/((?:<li>.*?<\/li>(?:<br \/>)?)+)/g, "<ul>$1</ul>");
@@ -659,11 +702,13 @@ function renderMarkdown(raw = "") {
   return html;
 }
 
+/* strip img: remove markdown image syntax from text (clean for clipboard) */
 const stripImg = (text = "") =>
   extractClarificationPayload(
     text.replace(/!\[.*?\]\([^)]+\)\n\n?/g, "").trim(),
   ).cleanedText;
 
+/* to context content: preserve only server-managed images, collapse excessive whitespace for LLM context window */
 const toContextContent = (text = "") =>
   String(text || "")
     .replace(/!\[[^\]]*\]\(([^)]+)\)/g, (full, rawUrl) => {
@@ -673,17 +718,21 @@ const toContextContent = (text = "") =>
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
+/* extract image url: parse markdown image syntax to get first image URL (for preview) */
 function extractImageUrl(content = "") {
   const m = content.match(/!\[.*?\]\(([^)]+)\)/);
   return m ? m[1] : null;
 }
 
+/* push url: sync browser address bar with current page route */
 function pushUrl(url) {
   if (window.location.pathname !== url) window.history.pushState(null, "", url);
 }
 
+// uid: generate unique ID for messages (timestamp + random suffix)
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
+// svg icon: image frame (used for image upload button)
 const ImageIcon = () => (
   <svg
     width="18"
@@ -699,6 +748,8 @@ const ImageIcon = () => (
   </svg>
 );
 
+// chat interface: main component - handles all chat UI/UX: message input, streaming responses, clarification popups
+// includes: model/style selection, image upload, internet toggle, sidebar, auth, message editing, toast notifications
 export default function ChatInterface({
   onMessagesChange,
   chatId,
@@ -710,7 +761,6 @@ export default function ChatInterface({
   onLoadChatRef,
 }) {
   const { t, i18n } = useTranslation();
-  const DEMO_MODE = true;
   const { authFetch, user } = useAuth();
   const localPath = (path) => withLang(path, i18n.language);
 
@@ -744,11 +794,14 @@ export default function ChatInterface({
     }
   });
   const pendingInputRef = useRef("");
+  const isWelcomeState = messages.length === 0;
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     setSelectedModel(getPlanModel(user?.plan));
   }, [user?.plan]);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     try {
       window.localStorage.setItem(
@@ -780,12 +833,34 @@ export default function ChatInterface({
   const queueClarifyPopup = useCallback(
     (payload, options = {}) => {
       if (!payload) return;
-      const immediate = options?.immediate === true;
+      const immediate =
+        options?.immediate === true ||
+        options?.liveUpdate === true ||
+        CLARIFY_POPUP_DELAY_MS <= 0;
       clearQueuedClarifyPopup();
-      clarifyPopupTimeoutRef.current = setTimeout(() => {
-        setClarifyPopup(payload);
-        clarifyPopupTimeoutRef.current = null;
-      }, immediate ? 0 : CLARIFY_POPUP_DELAY_MS);
+
+      if (immediate) {
+        setClarifyPopup((prev) => {
+          const nextSignature = getClarifyPayloadSignature(payload);
+          const prevSignature = getClarifyPayloadSignature(prev);
+          if (nextSignature && nextSignature === prevSignature) return prev;
+          return payload;
+        });
+        return;
+      }
+
+      clarifyPopupTimeoutRef.current = setTimeout(
+        () => {
+          setClarifyPopup((prev) => {
+            const nextSignature = getClarifyPayloadSignature(payload);
+            const prevSignature = getClarifyPayloadSignature(prev);
+            if (nextSignature && nextSignature === prevSignature) return prev;
+            return payload;
+          });
+          clarifyPopupTimeoutRef.current = null;
+        },
+        immediate ? 0 : CLARIFY_POPUP_DELAY_MS,
+      );
     },
     [clearQueuedClarifyPopup],
   );
@@ -797,6 +872,7 @@ export default function ChatInterface({
     toastTimeoutRef.current = setTimeout(() => setToast(null), 2600);
   }, []);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     return () => {
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
@@ -805,12 +881,51 @@ export default function ChatInterface({
   }, [clearQueuedClarifyPopup]);
 
   const welcomeMessage = useMemo(() => {
-    const welcomeMessages = t("chat.welcome", { returnObjects: true });
-    const items = Array.isArray(welcomeMessages)
-      ? welcomeMessages
-      : [String(welcomeMessages)];
-    return items[Math.floor(Math.random() * items.length)];
-  }, [i18n.language, t]);
+    const toMessageArray = (value) => {
+      if (Array.isArray(value)) {
+        return value.map((entry) => String(entry || "").trim()).filter(Boolean);
+      }
+
+      if (value && typeof value === "object") {
+        return Object.values(value)
+          .map((entry) => String(entry || "").trim())
+          .filter(Boolean);
+      }
+
+      const text = String(value || "").trim();
+      if (!text || text.startsWith("chat.")) return [];
+      return [text];
+    };
+
+    const displayName = String(
+      user?.username || t("chat.nameFallback", { defaultValue: "there" }),
+    ).trim();
+
+    const guestMessages = toMessageArray(
+      t("chat.welcomeGuest", { returnObjects: true }),
+    );
+    const legacyMessages = toMessageArray(
+      t("chat.welcome", { returnObjects: true }),
+    );
+    const basePool = guestMessages.length > 0 ? guestMessages : legacyMessages;
+
+    const loggedInMessages = user
+      ? toMessageArray(
+          t("chat.welcomeLoggedIn", {
+            returnObjects: true,
+            name: displayName,
+          }),
+        )
+      : [];
+
+    const pool =
+      user && loggedInMessages.length > 0
+        ? [...basePool, ...loggedInMessages]
+        : basePool;
+
+    if (pool.length === 0) return "";
+    return pool[Math.floor(Math.random() * pool.length)];
+  }, [i18n.language, t, user?.username, user]);
 
   useEffect(() => {
     currentChatRef.current = currentChatId;
@@ -832,6 +947,7 @@ export default function ChatInterface({
   }, []);
 
   useEffect(() => {
+    // handler separat halten, sonst wird die render-logik schnell wirr
     const handler = (e) => {
       if (
         modelDropdownRef.current &&
@@ -844,6 +960,7 @@ export default function ChatInterface({
   }, []);
 
   useEffect(() => {
+    // handler separat halten, sonst wird die render-logik schnell wirr
     const handler = (e) => {
       if (plusMenuRef.current && !plusMenuRef.current.contains(e.target))
         setShowPlusMenu(false);
@@ -858,29 +975,36 @@ export default function ChatInterface({
     setShowModelDropdown(false);
   }, [clarifyPopup]);
 
+  // Upload image file to server and return URL for insertion into messages
   const uploadImage = useCallback(
     async (file) => {
+      // Prepare multipart form with image file
       const fd = new FormData();
       fd.append("image", file);
+      // POST to server with authorization
       const res = await authFetch("/api/history/upload-image", {
         method: "POST",
         body: fd,
       });
       if (!res.ok) throw new Error(`Image upload failed (${res.status})`);
+      // Return URL path from server response
       return (await res.json()).url;
     },
     [authFetch],
   );
 
+  // Warm up model by sending preload request to prevent cold start latency
   const preloadModel = useCallback(
     async (modelId) => {
       if (!user || !modelId) return;
 
+      // Check if model was warm enough recently (avoid spamming server)
       const now = Date.now();
       const warmUntil = modelWarmUntilRef.current[modelId] || 0;
       if (warmUntil > now) return;
 
       try {
+        // Send preload signal with 5min cooldown to avoid duplicate requests
         const res = await authFetch("/api/chat/preload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -888,6 +1012,7 @@ export default function ChatInterface({
         });
 
         if (res.ok) {
+          // Mark model as warm for next 5 minutes
           modelWarmUntilRef.current[modelId] = now + MODEL_PRELOAD_REFRESH_MS;
         }
       } catch {}
@@ -900,12 +1025,15 @@ export default function ChatInterface({
     preloadModel(selectedModel);
   }, [user, selectedModel, preloadModel]);
 
+  // Load previously saved chat from server by filename
   const loadChat = useCallback(
     async (filename) => {
       try {
+        // Fetch chat data from history API
         const res = await authFetch(`/api/history/${filename}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+        // Transform server format (role/content) to local format (isUser/content)
         const loaded = (data.messages ?? []).map((m, i) => ({
           content: m.content,
           isUser: m.role === "user",
@@ -913,6 +1041,7 @@ export default function ChatInterface({
         }));
         setMessages(loaded);
         setCurrentChatId(filename);
+        // Update URL to reflect loaded chat UUID
         const uuid = filename.match(/chat_([a-f0-9-]+)\.json/)?.[1];
         if (uuid) pushUrl(localPath(`/chat/${uuid}`));
       } catch (err) {
@@ -926,10 +1055,12 @@ export default function ChatInterface({
     onLoadChatRef?.(loadChat);
   }, [loadChat]);
 
+  // Persist chat to server history with optional title generation
   const saveChat = useCallback(
     async (msgs, chatIdToUse, generateTitle = false) => {
       if (!msgs.length) return;
       try {
+        // POST chat messages to server (generateTitle triggers auto-title on first save)
         const res = await authFetch("/api/history/save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -947,12 +1078,14 @@ export default function ChatInterface({
           return;
         }
         const saved = await res.json();
+        // If new chat, save returned filename and update URL with UUID
         if (saved.filename && !chatIdToUse) {
           setCurrentChatId(saved.filename);
           currentChatRef.current = saved.filename;
           const uuid = saved.filename.match(/chat_([a-f0-9-]+)\.json/)?.[1];
           if (uuid) pushUrl(localPath(`/chat/${uuid}`));
         }
+        // Notify sidebar to refresh chat history list
         window.dispatchEvent(new CustomEvent("chatHistoryUpdated"));
       } catch (err) {
         console.error("Failed to save chat:", err);
@@ -961,22 +1094,27 @@ export default function ChatInterface({
     [authFetch],
   );
 
+  // Handle image file selection from input or drag-drop, validate and preview
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Validate file is an image type
     if (!file.type.startsWith("image/")) {
       alert(t("chat.errors.notImage", { name: file.name }));
       return;
     }
+    // Reject oversized images (check against MAX_IMAGE_MB limit)
     if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
       alert(t("chat.errors.tooLarge", { max: MAX_IMAGE_MB }));
       return;
     }
+    // Store file for upload and generate data URL preview
     setImageFile(file);
     const reader = new FileReader();
     reader.onload = (ev) =>
       setImagePreview({ dataUrl: ev.target.result, name: file.name });
     reader.readAsDataURL(file);
+    // Close plus menu and reset input for reselection
     setShowPlusMenu(false);
     e.target.value = "";
   };
@@ -988,55 +1126,73 @@ export default function ChatInterface({
   }, []);
 
   const sendMessage = useCallback(async () => {
+    // normalize input: trim whitespace, fallback to generic "describe image" if only image attached
     const text = input.trim() || (imageFile ? t("chat.describeImage") : "");
+    // guard: abort if empty or already processing previous message
     if (!text || isSending) return;
 
+    // check if this message is a reply to the clarification popup (user picked option or freeform)
     const clarifyReplyFromPopup = Boolean(clarifyPopup);
+    // format reply as Q: question\nA: answer if it's a clarification response, otherwise use raw text
     const requestText = clarifyReplyFromPopup
       ? formatClarifyReply(clarifyPopup?.question, text)
       : text;
 
+    // dismiss the clarification popup once reply is processed
     clearQueuedClarifyPopup();
     setClarifyPopup(null);
 
+    // check authentication: if not logged in, store message and show login modal
     if (!user) {
       pendingInputRef.current = requestText;
       setAuthModalOpen(true);
       return;
     }
 
+    // mark that this message is responding to clarification (used by streaming handler to avoid repeat popups)
     if (clarifyReplyFromPopup) {
       pendingClarifyReplyRef.current = true;
     }
 
+    // set sending state (disables send button) and clear input field immediately
     setIsSending(true);
     setInput("");
 
+    // handle image upload if user attached an image
     let imageUrl = null;
     const fileCopy = imageFile;
     if (fileCopy) {
+      // clear image from UI immediately
       clearImage();
       try {
+        // POST image to /api/history/upload-image and get persisted URL
         imageUrl = await uploadImage(fileCopy);
       } catch (err) {
+        // if upload fails, fallback to local dataUrl (base64 embedded in message)
         console.error("Image upload failed:", err);
         imageUrl = imagePreview?.dataUrl ?? null;
       }
     }
 
+    // combine image markdown ![...](url) + text into single user message content
     const userContext = imageUrl
       ? `![Bild](${imageUrl})\n\n${requestText}`
       : requestText;
+    // create message object with unique ID and metadata
     const userMsg = { content: userContext, isUser: true, id: uid() };
 
+    // transform all previous messages to context format: {role: 'user'|'assistant', content: cleaned text}
+    // this strips markdown images and normalizes formatting for API consumption
     const contextSnap = messages.map((m) => ({
       role: m.isUser ? "user" : "assistant",
       content: toContextContent(m.content),
     }));
 
+    // append user message to message list (update UI)
     const withUser = [...messages, userMsg];
     setMessages(withUser);
 
+    // start streaming response: pass all required parameters to runStream
     await runStream(
       requestText,
       fileCopy,
@@ -1101,65 +1257,80 @@ export default function ChatInterface({
       style = "formal",
       useInternet = false,
     ) => {
+      // create placeholder message in UI for AI response (empty at first, fills as tokens arrive)
       const aiId = uid();
       setMessages((prev) => [
         ...prev,
         { content: "", isUser: false, id: aiId },
       ]);
 
+      // setup abort controller for stop button (allows user to cancel mid-stream)
       const controller = new AbortController();
       abortRef.current = controller;
       let fullText = "";
 
       try {
+        // build FormData payload for /api/chat/stream endpoint
         const fd = new FormData();
         fd.append("message", userText);
+        // pass conversation context so model knows previous messages
         fd.append("context", JSON.stringify(contextSnap));
-        fd.append("model", model);
-        fd.append("aiStyle", style);
-        fd.append("internetAccess", useInternet ? "true" : "false");
+        fd.append("model", model); // which model to use (2b/4b/8b)
+        fd.append("aiStyle", style); // formal/friendly/precise communication style
+        fd.append("internetAccess", useInternet ? "true" : "false"); // allow web search?
+        fd.append("clientSource", "web"); // track that request came from web (vs extension)
 
+        // mark if this is a response to clarification popup (prevents repeat clarifications)
         const clarifyReply = pendingClarifyReplyRef.current;
         pendingClarifyReplyRef.current = false;
         if (clarifyReply) {
           fd.append("clarifyReply", "true");
         }
 
+        // attach image file if user uploaded an image
         if (file) fd.append("image", file);
 
+        // add auth token to headers if user is logged in
         const token = localStorage.getItem("wieland_token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+        // POST to server and open streaming response
         const res = await fetch("/api/chat/stream", {
           method: "POST",
           headers,
           body: fd,
-          signal: controller.signal,
+          signal: controller.signal, // allows abort() to cancel fetch
         });
         if (!res.ok) throw new Error(`API ${res.status}`);
 
-        const memorySaved =
-          res.headers.get("X-Wieland-Memory-Saved") === "1";
+        // parse response headers for metadata about memory saving and clarification forcing
+        const memorySaved = res.headers.get("X-Wieland-Memory-Saved") === "1";
         const memoryCount = Number(
           res.headers.get("X-Wieland-Memory-Count") || "0",
         );
         const clarifyForced =
           res.headers.get("X-Wieland-Clarify-Forced") === "1";
 
+        // show toast if server extracted and saved memory items
         if (memorySaved && memoryCount > 0) {
           showToast(t("chat.memorySaved", { count: memoryCount }), "success");
         }
 
+        // setup reader for streaming response body (tokens arrive one at a time)
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
 
+        // stream token für token lesen damit die ui sofort reagiert :)
+        // read chunks as they arrive from server, decode UTF-8, append to fullText
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) break; // stream ended
           fullText += decoder.decode(value, { stream: true });
 
+          // extract visible text preview (hide [[WIELAND_CLARIFY_JSON]] markers from UI)
           const preview = getClarificationStreamPreview(fullText);
           const previewText = preview.text;
+          // update AI message in real-time as text arrives (so user sees text appearing)
           setMessages((prev) =>
             prev.map((m) =>
               m.id === aiId ? { ...m, content: previewText } : m,
@@ -1167,20 +1338,14 @@ export default function ChatInterface({
           );
         }
 
+        // nach dem stream klar trennen zwischen sichtbarer antwort und popup payload
+        // extract clarification popup data from response (if present) + get clean visible text
         const clarification = extractClarificationPayload(fullText);
-        const shouldClientForceClarify =
-          clarifyForced || isLikelyVagueBuildPromptClient(userText);
-        const fallbackClarificationPayload = shouldClientForceClarify
-          ? sanitizeClarifyPayload(
-              buildClientForcedClarificationFallbackPayload(userText),
-              "",
-            )
-          : null;
-        const clarificationPayload =
-          clarification.payload || fallbackClarificationPayload;
+        const clarificationPayload = clarification.payload; // parsed popup question/options or null
         const finalAssistantText =
           clarification.cleanedText || fullText || t("chat.shortError");
 
+        // update AI message with final visible text (without clarification markers)
         if (finalAssistantText !== fullText) {
           fullText = finalAssistantText;
           setMessages((prev) =>
@@ -1190,20 +1355,24 @@ export default function ChatInterface({
           );
         }
 
+        // if response includes clarification popup, queue it for display
         if (clarificationPayload) {
           queueClarifyPopup(clarificationPayload, {
-            immediate: shouldClientForceClarify,
+            immediate: clarifyForced, // force immediate display if server marked it urgent
           });
         }
 
+        // save chat history to database (only if new chat or when content changes)
         const final = [...baseMessages];
         if (finalAssistantText) {
           final.push({ content: finalAssistantText, isUser: false, id: aiId });
         }
-        const isNew = !currentChatRef.current && final.length <= 2;
+        const isNew = !currentChatRef.current && final.length <= 2; // new chat if no ID yet + few messages
         await saveChat(final, currentChatRef.current, isNew);
       } catch (err) {
+        // handle abort (user clicked stop button mid-stream)
         if (err.name === "AbortError") {
+          // save partial response if in an existing chat
           if (currentChatRef.current) {
             await saveChat(
               [...baseMessages, { content: fullText, isUser: false, id: aiId }],
@@ -1211,16 +1380,17 @@ export default function ChatInterface({
               false,
             );
           }
-          return;
+          return; // exit gracefully
         }
+
+        // handle other errors (network, timeout, server error)
         console.error("Stream error:", err);
-        const fallback = DEMO_MODE
-          ? t("chat.demoFallback")
-          : t("chat.errors.server");
+        const fallback = t("chat.errors.server");
         setMessages((prev) =>
           prev.map((m) => (m.id === aiId ? { ...m, content: fallback } : m)),
         );
       } finally {
+        // cleanup: clear abort controller and re-enable send button
         abortRef.current = null;
         setIsSending(false);
       }
@@ -1228,8 +1398,10 @@ export default function ChatInterface({
     [saveChat, showToast, t, queueClarifyPopup],
   );
 
+  // Stop ongoing token generation by aborting fetch request
   const stopGeneration = () => abortRef.current?.abort();
 
+  // Send message on Enter key press (allow Shift+Enter for newline)
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey && !isSending) {
       e.preventDefault();
@@ -1237,6 +1409,7 @@ export default function ChatInterface({
     }
   };
 
+  // Start new conversation - abort pending requests, clear messages and state
   const handleNewChat = useCallback(() => {
     abortRef.current?.abort();
     clearQueuedClarifyPopup();
@@ -1252,16 +1425,19 @@ export default function ChatInterface({
 
   const lastUserMsg = messages.reduce((last, m) => (m.isUser ? m : last), null);
 
+  // Enable edit mode for last user message (only allow editing the most recent user msg)
   const startEditing = (msg) => {
     if (msg.id !== lastUserMsg?.id) return;
     setEditingId(msg.id);
     setEditingText(stripImg(msg.content));
   };
 
+  // Discard edits and exit edit mode
   const cancelEdit = () => {
     setEditingId(null);
     setEditingText("");
   };
+  // Save edited user message and optionally regenerate AI response if one existed after it
 
   const saveEdit = async (msgId) => {
     const idx = messages.findIndex((m) => m.id === msgId);
@@ -1282,13 +1458,13 @@ export default function ChatInterface({
     setEditingId(null);
 
     const hadAI = idx < messages.length - 1 && !messages[idx + 1]?.isUser;
-
     if (hadAI) {
       setIsSending(true);
       const ctx = truncated.slice(0, idx).map((m) => ({
         role: m.isUser ? "user" : "assistant",
         content: toContextContent(m.content),
       }));
+
       let refile = null;
       if (imgUrl) {
         try {
@@ -1300,6 +1476,7 @@ export default function ChatInterface({
           console.error("Failed to restore image for edit stream:", err);
         }
       }
+
       const requestText = refile ? editingText : toContextContent(newContent);
       await runStream(
         requestText,
@@ -1310,34 +1487,42 @@ export default function ChatInterface({
         aiStyle,
         internetAccess,
       );
-    } else {
-      if (currentChatRef.current)
-        await saveChat(truncated, currentChatRef.current, false);
+      return;
+    }
+
+    if (currentChatRef.current) {
+      await saveChat(truncated, currentChatRef.current, false);
     }
   };
 
+  // Regenerate last AI response based on edited user message
   const regenerate = useCallback(async () => {
     if (isSending || !messages.length) return;
+    // Find last AI message (right to left scan)
     const aiIdx = [...messages].reduceRight(
       (found, m, i) => (found === -1 && !m.isUser ? i : found),
       -1,
     );
     if (aiIdx === -1) return;
+    // Find last user message before AI response
     const uIdx = messages
       .slice(0, aiIdx)
       .reduceRight((f, m, i) => (f === -1 && m.isUser ? i : f), -1);
     if (uIdx === -1) return;
 
+    // Get user message content/image and truncate at that point
     const uMsg = messages[uIdx];
     const imgUrl = extractImageUrl(uMsg.content);
     const truncated = messages.slice(0, aiIdx);
     setMessages(truncated);
     setIsSending(true);
 
+    // Build context from messages before user's message
     const ctx = truncated.slice(0, uIdx).map((m) => ({
       role: m.isUser ? "user" : "assistant",
       content: toContextContent(m.content),
     }));
+    // Re-fetch and convert image if present in message
     let refile = null;
     if (imgUrl) {
       try {
@@ -1349,6 +1534,7 @@ export default function ChatInterface({
         console.error("Failed to restore image for regenerate stream:", err);
       }
     }
+    // Restart stream with original user input
     const requestText = refile
       ? stripImg(uMsg.content)
       : toContextContent(uMsg.content);
@@ -1363,9 +1549,11 @@ export default function ChatInterface({
     );
   }, [messages, isSending, runStream, selectedModel, aiStyle, internetAccess]);
 
+  // Copy message text to clipboard (strip image URLs first)
   const copyText = useCallback(
     async (content) => {
       try {
+        // Write plaintext version (no image markup) to clipboard
         await navigator.clipboard.writeText(stripImg(content));
         showToast(t("chat.copied"), "success");
       } catch (err) {
@@ -1376,8 +1564,10 @@ export default function ChatInterface({
     [showToast, t],
   );
 
+  // Copy code block to clipboard (decode from encoded payload format)
   const copyCode = useCallback(
     async (encodedCode) => {
+      // Decode code payload from custom encoding
       const decoded = decodeCodePayload(encodedCode);
       if (!decoded) return;
       try {
@@ -1410,42 +1600,43 @@ export default function ChatInterface({
       )}
 
       <div className="chat-container">
-        <div className="messages-area">
-          {messages.length === 0 ? (
-            <div
-              className="welcome-message-container"
-              style={{ bottom: `${inputOffset + 104}px` }}
-            >
-              <span>{welcomeMessage}</span>
-            </div>
-          ) : (
-            messages.map((msg, idx) => (
-              <MessageRow
-                key={msg.id}
-                msg={msg}
-                isLast={idx === messages.length - 1}
-                isLastUser={msg.id === lastUserMsg?.id}
-                isEditing={editingId === msg.id}
-                editingText={editingText}
-                editInputRef={editInputRef}
-                isSending={isSending}
-                onEdit={startEditing}
-                onEditChange={setEditingText}
-                onEditSave={saveEdit}
-                onEditCancel={cancelEdit}
-                onCopy={copyText}
-                onCopyCode={copyCode}
-                onRegenerate={regenerate}
-              />
-            ))
-          )}
+        <div
+          className={`messages-area ${isWelcomeState ? "welcome-mode" : ""}`}
+        >
+          {isWelcomeState
+            ? null
+            : messages.map((msg, idx) => (
+                <MessageRow
+                  key={msg.id}
+                  msg={msg}
+                  isLast={idx === messages.length - 1}
+                  isLastUser={msg.id === lastUserMsg?.id}
+                  isEditing={editingId === msg.id}
+                  editingText={editingText}
+                  editInputRef={editInputRef}
+                  isSending={isSending}
+                  onEdit={startEditing}
+                  onEditChange={setEditingText}
+                  onEditSave={saveEdit}
+                  onEditCancel={cancelEdit}
+                  onCopy={copyText}
+                  onCopyCode={copyCode}
+                  onRegenerate={regenerate}
+                />
+              ))}
           <div ref={messagesEndRef} />
         </div>
 
         <div
-          className={`chat-input-container ${imagePreview ? "has-preview" : ""}`}
-          style={{ bottom: `${inputOffset}px` }}
+          className={`chat-input-container ${imagePreview ? "has-preview" : ""} ${isWelcomeState ? "welcome-mode" : ""}`}
+          style={isWelcomeState ? undefined : { bottom: `${inputOffset}px` }}
         >
+          {isWelcomeState && (
+            <div className="welcome-message-container">
+              <span>{welcomeMessage}</span>
+            </div>
+          )}
+
           <input
             ref={fileInputRef}
             type="file"
@@ -1513,11 +1704,7 @@ export default function ChatInterface({
           )}
 
           {clarifyPopup && (
-            <ClarifyPopup
-              key={`${clarifyPopup.question}-${clarifyPopup.step || 0}-${clarifyPopup.totalSteps || 0}`}
-              data={clarifyPopup}
-              onSelect={sendClarifyReply}
-            />
+            <ClarifyPopup data={clarifyPopup} onSelect={sendClarifyReply} />
           )}
 
           <div
@@ -1532,7 +1719,11 @@ export default function ChatInterface({
                 setShowPlusMenu((v) => !v);
               }}
               disabled={isSending || Boolean(clarifyPopup)}
-              aria-label={clarifyPopup ? getLocalizedIdeaPlaceholder(i18n.language) : t("chat.options")}
+              aria-label={
+                clarifyPopup
+                  ? getLocalizedIdeaPlaceholder(i18n.language)
+                  : t("chat.options")
+              }
             >
               {clarifyPopup ? (
                 <svg
@@ -1571,8 +1762,8 @@ export default function ChatInterface({
                   : imagePreview
                     ? t("chat.placeholderImage")
                     : clarifyPopup
-                      ? (clarifyPopup.freeformPlaceholder ||
-                        getLocalizedIdeaPlaceholder(i18n.language))
+                      ? clarifyPopup.freeformPlaceholder ||
+                        getLocalizedIdeaPlaceholder(i18n.language)
                       : t("chat.placeholderMessage")
               }
               disabled={isSending}
@@ -1682,7 +1873,9 @@ export default function ChatInterface({
         </div>
       </div>
 
-      {toast && <div className={`chat-toast ${toast.type}`}>{toast.message}</div>}
+      {toast && (
+        <div className={`chat-toast ${toast.type}`}>{toast.message}</div>
+      )}
 
       <AuthModal
         isOpen={authModalOpen}
@@ -1696,10 +1889,147 @@ export default function ChatInterface({
   );
 }
 
+// Clarification popup: character-by-character typing animation for question/options reveal
 function ClarifyPopup({ data, onSelect }) {
   if (!data) return null;
 
-  const options = Array.isArray(data.options) ? data.options : [];
+  // Target text for animation (full question and options list)
+  const questionTarget = String(data.question || "");
+  // Parse options array into normalized label/id format
+  const optionsTarget = useMemo(
+    () =>
+      (Array.isArray(data.options) ? data.options : []).map((option) => ({
+        id: String(option?.id || "")
+          .trim()
+          .toUpperCase(),
+        label: String(option?.label || ""),
+      })),
+    [data.options],
+  );
+  const questionTargetRef = useRef(questionTarget);
+  const optionsTargetRef = useRef(optionsTarget);
+  // Track typing animation progress (which chars shown, which options visible, option lengths)
+  const [typingState, setTypingState] = useState({
+    questionLength: 0,
+    shownOptions: 0,
+    optionLengths: [],
+  });
+
+  // Reset typing animation when question/options data changes
+  useEffect(() => {
+    questionTargetRef.current = questionTarget;
+    optionsTargetRef.current = optionsTarget;
+
+    setTypingState((prev) => {
+      const nextOptionLengths = optionsTarget.map((option, index) =>
+        Math.min(Number(prev.optionLengths[index] || 0), option.label.length),
+      );
+      const shownFromLengths = nextOptionLengths.filter(
+        (len) => len > 0,
+      ).length;
+
+      return {
+        questionLength: Math.min(prev.questionLength, questionTarget.length),
+        shownOptions: Math.max(
+          Math.min(prev.shownOptions, optionsTarget.length),
+          shownFromLengths,
+        ),
+        optionLengths: nextOptionLengths,
+      };
+    });
+  }, [questionTarget, optionsTarget]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTypingState((prev) => {
+        const liveQuestionTarget = String(questionTargetRef.current || "");
+        const liveOptionsTarget = Array.isArray(optionsTargetRef.current)
+          ? optionsTargetRef.current
+          : [];
+
+        let questionLength = prev.questionLength;
+        let shownOptions = prev.shownOptions;
+        const optionLengths = [...prev.optionLengths];
+        let changed = false;
+
+        if (questionLength < liveQuestionTarget.length) {
+          questionLength = Math.min(
+            liveQuestionTarget.length,
+            questionLength + CLARIFY_QUESTION_CHARS_PER_TICK,
+          );
+          changed = true;
+        } else if (liveOptionsTarget.length > 0) {
+          if (shownOptions === 0) {
+            shownOptions = 1;
+            if (!Number.isFinite(optionLengths[0])) optionLengths[0] = 0;
+            changed = true;
+          } else {
+            let activeOptionIndex = -1;
+            for (let i = 0; i < shownOptions; i++) {
+              const targetLen = liveOptionsTarget[i]?.label?.length || 0;
+              const currentLen = Number(optionLengths[i] || 0);
+              if (currentLen < targetLen) {
+                activeOptionIndex = i;
+                break;
+              }
+            }
+
+            if (activeOptionIndex >= 0) {
+              const targetLen =
+                liveOptionsTarget[activeOptionIndex].label.length;
+              optionLengths[activeOptionIndex] = Math.min(
+                targetLen,
+                Number(optionLengths[activeOptionIndex] || 0) +
+                  CLARIFY_OPTION_CHARS_PER_TICK,
+              );
+              changed = true;
+            } else if (shownOptions < liveOptionsTarget.length) {
+              shownOptions += 1;
+              if (!Number.isFinite(optionLengths[shownOptions - 1])) {
+                optionLengths[shownOptions - 1] = 0;
+              }
+              changed = true;
+            }
+          }
+        }
+
+        if (!changed) return prev;
+
+        return {
+          questionLength,
+          shownOptions,
+          optionLengths,
+        };
+      });
+    }, CLARIFY_TYPE_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const typedQuestion = questionTarget.slice(0, typingState.questionLength);
+  const visibleOptions = optionsTarget
+    .slice(0, Math.max(0, typingState.shownOptions))
+    .map((option, index) => {
+      const fullLabel = String(option.label || "");
+      const typedLength = Math.min(
+        Number(typingState.optionLengths[index] || 0),
+        fullLabel.length,
+      );
+
+      return {
+        ...option,
+        typedLabel: fullLabel.slice(0, typedLength),
+        isTyping: typedLength < fullLabel.length,
+      };
+    });
+
+  const optionsStillTyping = visibleOptions.some((option) => option.isTyping);
+  const moreOptionsPending = typingState.shownOptions < optionsTarget.length;
+  const questionStillTyping =
+    typingState.questionLength < questionTarget.length;
+  const showLoading =
+    optionsTarget.length === 0 || optionsStillTyping || moreOptionsPending;
+  const showCursor = questionStillTyping || showLoading;
   const stepLabel =
     data.step && data.totalSteps && data.totalSteps > 1
       ? `${data.step} von ${data.totalSteps}`
@@ -1709,13 +2039,16 @@ function ClarifyPopup({ data, onSelect }) {
     <div className="clarify-dock" role="dialog" aria-label={data.question}>
       <div className="clarify-dock-card">
         <div className="clarify-dock-head">
-          <h3>{data.question}</h3>
+          <h3>
+            {typedQuestion || " "}
+            {showCursor && <span className="clarify-dock-typing">|</span>}
+          </h3>
         </div>
 
         {stepLabel && <div className="clarify-dock-step">{stepLabel}</div>}
 
         <div className="clarify-dock-options">
-          {options.map((option, index) => {
+          {visibleOptions.map((option, index) => {
             const optionReply = /^[A-E]$/.test(option.id)
               ? `${option.id}) ${option.label}`
               : option.label;
@@ -1725,20 +2058,27 @@ function ClarifyPopup({ data, onSelect }) {
               <button
                 key={`${option.id}-${index}`}
                 className="clarify-dock-option"
+                disabled={!option.typedLabel}
                 onClick={() => onSelect(quickReply)}
               >
                 <span className="clarify-dock-option-index">{index + 1}</span>
-                <span className="clarify-dock-option-label">{option.label}</span>
+                <span
+                  className={`clarify-dock-option-label ${option.isTyping ? "typing" : ""}`}
+                >
+                  {option.typedLabel || " "}
+                </span>
                 <span className="clarify-dock-option-arrow">›</span>
               </button>
             );
           })}
+          {showLoading && <div className="clarify-dock-loading">Typing...</div>}
         </div>
       </div>
     </div>
   );
 }
 
+// Render individual chat message: user text/images or AI response with edit/copy actions
 function MessageRow({
   msg,
   isLast,
@@ -1756,9 +2096,12 @@ function MessageRow({
   onRegenerate,
 }) {
   const { t } = useTranslation();
+  // Extract image URL from message markdown (format: ![Bild](url))
   const imageUrl = extractImageUrl(msg.content);
+  // Plaintext version without image markup (for display/copy functionality)
   const textOnly = stripImg(msg.content);
 
+  // Intercept code copy button clicks via event delegation (avoid per-button listeners)
   const handleAssistantContentClick = (event) => {
     const button = event.target.closest(".code-copy-btn");
     if (!button) return;

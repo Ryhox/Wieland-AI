@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { withLang } from "../utils/i18nRouting";
 
+// protected route: guard routes behind authentication + optional plan requirement
 export default function ProtectedRoute({ children, requiredPlan = null }) {
   const { t, i18n } = useTranslation();
   const { user, loading } = useAuth();

@@ -12,6 +12,7 @@ import Scene3D from "../components/Scene3D";
 import { useAuth } from "../context/AuthContext";
 import { withLang } from "../utils/i18nRouting";
 
+// einfaches faq-item component: frage ausklappbar mit antwort darunter
 function FAQItem({ q, a, open, onToggle }) {
   return (
     <div className={`faq-item ${open ? "faq-item--open" : ""}`}>
@@ -38,10 +39,14 @@ function FAQItem({ q, a, open, onToggle }) {
   );
 }
 
+// hauptseite: faq mit suche und kategorie-filter
 function FAQ({ isSidebarOpen, onSidebarToggle }) {
+  // translations + auth context
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const rootRef = useRef(null);
+
+  // ui-state: welche frage offen, welcher filter aktiv, suchquery
   const [openQuestion, setOpenQuestion] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,22 +62,28 @@ function FAQ({ isSidebarOpen, onSidebarToggle }) {
 
   const localPath = (path) => withLang(path, i18n.language);
 
+  // kategorie-klassifizierung basierend auf Text-Matching
   const getCategory = (item) => {
     const source = `${item.q} ${item.a}`.toLowerCase();
+    // regex pattern für subscription-keywords
     if (
       /abo|subscript|kuendig|cancel|upgrade|downgrade|plan|price|preis|max|pro|free|abbon/.test(
         source,
       )
     )
       return "subscription";
+    // model/KI-schichten pattern
     if (/modell|model|2b|4b|8b|multimodal|modello/.test(source)) return "model";
     return "about";
   };
 
+  // filtering: kategorie UND suchtext müssen matchen
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const filteredFaq = faqData.filter((item) => {
+    // kategorie check
     const categoryOk =
       activeFilter === "all" || getCategory(item) === activeFilter;
+    // text search in frage + antwort
     const searchOk =
       !normalizedQuery ||
       item.q.toLowerCase().includes(normalizedQuery) ||
@@ -80,6 +91,7 @@ function FAQ({ isSidebarOpen, onSidebarToggle }) {
     return categoryOk && searchOk;
   });
 
+  // animation und side-effects hier gebündelt, cleanup ist wichtig :/
   useLayoutEffect(() => {
     if (!rootRef.current) return;
 

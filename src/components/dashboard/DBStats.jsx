@@ -40,6 +40,7 @@ const ArrowRight = () => (
   </svg>
 );
 
+// hauptlogik sitzt hier, sonst verliert man im ui-flow schnell den faden :/
 function buildDaily(items, dateKey, days) {
   const now = new Date();
   const result = [];
@@ -88,7 +89,7 @@ function StatCard({ label, value, accent, loading, onClick, sublabel }) {
         <div className="db-skeleton db-skeleton-stat" />
       ) : (
         <>
-          <span className="db-stat-value">{value ?? "—"}</span>
+          <span className="db-stat-value">{value ?? "---"}</span>
           <span className="db-stat-label">{label}</span>
           {sublabel && <span className="db-stat-sub">{sublabel}</span>}
           {onClick && (
@@ -102,6 +103,8 @@ function StatCard({ label, value, accent, loading, onClick, sublabel }) {
   );
 }
 
+// db stats: admin dashboard stats component with recharts area/bar charts
+// range selector (7/14/30/90 days), type toggle (users, chats, both)
 export default function DBStats({
   stats,
   loading,
@@ -161,7 +164,7 @@ export default function DBStats({
           month: "short",
           year: "numeric",
         })
-      : "—";
+      : "---";
 
   return (
     <div className="db-overview">
@@ -184,7 +187,7 @@ export default function DBStats({
         />
         <StatCard
           label={t("dashboard.stats.messages")}
-          value={stats?.total_msgs ?? "—"}
+          value={stats?.total_msgs ?? "---"}
           accent="blue"
           loading={loading}
         />
@@ -405,7 +408,7 @@ export default function DBStats({
                     {c.title || c.filename}
                   </span>
                   {c.username && (
-                    <span className="db-top-chat-user"> · {c.username}</span>
+                    <span className="db-top-chat-user"> • {c.username}</span>
                   )}
                 </div>
                 <span className="db-top-chat-msgs">

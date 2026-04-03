@@ -3,11 +3,14 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import "../styles/PaymentConfirmModal.css";
 
+// payment confirm modal: select payment method (card, paypal, apple-pay, google-pay)
 export default function PaymentConfirmModal({
   onConfirm,
   onClose,
   plan = "Pro",
   price = 4.99,
+  pricePeriod,
+  billingNote,
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -18,7 +21,7 @@ export default function PaymentConfirmModal({
       id: "card",
       name: t("payment.methods.card"),
       icon: "/icons/card.png",
-      details: "•••• •••• •••• 3874",
+      details: "**** **** **** 3874",
       issuer: "Max Mustermann",
     },
     {
@@ -50,7 +53,7 @@ export default function PaymentConfirmModal({
         <div className="payment-confirm-header">
           <h2>{t("payment.title")}</h2>
           <button className="payment-confirm-close" onClick={onClose}>
-            ✕
+            {"\u00D7"}
           </button>
         </div>
 
@@ -106,8 +109,12 @@ export default function PaymentConfirmModal({
 
             <div className="plan-price-section">
               <span className="plan-price-amount">${price.toFixed(2)}</span>
-              <span className="plan-price-period">{t("payment.perMonth")}</span>
-              <p className="plan-price-note">{t("payment.tax")}</p>
+              <span className="plan-price-period">
+                {pricePeriod || t("payment.perMonth")}
+              </span>
+              <p className="plan-price-note">
+                {billingNote || t("payment.tax")}
+              </p>
             </div>
 
             <button className="payment-confirm-btn" onClick={onConfirm}>

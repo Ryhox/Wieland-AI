@@ -13,6 +13,7 @@ const LANGUAGES = [
   { code: "it", label: "Italiano", flagCode: "IT" },
 ];
 
+// language selector dropdown: alle 3 Sprachen (DE/EN/IT) mit flaggen
 function LanguageButton() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ function LanguageButton() {
   const selected =
     LANGUAGES.find((lang) => lang.code === i18n.language) || LANGUAGES[0];
 
+  // handler: change language + update URL path + close dropdown
   const handleLanguageSelect = (lang) => {
     i18n.changeLanguage(lang.code);
     const currentPath = stripLangPrefix(location.pathname);
@@ -79,6 +81,7 @@ function LanguageButton() {
   );
 }
 
+// Header: navigation bar mit logo + language selector + user menu (auth/logout/profile)
 function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -89,6 +92,7 @@ function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
   const lang = i18n.language || DEFAULT_LANG;
   const localPath = (path) => withLang(path, lang);
 
+  // header classes: adjust layout ob sidebar visible oder user authenticated
   let headerClass = "header";
   if (!user) {
     headerClass += " no-sidebar";
@@ -96,6 +100,7 @@ function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
     headerClass += " sidebar-open";
   }
 
+  // handler separat halten, sonst wird die render-logik schnell wirr
   const handleLogoClick = (e) => {
     e.preventDefault();
     if (!user) {
@@ -159,6 +164,7 @@ function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
           <a href={localPath("/faq")}>{t("header.navFaq")}</a>
           <a href={localPath("/changelogs")}>{t("header.navChangelogs")}</a>
           <a href={localPath("/pricing")}>{t("header.navPricing")}</a>
+          <a href={localPath("/conclusion")}>{t("header.navConclusion")}</a>
         </nav>
 
         <button
@@ -218,7 +224,7 @@ function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
                 onClick={closeMobileMenu}
                 aria-label={t("header.menuClose")}
               >
-                ✕
+                {"\u00D7"}
               </button>
             </header>
 
@@ -231,6 +237,9 @@ function Header({ isSidebarOpen, onNewChat, onSidebarToggle }) {
               </a>
               <a href={localPath("/changelogs")} onClick={closeMobileMenu}>
                 {t("header.navChangelogs")}
+              </a>
+              <a href={localPath("/conclusion")} onClick={closeMobileMenu}>
+                {t("header.navConclusion")}
               </a>
               <a href={localPath("/pricing")} onClick={closeMobileMenu}>
                 {t("header.navPricing")}

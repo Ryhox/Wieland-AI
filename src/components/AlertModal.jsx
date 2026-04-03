@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import "../styles/AlertModal.css";
 
+// alert modal: success/error notification with optional auto-close timer
 export default function AlertModal({
   type = "success",
   title,
@@ -11,6 +12,7 @@ export default function AlertModal({
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(true);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     if (!isVisible) {
       setTimeout(() => onClose?.(), 300);

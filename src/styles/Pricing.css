@@ -1,3 +1,4 @@
+/* Pricing Page Layout */
 @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap");
 
 .pricing-page-wrapper {
@@ -388,6 +389,7 @@
   color: rgba(255, 255, 255, 0.35);
 }
 
+/* mobile tweaks ab hier getrennt, sonst wirds schnell unklar */
 @media (max-width: 600px) {
   .pricing-ambient-glow {
     width: 72vmin;

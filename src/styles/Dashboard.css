@@ -1,3 +1,4 @@
+/* Dashboard Base */
 *,
 *::before,
 *::after {
@@ -25,6 +26,7 @@ a {
   text-decoration: none;
 }
 
+/* Dashboard layout */
 .db-root {
   display: flex;
   height: 100vh;
@@ -36,6 +38,7 @@ a {
   position: relative;
 }
 
+/* Sidebar */
 .db-sidebar {
   width: 220px;
   flex-shrink: 0;
@@ -47,6 +50,7 @@ a {
   flex-direction: column;
 }
 
+/* Sidebar brand/logo section */
 .db-brand {
   display: flex;
   align-items: center;
@@ -55,6 +59,7 @@ a {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Brand logo icon box */
 .db-brand-icon {
   width: 34px;
   height: 34px;
@@ -69,6 +74,7 @@ a {
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
 }
 
+/* Brand text & tagline */
 .db-brand-text {
   font-weight: 700;
   font-size: 15px;
@@ -87,6 +93,7 @@ a {
   color: rgba(255, 255, 255, 0.45);
 }
 
+/* Navigation menu */
 .db-nav {
   flex: 1;
   padding: 14px 10px;
@@ -95,6 +102,7 @@ a {
   gap: 3px;
 }
 
+/* Navigation item */
 .db-nav-item {
   display: flex;
   align-items: center;
@@ -122,6 +130,7 @@ a {
   color: #ffffff;
 }
 
+/* Nav item icon */
 .db-nav-icon {
   font-size: 15px;
   width: 18px;
@@ -133,11 +142,13 @@ a {
   font-size: 13px;
 }
 
+/* Sidebar footer with user */
 .db-sidebar-footer {
   padding: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Current user display */
 .db-current-user {
   display: flex;
   align-items: center;
@@ -162,6 +173,7 @@ a {
   letter-spacing: 0.1em;
 }
 
+/* User avatar */
 .db-avatar {
   width: 32px;
   height: 32px;
@@ -182,6 +194,7 @@ a {
   font-size: 10px;
 }
 
+/* Main content area */
 .db-main {
   flex: 1;
   display: flex;
@@ -190,6 +203,7 @@ a {
   min-width: 0;
 }
 
+/* Top navigation bar */
 .db-topbar {
   display: flex;
   align-items: center;
@@ -210,6 +224,7 @@ a {
   gap: 12px;
 }
 
+/* Page title & subtitle */
 .db-page-title {
   font-size: 18px;
   font-weight: 700;
@@ -228,6 +243,7 @@ a {
   gap: 10px;
 }
 
+/* Search input */
 .db-search-wrap {
   position: relative;
   display: flex;
@@ -266,6 +282,7 @@ a {
   color: rgba(255, 255, 255, 0.22);
 }
 
+/* Primary action button */
 .db-btn-primary {
   height: 32px;
   display: inline-flex;
@@ -297,6 +314,7 @@ a {
   scale: 1;
 }
 
+/* Ghost button variant */
 .db-btn-ghost {
   height: 32px;
   display: inline-flex;
@@ -319,6 +337,7 @@ a {
   color: #ffffff;
 }
 
+/* Danger delete button */
 .db-btn-danger {
   background: rgba(220, 38, 38, 0.12);
   border: 1px solid rgba(220, 38, 38, 0.3);
@@ -375,12 +394,14 @@ a {
   gap: 14px;
 }
 
+/* mobile tweaks ab hier getrennt, sonst wirds schnell unklar */
 @media (max-width: 1100px) {
   .db-stat-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
+/* Individual stat card */
 .db-stat-card {
   background: rgba(82, 82, 82, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.1);

@@ -1,3 +1,4 @@
+/* Chat Layout */
 .chat-container {
   position: fixed;
   inset: 0;
@@ -31,6 +32,12 @@
   display: none;
 }
 
+.messages-area.welcome-mode {
+  pointer-events: none;
+  overflow: hidden;
+  padding: 0;
+}
+
 .message {
   display: flex;
   max-width: 100%;
@@ -38,16 +45,18 @@
   flex-direction: column;
 }
 
+/* User message bubble styling */
 .user-message {
   align-items: flex-end;
 }
 
+/* AI message bubble styling */
 .ai-message {
   align-items: flex-start;
 }
 
+/* Message bubbles */
 .message-bubble {
-  max-width: 70%;
   padding: 12px 16px;
   border-radius: 12px;
   font-size: 14px;
@@ -59,6 +68,7 @@
   position: relative;
 }
 
+/* Images in messages */
 .message-images-grid {
   display: flex;
   flex-wrap: wrap;
@@ -97,6 +107,7 @@
   opacity: 1;
 }
 
+/* Individual action button */
 .message-action-btn {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -124,10 +135,12 @@
   cursor: not-allowed;
 }
 
+/* Edit mode */
 .edit-message-container {
   width: 100%;
 }
 
+/* Edit textarea */
 .edit-message-input {
   width: 100%;
   background: rgba(0, 0, 0, 0.3);
@@ -146,6 +159,7 @@
   border-color: rgba(255, 255, 255, 0.4);
 }
 
+/* Edit save/cancel buttons */
 .edit-actions {
   display: flex;
   gap: 8px;
@@ -180,6 +194,7 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* Message slide animation */
 @keyframes messageSlideIn {
   from {
     opacity: 0;
@@ -192,13 +207,16 @@
   }
 }
 
+/* User message background & border */
 .user-message .message-bubble {
   background: rgba(82, 82, 82, 0.24);
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.06);
+  white-space: pre-wrap;
 }
 
+/* AI message background & border */
 .ai-message .message-bubble {
   background: rgba(151, 151, 151, 0.07);
   color: #ffffff;
@@ -206,16 +224,41 @@
   box-shadow: 0 4px 15px rgba(255, 0, 234, 0.089);
 }
 
+/* Bold text styling */
 .message-bubble strong {
   color: #fa4fc7;
   font-weight: 600;
 }
 
+/* Italic text styling */
 .message-bubble em {
   color: #ffd0f7c9;
   font-style: italic;
 }
 
+/* Lists (ul, ol) */
+.message-bubble ul,
+.message-bubble ul,
+/* markdown listen hier bewusst hart stabilisieren */
+.message-bubble ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+/* Unordered list */
+.message-bubble ul {
+  list-style: disc;
+}
+
+.message-bubble ol {
+  list-style: decimal;
+}
+
+.message-bubble li {
+  margin: 3px 0;
+}
+
+/* Links */
 .message-bubble a {
   color: #c0b9c0;
   text-decoration: none;
@@ -227,6 +270,7 @@
   color: #ffffff;
 }
 
+/* Inline code */
 .message-bubble code {
   background: rgba(0, 0, 0, 0.25);
   padding: 2px 6px;
@@ -236,6 +280,7 @@
   font-size: 12px;
 }
 
+/* Code blocks */
 .message-bubble .chat-code-block {
   margin: 10px 0;
   border-radius: 10px;
@@ -290,6 +335,7 @@
   line-height: 1.5;
 }
 
+/* Loading animation */
 .message-bubble .loader {
   display: flex;
   justify-content: center;
@@ -424,20 +470,18 @@
 }
 
 .welcome-message-container {
-  position: fixed;
-  left: 50%;
-  bottom: calc(50px + 104px);
-  transform: translateX(-50%);
-  width: min(800px, calc(100% - 40px));
+  position: relative;
+  width: 100%;
   margin-top: 0;
   pointer-events: none;
   font-weight: 600;
   font-size: clamp(24px, 3.4vw, 30px);
   line-height: 1.25;
   text-align: center;
-  z-index: 80;
+  z-index: 20;
 }
 
+/* Input container */
 .chat-input-container {
   position: fixed;
   bottom: 50px;
@@ -448,6 +492,30 @@
   z-index: 100;
   pointer-events: auto;
   overflow: visible;
+}
+
+.chat-input-container.welcome-mode {
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  width: min(800px, calc(100% - 40px));
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  z-index: 120;
+}
+
+.chat-input-container.welcome-mode .input-row {
+  position: relative;
+  z-index: 130;
+  width: min(620px, 100%);
+  margin: 0 auto;
+}
+
+.chat-input-container.welcome-mode .plus-popup,
+.chat-input-container.welcome-mode .model-dropdown {
+  z-index: 260;
 }
 
 .image-previews-container {
@@ -703,7 +771,7 @@
   position: absolute;
   bottom: 70px;
   left: 0;
-  background: rgba(10, 12, 20, 0.98);
+  background: rgba(10, 12, 20, 0.973);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   padding: 8px;
@@ -711,7 +779,6 @@
   flex-direction: column;
   gap: 4px;
   min-width: 210px;
-  backdrop-filter: blur(12px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   z-index: 200;
   animation: popupIn 0.15s ease-out;
@@ -905,6 +972,7 @@
   background: rgba(220, 38, 38, 0.2);
 }
 
+/* popup für rückfragen separat halten damit input flow nicht kippt :) */
 .clarify-dock {
   position: absolute;
   left: 0;
@@ -920,7 +988,8 @@
   overflow-y: auto;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.07),
       rgba(255, 255, 255, 0.02)
@@ -946,8 +1015,25 @@
   color: #f5f6fb;
   font-size: clamp(17px, 2.5vw, 22px);
   line-height: 1.28;
+  min-height: 1.28em;
   letter-spacing: -0.2px;
   font-weight: 620;
+}
+.clarify-dock-typing {
+  margin-left: 4px;
+  opacity: 0.75;
+  animation: clarifyTypingBlink 0.9s steps(1, end) infinite;
+}
+
+@keyframes clarifyTypingBlink {
+  0%,
+  49% {
+    opacity: 0.75;
+  }
+  50%,
+  100% {
+    opacity: 0.15;
+  }
 }
 
 .clarify-dock-close {
@@ -979,6 +1065,18 @@
   gap: 6px;
 }
 
+.clarify-dock-loading {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 2px;
+}
+
 .clarify-dock-option {
   display: flex;
   align-items: center;
@@ -1000,6 +1098,10 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
+.clarify-dock-option:disabled {
+  cursor: default;
+}
+
 .clarify-dock-option-index {
   display: inline-flex;
   align-items: center;
@@ -1019,6 +1121,12 @@
   flex: 1;
   font-size: 14px;
   font-weight: 500;
+}
+
+.clarify-dock-option-label.typing::after {
+  content: " |";
+  opacity: 0.65;
+  animation: clarifyTypingBlink 0.9s steps(1, end) infinite;
 }
 
 .clarify-dock-option-arrow {
@@ -1097,6 +1205,8 @@
   }
 }
 
+/* mobile breakpoints hier nur auf lesbarkeit und touch fokus */
+
 @media (max-width: 768px) {
   .messages-area {
     max-width: 100%;
@@ -1117,9 +1227,15 @@
     bottom: 20px;
   }
 
-  .welcome-message-container {
+  .chat-input-container.welcome-mode {
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -50%);
     width: calc(100% - 24px);
-    bottom: calc(50px + 88px);
+  }
+
+  .welcome-message-container {
+    width: 100%;
     font-size: clamp(20px, 6vw, 26px);
   }
 

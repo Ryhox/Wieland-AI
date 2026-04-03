@@ -6,11 +6,13 @@ const path = require("path");
 const sqlite3 = require("sqlite3");
 const { open } = require("sqlite");
 
+// cli input robust halten damit script eindeutig per email oder username arbeitet
 function printUsage() {
   console.log("Usage: npm run make-admin -- --email <user@example.com>");
   console.log("   or: npm run make-admin -- --username <username>");
 }
 
+// helper-block für parsing/aufbereitung, nimmt unten viel chaos raus
 function parseArgs(argv) {
   const args = { email: null, username: null };
   for (let i = 0; i < argv.length; i += 1) {
@@ -61,6 +63,7 @@ function validateInput({ email, username, help }) {
 }
 
 async function main() {
+  // zieluser auf admin setzen ohne restliche userdaten anzufassen
   const args = parseArgs(process.argv.slice(2));
   const validation = validateInput(args);
 
@@ -94,15 +97,19 @@ async function main() {
       process.exit(1);
     }
 
+    // Skip wenn already admin :)
     if (user.plan === "Admin") {
       console.log(`User already admin: ${user.username} <${user.email}>`);
       process.exit(0);
     }
 
+    // Rolle upgraden zu admin
     const result = await db.run("UPDATE users SET plan = ? WHERE id = ?", [
       "Admin",
       user.id,
     ]);
+
+    // Bei null changes = etwas lief falsch
     if (result.changes !== 1) {
       console.error("No change applied.");
       process.exit(1);

@@ -1,6 +1,7 @@
 import "../styles/AlertModal.css";
 import { useTranslation } from "react-i18next";
 
+// confirmation modal: ask user to confirm action with cancel/confirm buttons
 export default function ConfirmationModal({
   title,
   message,
@@ -8,6 +9,7 @@ export default function ConfirmationModal({
   onCancel,
 }) {
   const { t } = useTranslation();
+  // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handleConfirm = async () => {
     await onConfirm?.();
   };
@@ -24,7 +26,7 @@ export default function ConfirmationModal({
             {title}
           </h2>
           <button className="alert-modal-close" onClick={onCancel}>
-            ✕
+            {"\u00D7"}
           </button>
         </div>
         <div className="alert-modal-body">

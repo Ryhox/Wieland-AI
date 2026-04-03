@@ -1,3 +1,5 @@
+/* Purchase Modal Popup */
+/* Purchase overlay */
 .purchase-modal-backdrop {
   position: fixed;
   top: 0;
@@ -12,6 +14,8 @@
   animation: fadeIn 0.3s ease;
 }
 
+/* Modal content */
+/* Purchase card */
 .purchase-modal {
   background: rgb(19, 19, 19);
   border: 1px solid rgba(232, 35, 250, 0.2);
@@ -23,6 +27,7 @@
   animation: modalSlideIn 0.4s ease;
 }
 
+/* Modal animations */
 @keyframes fadeIn {
   from {
     opacity: 0;

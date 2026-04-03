@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react";
 
+// starfield: canvas-based animated star background with twinkle or orbit modes
 export default function Starfield({ mode = "twinkle" }) {
   const canvasRef = useRef(null);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     const c = canvasRef.current;
     if (!c) return;
@@ -16,6 +18,7 @@ export default function Starfield({ mode = "twinkle" }) {
       build();
     }
 
+    // helper-block für parsing/aufbereitung, nimmt unten viel chaos raus
     function buildTwinkle() {
       return Array.from({ length: 320 }, () => ({
         x: Math.random() * W,
@@ -27,6 +30,7 @@ export default function Starfield({ mode = "twinkle" }) {
       }));
     }
 
+    // helper-block für parsing/aufbereitung, nimmt unten viel chaos raus
     function buildOrbitCenter() {
       const maxRadius = Math.min(W, H) * 0.34;
       const minRadius = Math.min(W, H) * 0.12;
@@ -41,6 +45,7 @@ export default function Starfield({ mode = "twinkle" }) {
       }));
     }
 
+    // helper-block für parsing/aufbereitung, nimmt unten viel chaos raus
     function build() {
       stars = mode === "orbit-center" ? buildOrbitCenter() : buildTwinkle();
     }

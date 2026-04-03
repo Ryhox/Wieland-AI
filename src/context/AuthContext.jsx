@@ -12,6 +12,7 @@ const TOKEN_KEY = "wieland_token";
 const USER_KEY = "wieland_user";
 const COOKIE_CONSENT_KEY = "wieland_cookie_consent";
 
+// hier läuft der hauptflow zusammen damit man den zustand schnell greifen kann :)
 function setCookie(name, value, days = 365) {
   const date = new Date();
   date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
@@ -53,6 +54,7 @@ function clearStoredAuth() {
   deleteCookie(TOKEN_KEY);
 }
 
+// auth provider: manage user auth state + token persistence + cookie consent
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
@@ -71,6 +73,7 @@ export function AuthProvider({ children }) {
   );
   const [loading, setLoading] = useState(true);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     const syncConsent = () => setCookieConsentAccepted(hasCookieConsent());
     window.addEventListener("storage", syncConsent);
@@ -81,6 +84,7 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     if (!token || !cookieConsentAccepted) {
       deleteCookie(TOKEN_KEY);
@@ -89,6 +93,7 @@ export function AuthProvider({ children }) {
     setCookie(TOKEN_KEY, token);
   }, [token, cookieConsentAccepted]);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     const storedToken =
       localStorage.getItem(TOKEN_KEY) ||
@@ -118,8 +123,7 @@ export function AuthProvider({ children }) {
         setToken(storedToken);
         localStorage.setItem(USER_KEY, JSON.stringify(data.data.user));
       })
-      .catch(() => {
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -172,8 +176,7 @@ export function AuthProvider({ children }) {
           setToken(null);
           setUser(null);
         }
-      } catch {
-      }
+      } catch {}
     };
 
     syncAuthFromSources();
@@ -231,6 +234,7 @@ export function AuthProvider({ children }) {
   );
 }
 
+// use auth: hook für zugriff auf user, token, login/logout + authFetch helpers
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used inside AuthProvider");

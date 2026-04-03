@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import "../styles/CookieBanner.css";
 
+// cookie banner: GDPR consent prompt with accept/decline buttons
 export default function CookieBanner() {
   const { t } = useTranslation();
   const [show, setShow] = useState(false);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     const cookieConsent = localStorage.getItem("wieland_cookie_consent");
     if (!cookieConsent) {
@@ -13,6 +15,7 @@ export default function CookieBanner() {
     }
   }, []);
 
+  // handler separat halten, sonst wird die render-logik schnell wirr
   const handleAccept = () => {
     localStorage.setItem("wieland_cookie_consent", "accepted");
     document.cookie =
@@ -21,6 +24,7 @@ export default function CookieBanner() {
     setShow(false);
   };
 
+  // handler separat halten, sonst wird die render-logik schnell wirr
   const handleDecline = () => {
     localStorage.setItem("wieland_cookie_consent", "declined");
     document.cookie =

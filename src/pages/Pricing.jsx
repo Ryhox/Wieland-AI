@@ -10,12 +10,13 @@ import Sidebar from "../components/Sidebar";
 import AuthModal from "../components/AuthModal";
 import PaymentConfirmModal from "../components/PaymentConfirmModal";
 import PurchaseModal from "../components/PurchaseModal";
+import DowngradeModal from "../components/DowngradeModal";
 import Starfield from "../components/Starfield";
 import Scene3D from "../components/Scene3D";
 import { useAuth } from "../context/AuthContext";
 import { withLang } from "../utils/i18nRouting";
 
-const CHECK = "✦";
+const CHECK = "•";
 const CROSS = "✕";
 
 const PLAN_ORDER = { free: 0, pro: 1, max: 2, admin: 3 };
@@ -28,16 +29,17 @@ const normalizePlan = (plan) => {
   return "free";
 };
 
+// ganze Logik für Planwechsel in der Komponente damit sie zentral und konsistent ist, außerdem muss sie ja auch die modals triggern
 function Pricing({ isSidebarOpen, onSidebarToggle }) {
   const { t, i18n } = useTranslation();
-  const { user, authFetch, setUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const rootRef = useRef(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false);
   const [purchaseModal, setPurchaseModal] = useState(null);
+  const [downgradeModal, setDowngradeModal] = useState(null);
   const [pendingPlan, setPendingPlan] = useState(null);
-  const [isPlanUpdating, setIsPlanUpdating] = useState(false);
   const localPath = (path) => withLang(path, i18n.language);
 
   const FREE_FEATURES =
@@ -54,6 +56,7 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
     ).matches;
     if (prefersReduced) return;
 
+    // intro animation in einem rutsch triggern sonst wirkt der einstieg unruhig
     const ctx = gsap.context(() => {
       gsap.set(".pricing-page-wrapper #three-canvas", {
         transformOrigin: "50% 50%",
@@ -107,40 +110,24 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
     };
   }, []);
 
+  // Plan-String normalisieren (Capitalization consistent halten)
   const currentPlan = normalizePlan(user?.plan);
+  // Admin kann Pläne nicht wechseln
   const isAdminPlan = currentPlan === "admin";
 
+  // Action für Button bestimmen: upgrade/downgrade/manage/locked
   const getPlanAction = (targetPlan) => {
     if (isAdminPlan) return "admin-locked";
     const target = normalizePlan(targetPlan);
     const current = currentPlan;
-    if (target === current) return "manage";
+    if (target === current) return "manage"; // Aktiver Plan = Manage Button
+    // Höher in Tabelle = upgrade, sonst downgrade
     return PLAN_ORDER[target] > PLAN_ORDER[current] ? "upgrade" : "downgrade";
   };
 
-  const applyPlanChange = async (targetPlan) => {
-    setIsPlanUpdating(true);
-    try {
-      const res = await authFetch("/api/auth/upgrade-plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: targetPlan }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        alert(data.error || t("pricing.planUpdateError"));
-        return;
-      }
-      const data = await res.json();
-      setUser(data.user);
-    } catch {
-      alert(t("pricing.planUpdateError"));
-    } finally {
-      setIsPlanUpdating(false);
-    }
-  };
-
+  // Button Click Handler - Flow entscheiden (Auth, Confirm, etc)
   const handlePlanAction = (targetPlan) => {
+    // Unauth > Auth Modal
     if (!user) {
       setAuthModalOpen(true);
       return;
@@ -148,24 +135,24 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
 
     const action = getPlanAction(targetPlan);
 
+    // Manage = zu Profile
     if (action === "manage") {
       navigate(localPath("/profile"));
       return;
     }
 
+    // Admin locked = nix
     if (action === "admin-locked") {
       return;
     }
 
+    // Downgrade braucht Bestätigung
     if (action === "downgrade") {
-      const confirmed = window.confirm(
-        t("pricing.switchConfirm", { plan: targetPlan }),
-      );
-      if (!confirmed) return;
-      applyPlanChange(targetPlan);
+      setDowngradeModal(targetPlan);
       return;
     }
 
+    // Upgrade > Payment Confirm Modal
     setPendingPlan(targetPlan);
     setPaymentConfirmOpen(true);
   };
@@ -185,7 +172,19 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
     return t("pricing.upgrade");
   };
 
-  const planPrice = pendingPlan === "Max" ? 9.99 : 4.99;
+  const isProToMaxUpgrade =
+    currentPlan === "pro" && normalizePlan(pendingPlan) === "max";
+  const planPrice = isProToMaxUpgrade
+    ? 5.0
+    : pendingPlan === "Max"
+      ? 9.99
+      : 4.99;
+  const pricePeriod = isProToMaxUpgrade
+    ? t("payment.dueNow")
+    : t("payment.perMonth");
+  const billingNote = isProToMaxUpgrade
+    ? t("payment.proratedNote", { fullPrice: "9.99" })
+    : t("payment.tax");
 
   return (
     <div
@@ -212,6 +211,8 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
         <PaymentConfirmModal
           plan={pendingPlan || "Pro"}
           price={planPrice}
+          pricePeriod={pricePeriod}
+          billingNote={billingNote}
           onConfirm={handleConfirmPayment}
           onClose={() => {
             setPaymentConfirmOpen(false);
@@ -230,6 +231,18 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
           onClose={() => {
             setPurchaseModal(null);
             setPendingPlan(null);
+          }}
+        />
+      )}
+
+      {downgradeModal && (
+        <DowngradeModal
+          plan={downgradeModal}
+          onComplete={() => {
+            setDowngradeModal(null);
+          }}
+          onClose={() => {
+            setDowngradeModal(null);
           }}
         />
       )}
@@ -276,7 +289,7 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
               <button
                 className="pricing-btn btn-ghost"
                 onClick={() => handlePlanAction("Free")}
-                disabled={isPlanUpdating || isAdminPlan}
+                disabled={isAdminPlan}
               >
                 {getButtonLabel("Free")}
               </button>
@@ -313,7 +326,7 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
               <button
                 className="pricing-btn btn-pro"
                 onClick={() => handlePlanAction("Pro")}
-                disabled={isPlanUpdating || isAdminPlan}
+                disabled={isAdminPlan}
               >
                 {getButtonLabel("Pro")}
               </button>
@@ -342,7 +355,7 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
               <button
                 className="pricing-btn btn-pro"
                 onClick={() => handlePlanAction("Max")}
-                disabled={isPlanUpdating || isAdminPlan}
+                disabled={isAdminPlan}
               >
                 {getButtonLabel("Max")}
               </button>

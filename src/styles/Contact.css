@@ -1,12 +1,15 @@
+/* Contact Page Container */
 .contact-container {
   max-width: 860px;
   margin: 0 auto;
 }
 
+/* Hero section */
 .contact-hero {
   margin-bottom: 56px;
 }
 
+/* Badge/tag */
 .contact-eyebrow {
   display: inline-block;
   font-family: "DM Mono", monospace;
@@ -46,6 +49,7 @@
   max-width: 540px;
 }
 
+/* Divider line */
 .contact-divider {
   height: 1px;
   background: linear-gradient(
@@ -67,9 +71,12 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   margin-bottom: 12px;
-  transition: all 0.3s ease;
+  transition:
+    boxShadow 0.3s ease,
+    borderColor 0.3s ease;
 }
 
+/* Form title */
 .contact-form-title {
   font-size: 22px;
   font-weight: 700;
@@ -78,6 +85,7 @@
   letter-spacing: -0.5px;
 }
 
+/* Form section */
 .contact-form {
   display: flex;
   flex-direction: column;
@@ -499,6 +507,7 @@
   }
 }
 
+/* mobile tweaks ab hier getrennt, sonst wirds schnell unklar */
 @media (max-width: 768px) {
   .contact-content {
     margin-bottom: 32px;

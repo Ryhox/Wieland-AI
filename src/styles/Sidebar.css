@@ -1,3 +1,4 @@
+/* Sidebar Layout */
 .sidebar {
   position: fixed;
   top: 0;
@@ -77,6 +78,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
+/* Sidebar action buttons */
 .sidebar-icon-btn {
   display: flex;
   align-items: center;
@@ -106,6 +108,8 @@
   color: #ffffff;
 }
 
+/* Search input */
+/* Search input field */
 .sidebar-search-input {
   flex: 1;
   padding: 6px 10px;
@@ -130,6 +134,7 @@
   border: 1px solid rgba(255, 255, 255, 0.116);
 }
 
+/* Section label */
 .sidebar-section-label {
   padding: 16px 12px 6px 12px;
   font-size: 11px;
@@ -140,6 +145,8 @@
   white-space: nowrap;
 }
 
+/* Chat list section */
+/* Chat history list */
 .sidebar-chats-section {
   flex: 1;
   overflow-y: auto;
@@ -157,6 +164,7 @@
   padding: 0 8px;
 }
 
+/* Empty chat message */
 .no-chats {
   color: rgba(255, 255, 255, 0.3);
   font-size: 13px;
@@ -164,6 +172,7 @@
   padding: 20px 12px;
 }
 
+/* Chat items */
 .chat-item {
   display: flex;
   align-items: center;
@@ -203,6 +212,7 @@
   transition: all 0.2s ease;
   opacity: 0;
   flex-shrink: 0;
+  margin-left: 10px;
   border-radius: 4px;
 }
 
@@ -331,6 +341,7 @@
   border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* mobile tweaks ab hier getrennt, sonst wirds schnell unklar */
 @media (max-width: 1280px) {
   .sidebar {
     z-index: 420;

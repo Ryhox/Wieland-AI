@@ -1,3 +1,4 @@
+/* About Page Layout */
 .about-page-shell {
   position: relative;
   overflow-x: hidden;
@@ -78,14 +79,15 @@
 
 .about-container {
   max-width: 980px;
+  padding-top: 30px;
 }
 
 .about-hero {
   display: grid;
   min-height: min(82vh, 760px);
-  margin-top: -60px;
+  margin-top: 0;
   margin-bottom: 62px;
-  padding-top: 8px;
+  padding-top: 0;
 }
 
 .about-hero-inner {
@@ -280,6 +282,7 @@
   line-height: 1.6;
 }
 
+/* mobile tweaks ab hier getrennt, sonst wirds schnell unklar */
 @media (max-width: 800px) {
   .about-text-grid {
     grid-template-columns: 1fr;

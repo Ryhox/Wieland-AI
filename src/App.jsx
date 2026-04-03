@@ -26,6 +26,7 @@ import Contact from "./pages/Contact";
 import Profile from "./pages/Profile";
 import FAQ from "./pages/faq";
 import Changelogs from "./pages/Changelogs";
+import Conclusion from "./pages/conclusion";
 import Download from "./pages/Download";
 import LegalNotice from "./pages/legal-notice";
 import PrivacyPolicy from "./pages/privacy-policy";
@@ -34,6 +35,7 @@ import Pricing from "./pages/Pricing";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/404.jsx";
 
+// hauptlogik sitzt hier, sonst verliert man im ui-flow schnell den faden :/
 function AppRoutes() {
   const { lang } = useParams();
   const location = useLocation();
@@ -45,6 +47,7 @@ function AppRoutes() {
     return <Navigate to={`/${activeLang}/`} replace />;
   }
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     if (i18n.language !== activeLang) {
       i18n.changeLanguage(activeLang);
@@ -142,6 +145,15 @@ function AppRoutes() {
           path="/changelogs"
           element={
             <Changelogs
+              isSidebarOpen={isSidebarOpen}
+              onSidebarToggle={setIsSidebarOpen}
+            />
+          }
+        />
+        <Route
+          path="/conclusion"
+          element={
+            <Conclusion
               isSidebarOpen={isSidebarOpen}
               onSidebarToggle={setIsSidebarOpen}
             />

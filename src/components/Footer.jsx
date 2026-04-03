@@ -1,8 +1,11 @@
 import "../styles/Footer.css";
 import { useTranslation } from "react-i18next";
 import { withLang } from "../utils/i18nRouting";
+
+// Footer: static links (contact, legal, privacy, terms) för all pages
 function Footer() {
   const { t, i18n } = useTranslation();
+  // localized paths: inject current language in URL
   const localPath = (path) => withLang(path, i18n.language);
 
   return (

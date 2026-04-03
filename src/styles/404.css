@@ -1,3 +1,4 @@
+/* 404 Page Layout */
 .nf-page-shell {
   position: relative;
   min-height: 100svh;
@@ -53,6 +54,7 @@
   will-change: transform, opacity;
 }
 
+/* Ambient glow effect */
 .nf-ambient-glow {
   position: fixed;
   width: 58vmin;
@@ -76,13 +78,12 @@
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  background:
-    radial-gradient(
-      circle at 50% 44%,
-      rgba(7, 10, 17, 0) 14%,
-      rgba(7, 10, 17, 0.6) 74%,
-      rgba(7, 10, 17, 0.88) 100%
-    );
+  background: radial-gradient(
+    circle at 50% 44%,
+    rgba(7, 10, 17, 0) 14%,
+    rgba(7, 10, 17, 0.6) 74%,
+    rgba(7, 10, 17, 0.88) 100%
+  );
 }
 
 .nf-content-layer {
@@ -108,7 +109,6 @@
   align-items: center;
   gap: 9px;
 }
-
 
 .nf-code-wrap {
   display: flex;
@@ -199,6 +199,7 @@
   backdrop-filter: blur(6px);
 }
 
+/* Mobile responsive */
 @media (max-width: 760px) {
   .nf-page-shell .page-content {
     padding-top: 60px;

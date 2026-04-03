@@ -1,3 +1,4 @@
+/* Header Layout */
 .header {
   position: fixed;
   top: 0;
@@ -20,6 +21,7 @@
   left: 280px;
 }
 
+/* Logo */
 .header-logo {
   display: flex;
   align-items: center;
@@ -97,6 +99,8 @@
   transform: rotateZ(-45deg) translate(-5px, 5px);
 }
 
+/* Navigation */
+/* Navigation links */
 .header-nav {
   display: flex;
   align-items: center;
@@ -104,6 +108,7 @@
   margin-left: auto;
 }
 
+/* Nav link style */
 .header-nav a {
   padding: 6px 12px;
   color: rgba(240, 240, 240, 0.6);
@@ -128,6 +133,7 @@
   flex-shrink: 0;
 }
 
+/* Login button */
 .header-login-btn {
   padding: 0.8em 1.5em;
   background: rgba(206, 43, 247, 0.1);
@@ -481,6 +487,7 @@
   }
 }
 
+/* mobile tweaks ab hier getrennt, sonst wirds schnell unklar */
 @media (max-width: 768px) {
   .header {
     padding: 0 14px 0 8px;

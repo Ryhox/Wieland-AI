@@ -12,6 +12,8 @@ import { useAuth } from "../context/AuthContext";
 
 const platforms = ["Chromium", "Firefox", "Edge"];
 
+// helper: extraction der datei-name aus content-disposition header
+// unterstützt UTF-8 encoded names und fallback zu basic format
 function parseFilenameFromContentDisposition(headerValue) {
   if (!headerValue) return null;
 
@@ -37,6 +39,8 @@ function Download({ isSidebarOpen, onSidebarToggle }) {
   const rootRef = useRef(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // extension-download handler: FileAPI für lokale speicherung oder fallback zu blob-link
+  // unterstützt browser's save-dialog (chrome/edge) oder standard download
   const handleExtensionDownload = useCallback(async () => {
     if (isDownloading) return;
     setIsDownloading(true);
@@ -44,6 +48,7 @@ function Download({ isSidebarOpen, onSidebarToggle }) {
     let writable = null;
 
     try {
+      // versuche FileAPI picker wenn verfügbar (modern browsers)
       if (typeof window.showSaveFilePicker === "function") {
         const fileHandle = await window.showSaveFilePicker({
           suggestedName: "wieland-extension.zip",
@@ -57,6 +62,7 @@ function Download({ isSidebarOpen, onSidebarToggle }) {
         writable = await fileHandle.createWritable();
       }
 
+      // fetch extension blob von server
       const response = await fetch("/api/extension/download");
       if (!response.ok) {
         throw new Error(`Download failed with status ${response.status}`);
@@ -67,6 +73,7 @@ function Download({ isSidebarOpen, onSidebarToggle }) {
       const suggestedName =
         parseFilenameFromContentDisposition(header) || "wieland-extension.zip";
 
+      // wenn fileAPI verfügbar: direkt zu datei schreiben, sonst fallback zu blob-link-download
       if (writable) {
         await writable.write(blob);
         await writable.close();
@@ -84,8 +91,7 @@ function Download({ isSidebarOpen, onSidebarToggle }) {
       if (writable && typeof writable.abort === "function") {
         try {
           await writable.abort();
-        } catch {
-        }
+        } catch {}
       }
 
       if (err?.name !== "AbortError") {
@@ -97,6 +103,7 @@ function Download({ isSidebarOpen, onSidebarToggle }) {
     }
   }, [isDownloading]);
 
+  // animation und side-effects hier gebündelt, cleanup ist wichtig :/
   useLayoutEffect(() => {
     if (!rootRef.current) return;
 
@@ -112,7 +119,10 @@ function Download({ isSidebarOpen, onSidebarToggle }) {
       });
       gsap.set(".dl-page-wrapper #stars-canvas", { opacity: 0 });
       gsap.set(".dl-hero > *", { opacity: 0, y: 26 });
-      gsap.set(".dl-main-card, .dl-platform-row", { opacity: 0, y: 30 });
+      gsap.set(".dl-main-card, .dl-platform-row, .dl-howto-section", {
+        opacity: 0,
+        y: 30,
+      });
 
       gsap
         .timeline()
@@ -138,7 +148,7 @@ function Download({ isSidebarOpen, onSidebarToggle }) {
           "-=0.1",
         )
         .to(
-          ".dl-main-card, .dl-platform-row",
+          ".dl-main-card, .dl-platform-row, .dl-howto-section",
           {
             opacity: 1,
             y: 0,
@@ -227,6 +237,61 @@ function Download({ isSidebarOpen, onSidebarToggle }) {
               </span>
             ))}
           </div>
+
+          <section
+            className="dl-howto-section"
+            aria-labelledby="download-howto-title"
+          >
+            <h2 id="download-howto-title" className="dl-section-label">
+              {t("download.howTo.title")}
+            </h2>
+            <ol className="dl-howto-list">
+              <li className="dl-howto-step">{t("download.howTo.step1")}</li>
+              <li className="dl-howto-step">{t("download.howTo.step2")}</li>
+              <li className="dl-howto-step">
+                {t("download.howTo.step3")}
+                <ul
+                  className="dl-howto-browsers"
+                  aria-label={t("download.howTo.browserListLabel")}
+                >
+                  <li className="dl-howto-browser">
+                    <a
+                      className="dl-howto-link"
+                      href="chrome://extensions/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {t("download.howTo.chrome")}
+                    </a>
+                  </li>
+                  <li className="dl-howto-browser">
+                    <a
+                      className="dl-howto-link"
+                      href="edge://extensions/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {t("download.howTo.edge")}
+                    </a>
+                  </li>
+                  <li className="dl-howto-browser">
+                    <a
+                      className="dl-howto-link"
+                      href="about:debugging#/runtime/this-firefox"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {t("download.howTo.firefox")}
+                    </a>
+                  </li>
+                </ul>
+                <p className="dl-howto-note">
+                  {t("download.howTo.developerMode")}
+                </p>
+              </li>
+              <li className="dl-howto-step">{t("download.howTo.step4")}</li>
+            </ol>
+          </section>
         </div>
       </main>
 

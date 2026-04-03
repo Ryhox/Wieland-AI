@@ -1,5 +1,6 @@
 const API_BASE = "http://localhost:3001";
 
+// extension config: API server, storage keys, UI timing constants, supported languages
 const EXT_LANG_KEY = "wieland_lang";
 const TOKEN_KEY = "wieland_token";
 const USER_KEY = "wieland_user";
@@ -9,16 +10,23 @@ const WEBSITE_LANG_COOKIE_KEY = "wieland_lang";
 const MAIN_WEBSITE_HOSTS = ["localhost", "127.0.0.1"];
 const LANG_SYNC_INTERVAL_MS = 1500;
 const MODEL_PRELOAD_REFRESH_MS = 10 * 60 * 1000;
+const CLARIFY_POPUP_DELAY_MS = 0;
+const CLARIFY_TYPE_INTERVAL_MS = 18;
+const CLARIFY_QUESTION_CHARS_PER_TICK = 1;
+const CLARIFY_OPTION_CHARS_PER_TICK = 1;
 const SUPPORTED_LANGS = ["de", "en", "it"];
 const I18N = Object.fromEntries(SUPPORTED_LANGS.map((lang) => [lang, {}]));
 let localesLoaded = false;
 
+// Alle i18n Files (de, en, it) parallel laden
 async function loadLocales() {
   if (localesLoaded) return;
 
+  // Promise.all für paralleles Fetchen statt wartend
   const results = await Promise.all(
     SUPPORTED_LANGS.map(async (lang) => {
       try {
+        // Chrome Ext oder fallback zu lokalem Pfad
         const url = chrome?.runtime?.getURL
           ? chrome.runtime.getURL(`locales/${lang}.json`)
           : `locales/${lang}.json`;
@@ -27,12 +35,14 @@ async function loadLocales() {
         const json = await response.json();
         return [lang, json];
       } catch (error) {
+        // Bei Error einfach leeres dict, Fallback funktioniert dann
         console.error(`Failed to load locale '${lang}'`, error);
         return [lang, {}];
       }
     }),
   );
 
+  // Alle geladen Locales ins globale I18N mergen
   for (const [lang, dict] of results) {
     I18N[lang] = dict;
   }
@@ -43,6 +53,7 @@ async function loadLocales() {
 let currentLang = "de";
 let languageSyncTimer = null;
 
+// language: normalisieren zu 2-char code (de/en/it) oder null
 function normalizeLang(raw) {
   const val = String(raw || "")
     .toLowerCase()
@@ -55,17 +66,20 @@ function parseBoolean(value) {
   return value === true || value === "1" || value === "true";
 }
 
+// Übersetzung mit Fallback: aktuelle Lang > Deutsch > Raw Key
 function tr(key, vars = {}) {
   const lookup = (obj) =>
     key.split(".").reduce((acc, part) => acc?.[part], obj);
   const fromLang = lookup(I18N[currentLang]);
   const fromDe = lookup(I18N.de);
+  // Fallback chain: erst lang, dann deutsch, sonst key als-is
   const template =
     typeof fromLang === "string"
       ? fromLang
       : typeof fromDe === "string"
         ? fromDe
         : key;
+  // Platzhalter wie {foo} ersetzen mit Werten aus vars
   return template.replace(/\{(\w+)\}/g, (_, token) =>
     String(vars[token] ?? ""),
   );
@@ -304,6 +318,7 @@ function stopLanguageSyncLoop() {
 }
 
 function applyStaticTranslations() {
+  // UI labels: nutze tr() helper um HTML elemente automatisch zu übersetzen
   document.documentElement.lang = currentLang;
   document.title = tr("appTitle");
 
@@ -376,20 +391,8 @@ const FACT_QUESTION_PROMPT_RE =
   /\b(wann|when|quando|wo|where|dove|wer|who|chi|was|what|che)\b/i;
 const CLARIFY_JSON_BLOCK_RE =
   /\[\[\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]([\s\S]*?)\[\[\s*\/\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
-const CLARIFY_JSON_OPEN_RE =
-  /\[\[\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
-const CLARIFY_JSON_CLOSE_RE =
-  /\[\[\s*\/\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
-const CLARIFY_JSON_TOKEN_RE = /WIELAND[\s_-]*CLARIFY[\s_-]*JSON/i;
 const CLARIFY_OPTION_LINE_RE = /^\s*([A-E])[)\].:-]\s*(.+)$/i;
 const CLARIFY_OPTION_IDS = ["A", "B", "C", "D", "E"];
-const CLARIFY_POPUP_DELAY_MS = 240;
-const CLARIFY_VAGUE_BUILD_VERB_RE =
-  /\b(mach|mache|build|make|create|generate|generat|generier|erstell\w*|baue?\b|program\w*|entwickl\w*|crea|sviluppa|fai)\b/i;
-const CLARIFY_VAGUE_BUILD_TARGET_RE =
-  /\b(app|website|webseite|landing\s+page|tool|projekt|project|bot|script|programm|program|dashboard|automation|automatisierung|extension)\b/i;
-const CLARIFY_VAGUE_BUILD_SCOPE_HINT_RE =
-  /\b(react|vue|svelte|html|css|javascript|typescript|node|python|java|single\s+file|mehrere\s+dateien|backend|frontend|api|mobile|ios|android|chrome\s+extension|browser\s+extension|deadline|budget|zielgruppe|target\s+audience)\b/i;
 const POPUP_IDEA_PLACEHOLDER_BY_LANG = {
   de: "Beschreibe deine Idee",
   en: "Describe your idea",
@@ -462,6 +465,30 @@ const CONTEXT_MATCH_STOPWORDS = new Set([
 function normalizeClarifyOptions(rawOptions = []) {
   const out = [];
   const list = Array.isArray(rawOptions) ? rawOptions : [];
+  const seenLabelKeys = new Set();
+
+  const normalizeClarifyLabelKey = (value = "") =>
+    String(value || "")
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+
+  const isDisallowedClarifyOptionLabel = (value = "") => {
+    const labelKey = normalizeClarifyLabelKey(value);
+    if (!labelKey) return true;
+
+    return (
+      /^(other|others|something else|anything else|custom|free text|explain|explanation|more details?|details?)$/.test(
+        labelKey,
+      ) ||
+      /^(etwas anderes|anderes|sonstiges|freitext|eigene angabe|eigene eingabe|erklaren|erklaeren|erklarung)$/.test(
+        labelKey,
+      ) ||
+      /^(altro|qualcos altro|spiega|spiegami)$/.test(labelKey)
+    );
+  };
 
   for (const item of list) {
     if (out.length >= 5) break;
@@ -480,8 +507,13 @@ function normalizeClarifyOptions(rawOptions = []) {
     }
 
     if (!label) continue;
+    if (isDisallowedClarifyOptionLabel(label)) continue;
     if (!/^[A-E]$/.test(id)) id = CLARIFY_OPTION_IDS[out.length] || "";
     if (!id) continue;
+
+    const labelKey = normalizeClarifyLabelKey(label);
+    if (labelKey && seenLabelKeys.has(labelKey)) continue;
+    if (labelKey) seenLabelKeys.add(labelKey);
 
     out.push({ id, label });
   }
@@ -490,6 +522,7 @@ function normalizeClarifyOptions(rawOptions = []) {
 }
 
 function toSingleSentenceQuestion(value = "", fallback = "") {
+  // clarify popup: erste satz aus response extrahieren, max 140 chars
   const source = String(value || fallback || "")
     .replace(/\s+/g, " ")
     .trim();
@@ -505,6 +538,23 @@ function toSingleSentenceQuestion(value = "", fallback = "") {
   return question;
 }
 
+function getClarifyPayloadSignature(payload = null) {
+  if (!payload || typeof payload !== "object") return "";
+
+  const options = Array.isArray(payload.options) ? payload.options : [];
+  return JSON.stringify({
+    question: String(payload.question || "").trim(),
+    options: options.map((option) => ({
+      id: String(option?.id || "")
+        .trim()
+        .toUpperCase(),
+      label: String(option?.label || "").trim(),
+    })),
+    step: Number(payload.step) || null,
+    totalSteps: Number(payload.totalSteps) || null,
+  });
+}
+
 function isClarifyQaReplyText(value = "") {
   const source = String(value || "").trim();
   if (!source) return false;
@@ -512,6 +562,8 @@ function isClarifyQaReplyText(value = "") {
   return /^q\s*:/i.test(source) && /(?:^|\n)\s*a\s*:/im.test(source);
 }
 
+// helper: format clarification reply (Q&A format) wenn user selected option dari popup
+// returns raw answer wenn bereits formatted, otherwise "Q: ...\nA: ..." pair
 function formatClarifyReply(question = "", answer = "") {
   const cleanAnswer = String(answer || "").trim();
   if (!cleanAnswer) return "";
@@ -521,129 +573,6 @@ function formatClarifyReply(question = "", answer = "") {
   if (!cleanQuestion) return cleanAnswer;
 
   return `Q: ${cleanQuestion}\nA: ${cleanAnswer}`;
-}
-
-function isLikelyVagueBuildPromptClient(message = "") {
-  const source = String(message || "").trim();
-  if (!source) return false;
-
-  const compact = source
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-  const wordCount = compact.split(" ").filter(Boolean).length;
-
-  if (wordCount > 10) return false;
-  if (!CLARIFY_VAGUE_BUILD_VERB_RE.test(compact)) return false;
-  if (!CLARIFY_VAGUE_BUILD_TARGET_RE.test(compact)) return false;
-  if (CLARIFY_VAGUE_BUILD_SCOPE_HINT_RE.test(compact)) return false;
-
-  return true;
-}
-
-function detectClarifyFallbackLanguageFromText(message = "") {
-  const source = String(message || "").toLowerCase();
-  if (!source) return "en";
-
-  if (
-    /[àèéìíîòóù]/i.test(source) ||
-    /\b(che|quando|dove|vorrei|fammi|crea|costruisci|sito|estensione|automazione)\b/i.test(
-      source,
-    )
-  ) {
-    return "it";
-  }
-
-  if (
-    /[äöüß]/i.test(source) ||
-    /\b(und|oder|ich|bitte|mach|baue|erstell|frage|website|webseite)\b/i.test(
-      source,
-    )
-  ) {
-    return "de";
-  }
-
-  return "en";
-}
-
-function buildClientForcedClarificationFallbackPayload(message = "") {
-  const lang = detectClarifyFallbackLanguageFromText(message);
-
-  if (lang === "de") {
-    return {
-      question: "Worauf soll ich mich zuerst fokussieren?",
-      options: [
-        { id: "A", label: "Website oder Landingpage" },
-        { id: "B", label: "Web-App" },
-        { id: "C", label: "Browser-Erweiterung" },
-        { id: "D", label: "Automatisierung oder Script" },
-        { id: "E", label: "Etwas anderes" },
-      ],
-      allowFreeform: true,
-      freeformPlaceholder: "Kurz beschreiben",
-      skipLabel: "Überspringen",
-      step: 1,
-      totalSteps: 1,
-    };
-  }
-
-  if (lang === "it") {
-    return {
-      question: "Su cosa devo concentrarmi per prima cosa?",
-      options: [
-        { id: "A", label: "Sito web o landing page" },
-        { id: "B", label: "Web app" },
-        { id: "C", label: "Estensione browser" },
-        { id: "D", label: "Automazione o script" },
-        { id: "E", label: "Altro" },
-      ],
-      allowFreeform: true,
-      freeformPlaceholder: "Descrivilo in breve",
-      skipLabel: "Salta",
-      step: 1,
-      totalSteps: 1,
-    };
-  }
-
-  return {
-    question: "What should I focus on first?",
-    options: [
-      { id: "A", label: "Website or landing page" },
-      { id: "B", label: "Web app" },
-      { id: "C", label: "Browser extension" },
-      { id: "D", label: "Automation or script" },
-      { id: "E", label: "Something else" },
-    ],
-    allowFreeform: true,
-    freeformPlaceholder: "Describe briefly",
-    skipLabel: "Skip",
-    step: 1,
-    totalSteps: 1,
-  };
-}
-
-function findClarifyMarkerStart(rawText = "") {
-  const source = String(rawText || "");
-  if (!source) return -1;
-
-  const openMarkerMatch = source.match(CLARIFY_JSON_OPEN_RE);
-  if (
-    openMarkerMatch &&
-    Number.isInteger(openMarkerMatch.index) &&
-    openMarkerMatch.index >= 0
-  ) {
-    return openMarkerMatch.index;
-  }
-
-  const bracketedFragmentIndex = source.toUpperCase().indexOf("[[WIELAND");
-  if (bracketedFragmentIndex >= 0) return bracketedFragmentIndex;
-
-  const tokenMatch = source.match(CLARIFY_JSON_TOKEN_RE);
-  if (tokenMatch && Number.isInteger(tokenMatch.index) && tokenMatch.index >= 0) {
-    return tokenMatch.index;
-  }
-
-  return -1;
 }
 
 function extractFirstJsonObject(rawText = "") {
@@ -695,8 +624,7 @@ function parseClarifyJsonObject(rawText = "") {
 
   try {
     return JSON.parse(normalized);
-  } catch {
-  }
+  } catch {}
 
   const jsonObject = extractFirstJsonObject(normalized);
   if (!jsonObject) return null;
@@ -729,14 +657,11 @@ function sanitizeClarifyPayload(payload = {}, fallbackQuestion = "") {
     question,
     options,
     allowFreeform: payload?.allowFreeform !== false,
-    freeformPlaceholder:
-      String(
-        payload?.freeformPlaceholder ||
-          payload?.freeTextPlaceholder ||
-          "Etwas anderes",
-      ).trim() || "Etwas anderes",
-    skipLabel: String(payload?.skipLabel || "Überspringen").trim() ||
-      "Überspringen",
+    freeformPlaceholder: String(
+      payload?.freeformPlaceholder || payload?.freeTextPlaceholder || "",
+    ).trim(),
+    skipLabel:
+      String(payload?.skipLabel || "Überspringen").trim() || "Überspringen",
     step: hasSingleStepMeta ? 1 : null,
     totalSteps: hasSingleStepMeta ? 1 : null,
   };
@@ -763,7 +688,8 @@ function parsePlainTextClarificationFallback(rawText = "") {
 
   if (options.length < 2 || firstOptionIndex < 0) return null;
 
-  const question = lines.slice(0, firstOptionIndex).join(" ").trim() || lines[0];
+  const question =
+    lines.slice(0, firstOptionIndex).join(" ").trim() || lines[0];
   const payload = sanitizeClarifyPayload({ question, options }, question);
   if (!payload) return null;
 
@@ -772,70 +698,44 @@ function parsePlainTextClarificationFallback(rawText = "") {
   return { payload, cleanedText };
 }
 
+// JSON-Block oder Plain-Text Clarify-Payloads parsen aus AI Response
+// extract clarification JSON payload aus AI response (suche [[WIELAND_CLARIFY_JSON]] markers)
+// fallback zu plain-text format "Q: ... A: ... A) ... B) ..."
 function extractClarificationPayload(rawText = "") {
   const source = String(rawText || "");
   if (!source) return { payload: null, cleanedText: "" };
 
-  const blockMatch = source.match(CLARIFY_JSON_BLOCK_RE);
-  if (blockMatch) {
-    const withoutBlock = source.replace(CLARIFY_JSON_BLOCK_RE, "").trim();
-    const fallbackQuestion = withoutBlock.split(/\r?\n/).find(Boolean) || "";
+  // First look for [[WIELAND_CLARIFY_JSON]] block marker
+  const blockPattern = new RegExp(CLARIFY_JSON_BLOCK_RE.source, "gi");
+  const blockMatches = [...source.matchAll(blockPattern)];
+  if (blockMatches.length) {
+    // remove JSON blocks from text (keep plain text fallback)
+    const withoutBlocks = source
+      .replace(new RegExp(CLARIFY_JSON_BLOCK_RE.source, "gi"), "")
+      .trim();
+    const fallbackQuestion = withoutBlocks.split(/\r?\n/).find(Boolean) || "";
 
-    const parsed = parseClarifyJsonObject(blockMatch[1]);
+    // reverse iterate: newest payload wins (last one in response)
+    for (let i = blockMatches.length - 1; i >= 0; i--) {
+      const parsed = parseClarifyJsonObject(blockMatches[i]?.[1] || "");
+      const payload = sanitizeClarifyPayload(parsed || {}, fallbackQuestion);
+      if (!payload) continue;
 
-    const payload = sanitizeClarifyPayload(parsed || {}, fallbackQuestion);
-    if (payload) {
       return {
         payload,
-        cleanedText: withoutBlock || payload.question,
+        cleanedText: withoutBlocks || payload.question,
       };
     }
 
     return {
       payload: null,
-      cleanedText: withoutBlock || source.trim(),
+      cleanedText: withoutBlocks || source.trim(),
     };
   }
 
-  const markerIndex = findClarifyMarkerStart(source);
-  if (markerIndex >= 0) {
-    const visibleText = source.slice(0, markerIndex).trim();
-    const markerTail = source.slice(markerIndex);
-    const openMarkerMatch = markerTail.match(CLARIFY_JSON_OPEN_RE);
-    const afterMarker = openMarkerMatch
-      ? markerTail.slice((openMarkerMatch.index || 0) + openMarkerMatch[0].length)
-      : markerTail;
-    const markerPayloadText = afterMarker.replace(CLARIFY_JSON_CLOSE_RE, "").trim();
-    const fallbackQuestion = visibleText.split(/\r?\n/).find(Boolean) || "";
+  // Fallback zu Plain-Text parsing (older format)
 
-    const parsed = parseClarifyJsonObject(markerPayloadText);
-    const payload = sanitizeClarifyPayload(parsed || {}, fallbackQuestion);
-    if (payload) {
-      return {
-        payload,
-        cleanedText: visibleText || payload.question,
-      };
-    }
-
-    const combinedFallbackSource = [visibleText, markerPayloadText]
-      .filter(Boolean)
-      .join("\n");
-    const fallbackFromCombined = parsePlainTextClarificationFallback(
-      combinedFallbackSource,
-    );
-    if (fallbackFromCombined) {
-      return {
-        payload: fallbackFromCombined.payload,
-        cleanedText: visibleText || fallbackFromCombined.cleanedText,
-      };
-    }
-
-    return {
-      payload: null,
-      cleanedText: visibleText,
-    };
-  }
-
+  // Fallback zu Plain-Text parsing (older format)
   const fallback = parsePlainTextClarificationFallback(source);
   if (fallback) return fallback;
 
@@ -849,10 +749,16 @@ function getClarificationStreamPreview(rawText = "") {
   const source = String(rawText || "");
   if (!source) return { text: "", suppress: false };
 
-  const markerIndex = findClarifyMarkerStart(source);
-  if (markerIndex >= 0) {
+  const markerMatch = source.match(
+    /\[\[\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i,
+  );
+  if (
+    markerMatch &&
+    Number.isInteger(markerMatch.index) &&
+    markerMatch.index >= 0
+  ) {
     return {
-      text: source.slice(0, markerIndex).trimEnd(),
+      text: source.slice(0, markerMatch.index).trimEnd(),
       suppress: true,
     };
   }
@@ -886,6 +792,13 @@ let sidebarOpen = false;
 let pendingClarifyReply = false;
 let clarifyPopupTimer = null;
 let activeClarifyPopup = null;
+let activeClarifyPopupSignature = "";
+let clarifyTypewriterTimer = null;
+let clarifyTypewriterState = {
+  questionLength: 0,
+  shownOptions: 0,
+  optionLengths: [],
+};
 const modelWarmUntil = new Map();
 
 const $ = (sel) => document.querySelector(sel);
@@ -946,6 +859,7 @@ const clarifyPopupOptions = $("#clarify-popup-options");
 
 let authMode = "login";
 
+// check ob clarify popup DOM element visible (nicht hidden class)
 function isClarifyPopupOpen() {
   return !!clarifyPopup && !clarifyPopup.classList.contains("hidden");
 }
@@ -962,7 +876,36 @@ function getLocalizedSkipLabel() {
 }
 
 function getClarifyInputPlaceholder() {
-  return activeClarifyPopup?.freeformPlaceholder || getLocalizedIdeaPlaceholder();
+  return (
+    activeClarifyPopup?.freeformPlaceholder || getLocalizedIdeaPlaceholder()
+  );
+}
+
+// apply AI style selection: toggle button state + store selection
+function applyAiStyleSelection(styleId = "") {
+  const styleButtons = [...$$(".plus-menu-item[data-style]")];
+  if (!styleButtons.length) {
+    // fallback: no buttons found, just store the style
+    aiStyle = String(styleId || aiStyle || "formal").trim() || "formal";
+    return aiStyle;
+  }
+
+  const requestedStyle = String(styleId || aiStyle || "").trim();
+  const firstStyle = String(styleButtons[0]?.dataset?.style || "formal");
+  // validate style exists, fallback to first available
+  const resolvedStyle = styleButtons.some(
+    (btn) => btn.dataset.style === requestedStyle,
+  )
+    ? requestedStyle
+    : firstStyle;
+
+  // update global state + toggle active class on buttons
+  aiStyle = resolvedStyle;
+  styleButtons.forEach((btn) => {
+    btn.classList.toggle("active-style", btn.dataset.style === resolvedStyle);
+  });
+
+  return resolvedStyle;
 }
 
 function updateMainInputPlaceholder() {
@@ -977,7 +920,9 @@ function updateInputIconState() {
   const popupMode = isClarifyPopupOpen();
   btnPlus.classList.toggle("input-icon-popup-mode", popupMode);
   btnPlus.disabled = popupMode;
-  btnPlus.title = popupMode ? getLocalizedIdeaPlaceholder() : tr("chat.options");
+  btnPlus.title = popupMode
+    ? getLocalizedIdeaPlaceholder()
+    : tr("chat.options");
 }
 
 function updateModelButtonState() {
@@ -1004,6 +949,261 @@ function updateInternetToggleUI() {
   }
 }
 
+function clearClarifyTypewriterTimer() {
+  if (!clarifyTypewriterTimer) return;
+  clearInterval(clarifyTypewriterTimer);
+  clarifyTypewriterTimer = null;
+}
+
+function setClarifyTypewriterTarget(payload = null) {
+  const question = String(payload?.question || "");
+  const options = Array.isArray(payload?.options) ? payload.options : [];
+  const prev = clarifyTypewriterState;
+
+  const nextOptionLengths = options.map((option, index) =>
+    Math.min(
+      Number(prev.optionLengths[index] || 0),
+      String(option?.label || "").length,
+    ),
+  );
+  const shownFromLengths = nextOptionLengths.filter((len) => len > 0).length;
+
+  clarifyTypewriterState = {
+    questionLength: Math.min(prev.questionLength, question.length),
+    shownOptions: Math.max(
+      Math.min(prev.shownOptions, options.length),
+      shownFromLengths,
+    ),
+    optionLengths: nextOptionLengths,
+  };
+}
+
+function isClarifyTypewriterComplete() {
+  const question = String(activeClarifyPopup?.question || "");
+  const options = Array.isArray(activeClarifyPopup?.options)
+    ? activeClarifyPopup.options
+    : [];
+
+  if (clarifyTypewriterState.questionLength < question.length) return false;
+  if (clarifyTypewriterState.shownOptions < options.length) return false;
+
+  for (let i = 0; i < options.length; i++) {
+    const targetLen = String(options[i]?.label || "").length;
+    const currentLen = Number(clarifyTypewriterState.optionLengths[i] || 0);
+    if (currentLen < targetLen) return false;
+  }
+
+  return true;
+}
+
+function stepClarifyTypewriter() {
+  const question = String(activeClarifyPopup?.question || "");
+  const options = Array.isArray(activeClarifyPopup?.options)
+    ? activeClarifyPopup.options
+    : [];
+
+  let questionLength = clarifyTypewriterState.questionLength;
+  let shownOptions = clarifyTypewriterState.shownOptions;
+  const optionLengths = [...clarifyTypewriterState.optionLengths];
+  let changed = false;
+
+  if (questionLength < question.length) {
+    questionLength = Math.min(
+      question.length,
+      questionLength + CLARIFY_QUESTION_CHARS_PER_TICK,
+    );
+    changed = true;
+  } else if (options.length > 0) {
+    if (shownOptions === 0) {
+      shownOptions = 1;
+      if (!Number.isFinite(optionLengths[0])) optionLengths[0] = 0;
+      changed = true;
+    } else {
+      let activeOptionIndex = -1;
+      for (let i = 0; i < shownOptions; i++) {
+        const targetLen = String(options[i]?.label || "").length;
+        const currentLen = Number(optionLengths[i] || 0);
+        if (currentLen < targetLen) {
+          activeOptionIndex = i;
+          break;
+        }
+      }
+
+      if (activeOptionIndex >= 0) {
+        const targetLen = String(
+          options[activeOptionIndex]?.label || "",
+        ).length;
+        optionLengths[activeOptionIndex] = Math.min(
+          targetLen,
+          Number(optionLengths[activeOptionIndex] || 0) +
+            CLARIFY_OPTION_CHARS_PER_TICK,
+        );
+        changed = true;
+      } else if (shownOptions < options.length) {
+        shownOptions += 1;
+        if (!Number.isFinite(optionLengths[shownOptions - 1])) {
+          optionLengths[shownOptions - 1] = 0;
+        }
+        changed = true;
+      }
+    }
+  }
+
+  if (!changed) return false;
+
+  clarifyTypewriterState = {
+    questionLength,
+    shownOptions,
+    optionLengths,
+  };
+
+  return true;
+}
+
+function upsertClarifyPopupLoading(show = false) {
+  if (!clarifyPopupOptions) return;
+
+  const existing = clarifyPopupOptions.querySelector(".clarify-popup-loading");
+  if (!show) {
+    if (existing) existing.remove();
+    return;
+  }
+
+  if (existing) {
+    existing.textContent = "Typing...";
+    return;
+  }
+
+  const loading = document.createElement("div");
+  loading.className = "clarify-popup-loading";
+  loading.textContent = "Typing...";
+  clarifyPopupOptions.appendChild(loading);
+}
+
+function getOrCreateClarifyOptionButton(index) {
+  if (!clarifyPopupOptions) return null;
+
+  let button = clarifyPopupOptions.querySelector(
+    `.clarify-popup-option[data-option-index="${index}"]`,
+  );
+  if (button) return button;
+
+  button = document.createElement("button");
+  button.type = "button";
+  button.className = "clarify-popup-option";
+  button.dataset.optionIndex = String(index);
+
+  const badge = document.createElement("span");
+  badge.className = "clarify-popup-option-badge";
+
+  const label = document.createElement("span");
+  label.className = "clarify-popup-option-label";
+
+  button.appendChild(badge);
+  button.appendChild(label);
+  button.addEventListener("click", () => {
+    const optionIndex = Number(button.dataset.optionIndex || "-1");
+    const option = activeClarifyPopup?.options?.[optionIndex];
+    if (!option) return;
+
+    const optionReply = /^[A-E]$/.test(option.id)
+      ? `${option.id}) ${option.label}`
+      : option.label;
+    const quickReply = formatClarifyReply(
+      String(activeClarifyPopup?.question || ""),
+      optionReply,
+    );
+    sendClarifyReply(quickReply);
+  });
+
+  clarifyPopupOptions.appendChild(button);
+  return button;
+}
+
+function renderClarifyPopupTypingFrame() {
+  if (!clarifyPopup || !clarifyPopupQuestion || !clarifyPopupOptions) return;
+  if (!activeClarifyPopup) return;
+
+  const question = String(activeClarifyPopup.question || "");
+  const options = Array.isArray(activeClarifyPopup.options)
+    ? activeClarifyPopup.options
+    : [];
+
+  const typedQuestion = question.slice(
+    0,
+    clarifyTypewriterState.questionLength,
+  );
+  clarifyPopupQuestion.textContent = typedQuestion || " ";
+  clarifyPopupQuestion.classList.toggle(
+    "clarify-popup-question-typing",
+    !isClarifyTypewriterComplete(),
+  );
+
+  const visibleCount = Math.min(
+    Math.max(0, clarifyTypewriterState.shownOptions),
+    options.length,
+  );
+
+  clarifyPopupOptions
+    .querySelectorAll(".clarify-popup-option")
+    .forEach((btn) => {
+      const index = Number(btn.dataset.optionIndex || "-1");
+      if (index >= visibleCount) btn.remove();
+    });
+
+  let optionsStillTyping = false;
+  for (let i = 0; i < visibleCount; i++) {
+    const option = options[i] || {};
+    const fullLabel = String(option.label || "");
+    const typedLen = Math.min(
+      Number(clarifyTypewriterState.optionLengths[i] || 0),
+      fullLabel.length,
+    );
+    if (typedLen < fullLabel.length) optionsStillTyping = true;
+
+    const button = getOrCreateClarifyOptionButton(i);
+    if (!button) continue;
+
+    button.dataset.optionIndex = String(i);
+
+    const badge = button.querySelector(".clarify-popup-option-badge");
+    const label = button.querySelector(".clarify-popup-option-label");
+    if (!badge || !label) continue;
+
+    badge.textContent = String(i + 1);
+    label.textContent = fullLabel.slice(0, typedLen) || " ";
+    label.classList.toggle("typing", typedLen < fullLabel.length);
+    button.disabled = typedLen === 0;
+  }
+
+  const hasPendingOptions = visibleCount < options.length;
+  const showLoading =
+    options.length === 0 || optionsStillTyping || hasPendingOptions;
+  upsertClarifyPopupLoading(showLoading);
+}
+
+function startClarifyTypewriter() {
+  renderClarifyPopupTypingFrame();
+
+  if (isClarifyTypewriterComplete()) {
+    clearClarifyTypewriterTimer();
+    return;
+  }
+
+  if (clarifyTypewriterTimer) return;
+
+  clarifyTypewriterTimer = setInterval(() => {
+    const changed = stepClarifyTypewriter();
+    if (changed) {
+      renderClarifyPopupTypingFrame();
+    }
+
+    if (isClarifyTypewriterComplete()) {
+      clearClarifyTypewriterTimer();
+    }
+  }, CLARIFY_TYPE_INTERVAL_MS);
+}
+
 function clearQueuedClarifyPopup() {
   if (!clarifyPopupTimer) return;
   clearTimeout(clarifyPopupTimer);
@@ -1012,51 +1212,90 @@ function clearQueuedClarifyPopup() {
 
 function queueClarifyPopup(payload, options = {}) {
   if (!payload) return;
-  const immediate = options?.immediate === true;
+  const immediate =
+    options?.immediate === true ||
+    options?.liveUpdate === true ||
+    CLARIFY_POPUP_DELAY_MS <= 0;
   clearQueuedClarifyPopup();
-  clarifyPopupTimer = setTimeout(() => {
-    clarifyPopupTimer = null;
+
+  if (immediate) {
     openClarifyPopup(payload);
-  }, immediate ? 0 : CLARIFY_POPUP_DELAY_MS);
+    return;
+  }
+
+  clarifyPopupTimer = setTimeout(
+    () => {
+      clarifyPopupTimer = null;
+      openClarifyPopup(payload);
+    },
+    immediate ? 0 : CLARIFY_POPUP_DELAY_MS,
+  );
 }
 
+// close clarify popup: clear state + reset DOM + update UI input area
 function hideClarifyPopup() {
   clearQueuedClarifyPopup();
+  clearClarifyTypewriterTimer();
+  // reset typewriter animation state
+  clarifyTypewriterState = {
+    questionLength: 0,
+    shownOptions: 0,
+    optionLengths: [],
+  };
   if (!clarifyPopup) return;
   activeClarifyPopup = null;
+  activeClarifyPopupSignature = "";
   clarifyPopup.classList.add("hidden");
   clarifyPopup.setAttribute("aria-hidden", "true");
+  // clear popup DOM content
   if (clarifyPopupOptions) clarifyPopupOptions.innerHTML = "";
-  if (clarifyPopupQuestion) clarifyPopupQuestion.textContent = "";
+  if (clarifyPopupQuestion) {
+    clarifyPopupQuestion.textContent = "";
+    clarifyPopupQuestion.classList.remove("clarify-popup-question-typing");
+  }
   if (clarifyPopupStep) {
     clarifyPopupStep.textContent = "";
     clarifyPopupStep.classList.add("hidden");
   }
+  // update main input placeholder + button states
   updateMainInputPlaceholder();
   updateInputIconState();
   updateModelButtonState();
 }
 
+// handle clarification popup option selection: set als chat reply + submit
 function sendClarifyReply(rawValue = "") {
   const value = String(rawValue || "").trim();
   if (!value || isSending) return;
 
   hideClarifyPopup();
+  // mark request als clarify reply für backend
   pendingClarifyReply = true;
   chatInput.value = value;
   chatInput.dispatchEvent(new Event("input", { bubbles: true }));
   void sendMessage();
 }
 
+// open clarify popup: render question + options mit typewriter animation
 function openClarifyPopup(payload) {
   if (!clarifyPopup || !payload?.question || !Array.isArray(payload?.options))
     return;
 
+  // skip duplicate popups (same question/options)
+  const nextSignature = getClarifyPayloadSignature(payload);
+  if (nextSignature && nextSignature === activeClarifyPopupSignature) {
+    return;
+  }
+
   clearQueuedClarifyPopup();
+
+  // set active popup state + prepare typewriter animation
   activeClarifyPopup = payload;
-  clarifyPopupQuestion.textContent = payload.question;
+  activeClarifyPopupSignature = nextSignature;
+  setClarifyTypewriterTarget(payload);
   clarifyPopup.setAttribute("aria-label", payload.question);
 
+  // show step counter wenn multi-step clarification (e.g., "1 von 3")
   if (
     payload.step &&
     payload.totalSteps &&
@@ -1071,35 +1310,11 @@ function openClarifyPopup(payload) {
     clarifyPopupStep.classList.add("hidden");
   }
 
-  clarifyPopupOptions.innerHTML = "";
-  payload.options.forEach((option, index) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "clarify-popup-option";
-
-    const badge = document.createElement("span");
-    badge.className = "clarify-popup-option-badge";
-    badge.textContent = String(index + 1);
-
-    const label = document.createElement("span");
-    label.className = "clarify-popup-option-label";
-    label.textContent = option.label;
-
-    button.appendChild(badge);
-    button.appendChild(label);
-    button.addEventListener("click", () => {
-      const optionReply = /^[A-E]$/.test(option.id)
-        ? `${option.id}) ${option.label}`
-        : option.label;
-      const quickReply = formatClarifyReply(payload.question, optionReply);
-      sendClarifyReply(quickReply);
-    });
-
-    clarifyPopupOptions.appendChild(button);
-  });
-
+  // display popup + start typewriter
   clarifyPopup.classList.remove("hidden");
   clarifyPopup.setAttribute("aria-hidden", "false");
+  startClarifyTypewriter();
+  // update input area styles
   updateMainInputPlaceholder();
   updateInputIconState();
   updateModelButtonState();
@@ -1203,6 +1418,7 @@ async function init() {
   const welcomeMessages = trArray("welcomeMessages");
   welcomeText.textContent =
     welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
+  applyAiStyleSelection(aiStyle);
 
   const stored = await chromeGet([TOKEN_KEY, USER_KEY, EXT_WEB_ACCESS_KEY]);
   token = stored[TOKEN_KEY] || getAuthCookie();
@@ -1234,8 +1450,7 @@ async function init() {
       } else if (res.status === 401 || res.status === 403) {
         await clearAuthSession();
       }
-    } catch {
-    }
+    } catch {}
   }
 
   if (token && user) {
@@ -1336,6 +1551,7 @@ $("#auth-form").addEventListener("keydown", (e) => {
   if (e.key === "Enter") handleAuth();
 });
 
+// handle auth: login/register flow mit validation, error handling, token persistence
 async function handleAuth() {
   const email = inputEmail.value.trim();
   const password = inputPassword.value;
@@ -1392,11 +1608,13 @@ async function handleAuth() {
   }
 }
 
+// show auth error: display error message in UI
 function showAuthError(msg) {
   authError.textContent = msg;
   authError.classList.remove("hidden");
 }
 
+// show chat UI: init sidebar from user data, load chat list, preload model for subscription
 function showChat() {
   authScreen.classList.add("hidden");
   chatScreen.classList.remove("hidden");
@@ -1417,6 +1635,7 @@ function showChat() {
   handleNewChat();
 }
 
+// plan rank: normalize user plan to numeric tier (free=0, pro=1, max/admin=2)
 function planRank(plan) {
   const p = (plan || "Free").toLowerCase();
   if (p === "admin" || p === "max") return 2;
@@ -1424,6 +1643,7 @@ function planRank(plan) {
   return 0;
 }
 
+// update model for plan: assign model tier based on user subscription (2b free, 4b pro, 8b max)
 function updateModelForPlan() {
   const rank = planRank(user?.plan);
   if (rank >= 2) selectedModel = "qwen3-vl:8b-instruct";
@@ -1432,10 +1652,12 @@ function updateModelForPlan() {
   updateModelButtonState();
 }
 
+// model label: get translated label for model ID
 function modelLabelFor(modelId) {
   return getModelLabel(modelId);
 }
 
+// update model dropdown: toggle locked state based on plan rank, highlight active model
 function updateModelDropdown() {
   const rank = planRank(user?.plan);
   modelOptions.forEach((opt) => {
@@ -1477,6 +1699,7 @@ btnToggleSB.addEventListener("click", () => toggleSidebar(!sidebarOpen));
 btnCloseSB?.addEventListener("click", () => toggleSidebar(false));
 sidebarOverlay.addEventListener("click", () => toggleSidebar(false));
 
+// toggle sidebar: show/hide chat history sidebar and overlay
 function toggleSidebar(open) {
   sidebarOpen = open;
   sidebar.classList.toggle("open", open);
@@ -1501,6 +1724,7 @@ btnLogout.addEventListener("click", async () => {
   showAuth();
 });
 
+// load chat list: fetch all user chats from backend API + render in sidebar
 async function loadChatList() {
   try {
     const res = await apiFetch("/api/history");
@@ -1513,6 +1737,7 @@ async function loadChatList() {
   }
 }
 
+// render chat list: build DOM list with chat items, add click + delete handlers
 function renderChatList(chats) {
   if (!chats.length) {
     chatListEl.innerHTML = `<p class="no-chats">${tr("sidebar.noChats")}</p>`;
@@ -1539,6 +1764,7 @@ function renderChatList(chats) {
   });
 }
 
+// load chat: fetch specific chat messages from backend + display in UI
 async function loadChat(filename) {
   try {
     const res = await apiFetch(`/api/history/${filename}`);
@@ -1557,6 +1783,7 @@ async function loadChat(filename) {
   }
 }
 
+// delete chat: remove chat file from backend, reset UI if currently viewing it
 async function deleteChat(filename) {
   try {
     const res = await apiFetch(`/api/history/${filename}`, {
@@ -1571,6 +1798,7 @@ async function deleteChat(filename) {
   }
 }
 
+// handle new chat: clear message history, abort streaming, reset UI state
 function handleNewChat() {
   if (abortController) abortController.abort();
   hideClarifyPopup();
@@ -1607,11 +1835,7 @@ btnToggleInternet?.addEventListener("click", async () => {
 
 $$(".plus-menu-item[data-style]").forEach((btn) => {
   btn.addEventListener("click", () => {
-    aiStyle = btn.dataset.style;
-    $$(".plus-menu-item[data-style]").forEach((b) =>
-      b.classList.remove("active-style"),
-    );
-    btn.classList.add("active-style");
+    applyAiStyleSelection(btn.dataset.style);
     plusMenu.classList.add("hidden");
   });
 });
@@ -1639,8 +1863,11 @@ fileInput.addEventListener("change", (e) => {
   e.target.value = "";
 });
 
+// clear image preview + reset file input state
 btnRemoveImg.addEventListener("click", clearImage);
 
+// clear image preview + reset file input state
+// clear image preview + reset file input state
 function clearImage() {
   imageFile = null;
   imagePreview = null;
@@ -1649,6 +1876,7 @@ function clearImage() {
   fileInput.value = "";
 }
 
+// normalize for context match: lowercase + normalize diacritics + tokenize for keyword matching
 function normalizeForContextMatch(value = "") {
   return String(value || "")
     .toLowerCase()
@@ -1658,6 +1886,7 @@ function normalizeForContextMatch(value = "") {
     .trim();
 }
 
+// extract context match tokens: split normalized text, filter short words + stopwords
 function extractContextMatchTokens(value = "") {
   const normalized = normalizeForContextMatch(value);
   if (!normalized) return [];
@@ -1677,6 +1906,7 @@ function extractContextMatchTokens(value = "") {
   return out;
 }
 
+// has meaningful title overlap: check if prompt + chat title share keywords for context matching
 function hasMeaningfulTitleOverlap(prompt = "", title = "") {
   const promptTokens = extractContextMatchTokens(prompt);
   const titleTokens = extractContextMatchTokens(title);
@@ -1769,11 +1999,13 @@ chatInput.addEventListener("keydown", (e) => {
 btnSend.addEventListener("click", sendMessage);
 btnStop.addEventListener("click", () => abortController?.abort());
 
+// send message to Wieland API: image upload + page context retrieval + stream response
 async function sendMessage() {
   const text =
     chatInput.value.trim() || (imageFile ? tr("chat.describeImage") : "");
   if (!text || isSending) return;
 
+  // check ob user antwortet auf clarify popup (option selection)
   const clarifyReplyFromPopup = isClarifyPopupOpen();
   const requestText = clarifyReplyFromPopup
     ? formatClarifyReply(activeClarifyPopup?.question, text)
@@ -1784,6 +2016,7 @@ async function sendMessage() {
   }
   hideClarifyPopup();
 
+  // UI state: disable input, show stop button
   isSending = true;
   chatInput.value = "";
   chatInput.style.height = "auto";
@@ -1794,13 +2027,21 @@ async function sendMessage() {
   let imageUrl = null;
   const fileCopy = imageFile;
   let pageContext = null;
-
-  const page = await getActivePageContext();
-  const shouldUsePageContext = shouldAttachWebsiteContext(requestText, page);
+  let page = null;
+  let shouldUsePageContext = false;
   const explicitlyAskedForPage =
     WEBSITE_SUMMARY_PROMPT_RE.test(requestText) ||
     PAGE_REFERENCE_PROMPT_RE.test(requestText);
 
+  // retrieve active page context (title + URL + content)
+  try {
+    page = await getActivePageContext();
+    shouldUsePageContext = shouldAttachWebsiteContext(requestText, page);
+  } catch (err) {
+    console.warn("getActivePageContext failed:", err);
+  }
+
+  // attach page context wenn relevant for query
   if (shouldUsePageContext && page?.content) {
     pageContext = {
       title: String(page.title || "").trim(),
@@ -1811,6 +2052,7 @@ async function sendMessage() {
     toast(tr("chat.readPageFailed"), "error");
   }
 
+  // image upload: multipart zum API endpoint
   if (fileCopy) {
     try {
       const fd = new FormData();
@@ -1835,6 +2077,7 @@ async function sendMessage() {
       console.error("Image upload failed:", err);
       toast(tr("chat.imageUploadFailed"), "error");
 
+      // reset UI on upload failure
       isSending = false;
       btnStop.classList.add("hidden");
       btnSend.classList.remove("hidden");
@@ -1847,6 +2090,7 @@ async function sendMessage() {
     }
   }
 
+  // format user message: image markdown + text
   const userContent = imageUrl
     ? `![${tr("chat.image")}](${imageUrl})\n\n${requestText}`
     : requestText;
@@ -1855,11 +2099,13 @@ async function sendMessage() {
   renderMessages();
   scrollToBottom();
 
+  // build context: all previous messages für conversation history
   const context = messages.slice(0, -1).map((m) => ({
     role: m.isUser ? "user" : "assistant",
     content: toContextContent(m.content),
   }));
 
+  // add empty AI message placeholder (wird gefüllt mit streaming)
   const aiId = uid();
   messages.push({ content: "", isUser: false, id: aiId });
   renderMessages();
@@ -1869,23 +2115,28 @@ async function sendMessage() {
   let fullText = "";
 
   try {
+    // build FormData für multipart request (message + context + model settings)
     const fd = new FormData();
     fd.append("message", requestText);
     fd.append("context", JSON.stringify(context));
     fd.append("model", selectedModel);
     fd.append("aiStyle", aiStyle);
     fd.append("internetAccess", internetAccess ? "true" : "false");
+    fd.append("clientSource", "extension");
 
+    // optional: mark wenn user antwortet auf clarify popup
     const clarifyReply = pendingClarifyReply;
     pendingClarifyReply = false;
     if (clarifyReply) {
       fd.append("clarifyReply", "true");
     }
 
+    // optional: attach page context (wenn available + relevant)
     if (pageContext) {
       fd.append("pageContext", JSON.stringify(pageContext));
       fd.append("preferPageContext", "true");
     }
+    // optional: image file (wenn user uploaded)
     if (fileCopy) fd.append("image", fileCopy);
 
     const res = await fetch(`${API_BASE}/api/chat/stream`, {
@@ -1901,8 +2152,7 @@ async function sendMessage() {
     const memoryCount = Number(
       res.headers.get("X-Wieland-Memory-Count") || "0",
     );
-    const clarifyForced =
-      res.headers.get("X-Wieland-Clarify-Forced") === "1";
+    const clarifyForced = res.headers.get("X-Wieland-Clarify-Forced") === "1";
 
     if (memorySaved && memoryCount > 0) {
       toast(tr("chat.memorySaved", { count: memoryCount }), "success");
@@ -1924,16 +2174,7 @@ async function sendMessage() {
     }
 
     const clarification = extractClarificationPayload(fullText);
-    const shouldClientForceClarify =
-      clarifyForced || isLikelyVagueBuildPromptClient(requestText);
-    const fallbackClarificationPayload = shouldClientForceClarify
-      ? sanitizeClarifyPayload(
-          buildClientForcedClarificationFallbackPayload(requestText),
-          "",
-        )
-      : null;
-    const clarificationPayload =
-      clarification.payload || fallbackClarificationPayload;
+    const clarificationPayload = clarification.payload;
     const finalAssistantText =
       clarification.cleanedText || fullText || tr("chat.shortError");
 
@@ -1945,7 +2186,7 @@ async function sendMessage() {
 
     if (clarificationPayload) {
       queueClarifyPopup(clarificationPayload, {
-        immediate: shouldClientForceClarify,
+        immediate: clarifyForced,
       });
     }
 
@@ -1971,9 +2212,12 @@ async function sendMessage() {
   }
 }
 
+// update message content in state + re-render DOM (for streaming updates)
 function updateMessage(id, content) {
+  // find message in state + update content
   const msg = messages.find((m) => m.id === id);
   if (msg) msg.content = content;
+  // re-render message DOM: markdown parse + code block copy buttons
   const el = document.querySelector(`[data-msg-id="${id}"] .message-bubble`);
   if (el) {
     el.innerHTML = content ? renderMarkdown(content) : typingLoaderHTML();
@@ -1982,6 +2226,8 @@ function updateMessage(id, content) {
 }
 
 async function saveChat(generateTitle = false) {
+  // persist conversation zu backend: messages array → /api/history/save
+  // wenn new chat: generiere title asynchron, sonst: update existing
   try {
     await apiFetch("/api/history/save", {
       method: "POST",
@@ -2005,9 +2251,11 @@ async function saveChat(generateTitle = false) {
   }
 }
 
+// render chat messages: empty state + list all messages mit user/AI styling
 function renderMessages() {
   messagesArea.innerHTML = "";
 
+  // empty state: show welcome message wenn keine messages
   if (messages.length === 0) {
     const welcomeMessages = trArray("welcomeMessages");
     messagesArea.innerHTML = `
@@ -2017,22 +2265,26 @@ function renderMessages() {
     return;
   }
 
+  // build DOM für jeden message (user + AI)
   messages.forEach((msg, idx) => {
     messagesArea.appendChild(createMessageEl(msg, idx));
   });
   scrollToBottom();
 }
 
+// create message DOM element: styled bubble + action buttons (copy/regenerate)
 function createMessageEl(msg, idx) {
   const div = document.createElement("div");
   div.className = `message ${msg.isUser ? "user-message" : "ai-message"}`;
   div.dataset.msgId = msg.id;
 
+  // extract image markup von message content
   const imageUrl = extractImageUrl(msg.content);
   const textOnly = stripImg(msg.content);
 
   let bubbleHTML = "";
   if (msg.isUser) {
+    // user message: image + text
     if (imageUrl) {
       const imageSrc = resolveImageSrc(imageUrl);
       if (imageSrc) {
@@ -2041,9 +2293,11 @@ function createMessageEl(msg, idx) {
     }
     bubbleHTML += escapeHtml(textOnly);
   } else {
+    // AI message: markdown render oder loading animation
     bubbleHTML = msg.content ? renderMarkdown(msg.content) : typingLoaderHTML();
   }
 
+  // assemble message bubble + action buttons
   div.innerHTML = `
     <div class="message-bubble">${bubbleHTML}</div>
     <div class="message-actions">
@@ -2060,6 +2314,7 @@ function createMessageEl(msg, idx) {
       </button>
     </div>`;
 
+  // attach click handlers für copy/regenerate buttons
   div.querySelectorAll(".msg-action-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       if (btn.dataset.action === "copy") {
@@ -2071,6 +2326,7 @@ function createMessageEl(msg, idx) {
     });
   });
 
+  // bind code block copy buttons
   const bubbleEl = div.querySelector(".message-bubble");
   if (bubbleEl) bindCodeCopyButtons(bubbleEl);
 
@@ -2109,7 +2365,7 @@ async function regenerate() {
   }));
 
   let fullText = "";
-  
+
   try {
     const fd = new FormData();
     let requestText = toContextContent(userMsg.content);
@@ -2128,6 +2384,7 @@ async function regenerate() {
     fd.append("model", selectedModel);
     fd.append("aiStyle", aiStyle);
     fd.append("internetAccess", internetAccess ? "true" : "false");
+    fd.append("clientSource", "extension");
     if (pageContext) {
       fd.append("pageContext", JSON.stringify(pageContext));
       fd.append("preferPageContext", "true");
@@ -2145,8 +2402,7 @@ async function regenerate() {
     const memoryCount = Number(
       res.headers.get("X-Wieland-Memory-Count") || "0",
     );
-    const clarifyForced =
-      res.headers.get("X-Wieland-Clarify-Forced") === "1";
+    const clarifyForced = res.headers.get("X-Wieland-Clarify-Forced") === "1";
 
     if (memorySaved && memoryCount > 0) {
       toast(tr("chat.memorySaved", { count: memoryCount }), "success");
@@ -2167,16 +2423,7 @@ async function regenerate() {
     }
 
     const clarification = extractClarificationPayload(fullText);
-    const shouldClientForceClarify =
-      clarifyForced || isLikelyVagueBuildPromptClient(requestText);
-    const fallbackClarificationPayload = shouldClientForceClarify
-      ? sanitizeClarifyPayload(
-          buildClientForcedClarificationFallbackPayload(requestText),
-          "",
-        )
-      : null;
-    const clarificationPayload =
-      clarification.payload || fallbackClarificationPayload;
+    const clarificationPayload = clarification.payload;
     const finalAssistantText =
       clarification.cleanedText || fullText || tr("chat.shortError");
 
@@ -2188,7 +2435,7 @@ async function regenerate() {
 
     if (clarificationPayload) {
       queueClarifyPopup(clarificationPayload, {
-        immediate: shouldClientForceClarify,
+        immediate: clarifyForced,
       });
     }
 
@@ -2208,7 +2455,7 @@ async function regenerate() {
 
 function renderMarkdown(raw = "") {
   const { cleanedText } = extractClarificationPayload(raw);
-  const source = String(cleanedText || raw || "").replace(/\r\n/g, "\n");
+  const source = normalizeMarkdownCodeFences(String(cleanedText || raw || ""));
 
   const codeBlocks = [];
   const withCodePlaceholders = source.replace(
@@ -2239,7 +2486,7 @@ function renderMarkdown(raw = "") {
       /\[(.*?)\]\((https?:\/\/[^)]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener">$1</a>',
     )
-    .replace(/^[-*] (.+)$/gm, "<li>$1</li>")
+    .replace(/^\s*[-*•]\s+(.+)$/gm, "<li>$1</li>")
     .replace(/\n/g, "<br/>");
 
   html = html.replace(/((?:<li>.*?<\/li>(?:<br\/>)?)+)/g, "<ul>$1</ul>");
@@ -2249,6 +2496,56 @@ function renderMarkdown(raw = "") {
   );
 
   return html;
+}
+
+const CODE_FENCE_LINE_RE = /^```([a-zA-Z0-9_+.-]*)\s*$/;
+
+function normalizeMarkdownCodeFences(raw = "") {
+  const source = String(raw || "").replace(/\r\n/g, "\n");
+  if (!source) return "";
+
+  const lines = source.split("\n");
+  const out = [];
+  let inFence = false;
+  let activeLang = "";
+
+  for (const line of lines) {
+    const match = line.match(CODE_FENCE_LINE_RE);
+    if (!match) {
+      out.push(line);
+      continue;
+    }
+
+    const fenceLang = String(match[1] || "")
+      .trim()
+      .toLowerCase();
+
+    if (!inFence) {
+      inFence = true;
+      activeLang = fenceLang;
+      out.push(line);
+      continue;
+    }
+
+    if (!fenceLang) {
+      inFence = false;
+      activeLang = "";
+      out.push("```");
+      continue;
+    }
+
+    if (activeLang && fenceLang === activeLang) {
+      continue;
+    }
+
+    out.push(line);
+  }
+
+  if (inFence) {
+    out.push("```");
+  }
+
+  return out.join("\n");
 }
 
 function escapeHtmlText(value = "") {
@@ -2386,12 +2683,14 @@ function resolveImageSrc(rawUrl = "") {
   return `${API_BASE}${normalized}`;
 }
 
+// auto-scroll zu bottom: chat messages immer sichtbar (mit RAF für smooth animation)
 function scrollToBottom() {
   requestAnimationFrame(() => {
     messagesArea.scrollTop = messagesArea.scrollHeight;
   });
 }
 
+// show temporary toast notification (auto-dismiss nach 3s)
 function toast(msg, type = "error") {
   const el = document.createElement("div");
   el.className = `toast ${type}`;

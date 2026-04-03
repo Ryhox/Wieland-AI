@@ -1,3 +1,5 @@
+/* Payment Confirmation Modal */
+/* Payment modal overlay */
 .payment-confirm-backdrop {
   position: fixed;
   top: 0;
@@ -260,6 +262,7 @@
   transform: translateY(0);
 }
 
+/* mobile tweaks ab hier getrennt, sonst wirds schnell unklar */
 @media (max-width: 600px) {
   .payment-confirm-content {
     grid-template-columns: 1fr;

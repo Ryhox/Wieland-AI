@@ -25,6 +25,7 @@
     "about": "/about",
     "faq": "/faq",
     "changelogs": "/changelogs",
+    "conclusion": "/conclusion",
     "pricing": "/pricing",
     "download": "/download",
     "contact": "/contact",
@@ -43,12 +44,14 @@
     "navAbout": "Über",
     "navFaq": "FAQ",
     "navChangelogs": "Changelogs",
+    "navConclusion": "Fazit",
     "navPricing": "Pricing",
     "downloadExtension": "Download Extension",
     "login": "Anmelden"
   },
   "footer": {
     "contact": "Kontakt",
+    "conclusion": "Fazit",
     "legalNotice": "Impressum",
     "privacy": "Datenschutz",
     "terms": "Nutzungsbedingungen",
@@ -94,12 +97,50 @@
     "loading": "Laden..."
   },
   "chat": {
-    "welcome": [
-      "Was geht dir heute durch den Kopf?",
-      "Was liegt heute an?",
-      "Wobei kann ich dir heute helfen?",
-      "Schön, dass du hier bist!",
-      "Worüber möchtest du sprechen?"
+    "nameFallback": "du",
+    "welcomeGuest": [
+      "Schön, dass du da bist.",
+      "Worauf hast du heute Lust?",
+      "Erzähl mir kurz, was gerade ansteht.",
+      "Wenn du magst, fangen wir ganz entspannt an.",
+      "Hast du eine Idee, die wir gemeinsam schärfen sollen?",
+      "Brauchst du gerade einen klaren Blick von außen?",
+      "Schick mir ruhig die unperfekte Version, wir machen sie rund.",
+      "Was wäre heute ein guter Fortschritt für dich?",
+      "Sollen wir erst brainstormen oder direkt umsetzen?",
+      "Wenn etwas klemmt, lösen wir es Schritt für Schritt.",
+      "Woran arbeitest du gerade konkret?",
+      "Wir können es kurz halten oder tief reingehen.",
+      "Ich helfe dir gern beim Schreiben, Coden oder Strukturieren.",
+      "Lass uns aus deinen Gedanken einen klaren nächsten Schritt machen.",
+      "Gib mir den Kontext, ich sortiere ihn für dich.",
+      "Was wäre für dich ein gutes Ergebnis nach diesem Chat?",
+      "Ein Satz reicht zum Starten.",
+      "Soll ich deinen Plan einmal kritisch gegenchecken?",
+      "Kein Stress, wir gehen das gemeinsam an.",
+      "Ich bin da, sobald du loslegen willst."
+    ],
+    "welcomeLoggedIn": [
+      "Hey {{name}}, schön, dich wiederzusehen.",
+      "Willkommen zurück, {{name}}. Wie soll es heute laufen?",
+      "Hi {{name}}, wollen wir da weitermachen, wo du aufgehört hast?",
+      "Gut, dass du da bist, {{name}}. Was packen wir zuerst an?",
+      "Hey {{name}}, ich bin bereit, wenn du es bist.",
+      "{{name}}, was wäre heute ein richtig guter Fortschritt?",
+      "Hi {{name}}, schick mir deine Rohfassung, ich helfe beim Feinschliff.",
+      "Willkommen zurück, {{name}}. Lieber schnell oder gründlich?",
+      "Schön, dich zu sehen, {{name}}. Was hat gerade Priorität?",
+      "{{name}}, wenn etwas hakt, entwirren wir es zusammen.",
+      "Hi {{name}}, sollen wir optimieren oder neu starten?",
+      "Hey {{name}}, soll ich das in klare Schritte aufteilen?",
+      "Willkommen zurück, {{name}}. Lass uns sauber vorankommen.",
+      "{{name}}, welches Ergebnis möchtest du heute erreichen?",
+      "Hi {{name}}, wir halten es klar und fokussiert.",
+      "Hey {{name}}, gib mir den Kontext, ich übernehme die Struktur.",
+      "Schön, dich wieder hier zu haben, {{name}}. Wollen wir weitermachen?",
+      "{{name}}, brauchst du eher Tempo, Tiefe oder beides?",
+      "Willkommen zurück, {{name}}. Was lösen wir als Erstes?",
+      "Freut mich, dass du da bist, {{name}}. Legen wir los."
     ],
     "models": {
       "free": "2B - Free",
@@ -114,7 +155,7 @@
     "errors": {
       "notImage": "\"{{name}}\" ist kein Bild.",
       "tooLarge": "Bild zu groß (max. {{max}} MB).",
-      "server": "Fehler bei der Kommunikation mit dem Server."
+      "server": "Server ist offline."
     },
     "placeholderLogin": "Anmelden zum Schreiben...",
     "placeholderImage": "Schreibe eine Nachricht zum Bild...",
@@ -133,7 +174,6 @@
     "memorySaved": "Im Gedachtnis gespeichert ({{count}}).",
     "regenerate": "Neu generieren",
     "planModelLocked": "Dieses Modell wird automatisch durch deinen Plan festgelegt.",
-    "demoFallback": "**Hallo! Ich bin Wieland** - dein lokaler KI-Assistent.\n\nDies ist eine **Demo-Vorschau**. Im echten Betrieb läuft hier ein lokales Sprachmodell (Wieland AI).\n\n*Um Ressourcen zu schonen läuft hier keine wirkliche AI*",
     "aiStyle": "KI-Stil"
   },
   "sidebar": {
@@ -450,7 +490,19 @@
     "extensionTitle": "Wieland AI Extension",
     "desc": "Nutze Wieland AI überall im Browser.",
     "button": "Download",
-    "runsOn": "Läuft auf"
+    "runsOn": "Läuft auf",
+    "howTo": {
+      "title": "So lädst du es herunter",
+      "step1": "ZIP-Datei herunterladen und speichern.",
+      "step2": "Die heruntergeladene Datei entpacken.",
+      "step3": "Öffne die Erweiterungsseite deines Browsers:",
+      "browserListLabel": "Erweiterungsseiten der unterstützten Browser",
+      "chrome": "Chrome: chrome://extensions/",
+      "edge": "Edge: edge://extensions/",
+      "firefox": "Firefox: about:debugging#/runtime/this-firefox",
+      "developerMode": "Aktiviere den Entwicklermodus (Chrome und Edge).",
+      "step4": "Wähle den Ordner aus, den du gerade heruntergeladen hast."
+    }
   },
   "changelogs": {
     "eyebrow": "Changelogs",
@@ -459,6 +511,23 @@
     "lead": "Alle Versionen, Fixes und Features - chronologisch dokumentiert.",
     "initialTag": "Initial",
     "entries": [
+      {
+        "version": "v0.2.1",
+        "date": "03 April 2026",
+        "tag": "green",
+        "title": "Backend & UX Update",
+        "changes": [
+          "Bugfixes",
+          "Intent-Routing neu aufgebaut (Web vs. Extension, Seitenkontext, Bild-Input, Popup-Antworten)",
+          "Web-Lookup präziser getrennt: Live-Themen über SEARCH_WEB, seitenbezogene Fragen über READ_PAGE",
+          "Klärungsfluss in Web und Extension verbessert (präzisere Rückfragen, stabile Payloads, doppelte Popups entfernt)",
+          "Streaming robuster gemacht mit Auto-Continue bei Längenlimit und Markdown/Code-Fence-Bereinigung",
+          "JWT enthält jetzt den aktiven Plan; bei Planwechsel gibt es sofort ein aktualisiertes Token",
+          "SQLite-Query-/Connection-Layer und History-Transaktionen gehärtet (zuverlässigeres Rollback)",
+          "Memory-Relevanzabruf über SQL-Hint-Filtering verbessert",
+          "Profile/UI-Polish: Profilseite überarbeitet, Plan-Darstellung verbessert, Welcome-Layering gefixt und erster AI-Stil in der Extension standardmäßig aktiv"
+        ]
+      },
       {
         "version": "v0.2.0",
         "date": "02 April 2026",
@@ -600,11 +669,138 @@
       }
     ]
   },
+  "conclusion": {
+    "eyebrow": "Final Chapter",
+    "title": "Fazit:",
+    "titleAccent": "Vom Chaos zum System.",
+    "lead": "Das hier ist mein ehrlicher Projektabschluss. Nicht auf \"sieht gut aus\" getrimmt, sondern so wie es wirklich war: viele Umwege, viele Korrekturen und am Ende ein System, das deutlich robuster ist als am Anfang.",
+    "leadSecondary": "Ich wollte bewusst kein Standard-Recap mit leeren Buzzwords, sondern den Weg zeigen, den man in Commit-Historien und Logs meistens nicht sieht: Entscheidungen unter Druck, technische Brüche und die Learnings, die daraus entstanden sind.",
+    "pills": [
+      "Web App + Extension",
+      "Node / Express",
+      "SQLite statt PostgreSQL",
+      "Erstes Mal Three.js",
+      "Produkt statt Demo"
+    ],
+    "acts": [
+      {
+        "kicker": "Akt I",
+        "title": "Der Start war härter als gedacht",
+        "offset": false,
+        "paragraphs": [
+          "[[React war am Anfang eine echte Baustelle]]. Ich hatte zu viele Abhängigkeiten zwischen Komponenten, State-Drift zwischen Web-App und Extension und mehrere Flows, die sich gegenseitig überschrieben haben.",
+          "Gerade beim Chat war das deutlich spürbar: Streaming, Bearbeiten, Regenerate, Bild-Upload, History und Auth mussten gleichzeitig korrekt zusammenlaufen. Anfangs lief das oft \"irgendwie\", aber nicht zuverlässig.",
+          "Der Wendepunkt war, Verantwortung konsequent zu trennen: klarere Komponenten-Grenzen, reproduzierbare User-Flows und weniger \"quick fixes\" direkt im UI. Erst ab da hat sich das Projekt wie ein echtes Produkt angefühlt und nicht wie eine Demo mit vielen Einzelteilen."
+        ]
+      },
+      {
+        "kicker": "Akt II",
+        "title": "Datenbank-Realität: PostgreSQL zu SQLite",
+        "offset": true,
+        "paragraphs": [
+          "Ursprünglich war PostgreSQL mein geplanter Standardweg. In der Praxis hatte ich aber genau dort immer wieder Reibung: lokale Umgebung, Migrationsabläufe, konsistenter Setup auf verschiedenen Maschinen und unnötige Komplexität für den aktuellen Produktstand.",
+          "Der Wechsel auf [[SQLite mit WAL]] war deshalb keine Notlösung, sondern eine bewusste Produktentscheidung. Ich wollte eine Datenbasis, die lokal schnell, stabil und ohne Nebenschauplätze läuft.",
+          "Das Ergebnis war spürbar: weniger Zeit für Infrastrukturstress, mehr Zeit für echte Features, Bugfixes und Konsistenz. Für diese Projektphase war der Switch genau richtig."
+        ]
+      },
+      {
+        "kicker": "Akt III",
+        "title": "Das erste Mal mit Three.js und 3D-Objekten",
+        "offset": false,
+        "paragraphs": [
+          "[[Three.js war für mich komplett neu]]. Ich musste mich in FBX-Import, Material-Handling, Kamera-Logik, Performance und Rendering-Fehler gleichzeitig einarbeiten, während der Rest der App parallel weiterlief.",
+          "Besonders am Anfang war das Trial-and-Error pur: Texturen wurden nicht geladen, Szenen waren zu dunkel, Animationen wirkten künstlich oder unruhig. Genau diese Phase war aber wichtig, weil ich dadurch verstanden habe, welche Kamera- und Motion-Entscheidungen wirklich cineastisch wirken und welche nur laut aussehen.",
+          "Am Ende ist daraus eine visuelle Sprache entstanden, die nicht austauschbar ist: mehr Atmosphäre, mehr Inszenierung und trotzdem technisch kontrolliert genug, damit die Seite stabil bleibt."
+        ]
+      },
+      {
+        "kicker": "Akt IV",
+        "title": "Der eigentliche Sprung: Qualität in den Details",
+        "offset": true,
+        "paragraphs": [
+          "Der größte Fortschritt kam nicht durch ein einzelnes neues Feature, sondern durch die \"unsichtbaren\" Baustellen: sauberes Intent-Routing, Clarification-Flow ohne Overtrigger, konsistente Antwortsprache, robustes Streaming-Verhalten und klare Error-Fallbacks.",
+          "Genau dort entscheidet sich, ob ein AI-Produkt nur beeindruckt oder im Alltag wirklich funktioniert. Wenn Routing, Sprache, Kontext und UI nicht zusammenpassen, bringt das beste Modell nichts.",
+          "Mein Kern-Learning aus diesem Akt: [[nicht nur Features bauen, sondern Verhalten stabil machen]]. Erst dadurch entsteht Vertrauen in das Produkt."
+        ]
+      },
+      {
+        "kicker": "Akt V",
+        "title": "Zwei Welten synchron halten: Web-App und Extension",
+        "offset": false,
+        "paragraphs": [
+          "Ein Punkt, den ich vorher unterschätzt habe: [[dieselbe Logik in zwei unterschiedlichen Oberflächen]] stabil zu halten. In der Web-App und in der Extension wirken kleine Unterschiede sofort wie zwei verschiedene Produkte, wenn Sprache, Popup-Verhalten, Eingabezustand oder Fehlertexte nicht exakt zusammenpassen.",
+          "Genau deshalb habe ich [[viele Dinge vereinheitlicht]]: identische Clarification-Regeln, konsistente Markdown-/Code-Rendering-Pfade, saubere Fallbacks und gleiches Verhalten bei Streaming-Unterbrechungen. Das war nicht spektakulär, aber es hat die gefühlte Qualität massiv erhöht.",
+          "Das Learning aus diesem Akt war klar: wenn ein Produkt auf mehreren Oberflächen lebt, ist [[Konsistenz keine Option, sondern Kernfunktion]]."
+        ]
+      },
+      {
+        "kicker": "Akt VI",
+        "title": "Release-Druck, Rückschritte und saubere Entscheidungen",
+        "offset": true,
+        "paragraphs": [
+          "Gegen Ende ging es weniger um \"noch ein Feature\" und mehr um [[Priorisierung]]. Ich musste öfter bewusst entscheiden, was ich nicht baue, damit das, was drin ist, wirklich stabil bleibt. Gerade [[unter Zeitdruck]] ist das schwerer als es klingt.",
+          "Es gab auch Rückschritte: Dinge, die kurzfristig gut aussahen, haben später Nebenwirkungen erzeugt und mussten wieder raus. Dieses Zurücknehmen war am Anfang frustrierend, aber es war notwendig, um [[eine klare technische Linie zu halten]].",
+          "Der vielleicht wichtigste Effekt dieser Phase: ich denke heute stärker in [[Wartbarkeit und Verhalten über Zeit]], nicht nur in \"funktioniert jetzt gerade\"."
+        ]
+      }
+    ],
+    "reflection": {
+      "sectionLabel": "Nachklang",
+      "title": "Was dieses Projekt bei mir verändert hat",
+      "intro": "Wenn ich den gesamten Weg heute zusammenfasse, ist der größte Unterschied nicht nur im Ergebnis sichtbar, sondern vor allem in [[der Denkweise, mit der ich Probleme angehe]].",
+      "quickTitle": "Wenn ich es auf vier Punkte runterbreche:",
+      "quick": [
+        "[[System-Denken schlägt reines Feature-Denken.]]",
+        "[[Kurskorrektur ist Stärke, nicht Schwäche.]]",
+        "[[Qualität entsteht in Randfällen und Übergängen.]]",
+        "[[Debugging ist ein Kernprozess, kein Notfallmodus.]]"
+      ],
+      "chapters": [
+        {
+          "title": "1) Vom Screen-Denken zum System-Denken",
+          "paragraphs": [
+            "Ich denke inzwischen viel stärker in Systemen statt in einzelnen Screens. Ein guter Bildschirm ist wichtig, aber [[ohne stabile Datenwege, klares Routing und saubere Zustandsführung]] bleibt das nur Oberfläche. Diese Erkenntnis war wahrscheinlich der größte Schritt im ganzen Projekt.",
+            "Wenn ich heute auf den Anfang zurückblicke, sehe ich weniger die einzelnen Features und mehr die Entwicklung in der Denkweise: von \"ich baue etwas, das irgendwie läuft\" zu [[\"ich entwerfe etwas, das sich verlässlich verhält\"]]."
+          ]
+        },
+        {
+          "title": "2) Mut zur Kurskorrektur",
+          "paragraphs": [
+            "Gleichzeitig habe ich gelernt, mutig technische Entscheidungen zu korrigieren. Der PostgreSQL-zu-SQLite-Wechsel war dafür ein gutes Beispiel: nicht an einem Plan festhalten, nur weil er am Anfang \"richtig\" klang, sondern [[das wählen, was für den aktuellen Produktzustand wirklich sinnvoll ist]].",
+            "Im Nachhinein war genau diese Mischung entscheidend: Frontend-Feingefühl, Backend-Disziplin und die Bereitschaft, Architektur neu zu denken, wenn die Realität es verlangt. Früher hätte ich manche Entscheidungen zu lange verteidigt, heute [[korrigiere ich lieber früher und sauberer]]."
+          ]
+        },
+        {
+          "title": "3) Qualität entsteht in den Zwischenräumen",
+          "paragraphs": [
+            "Ich habe gemerkt, dass Produktqualität oft in den Übergängen entsteht: in Timeouts, in Fehlertexten, Reconnect-Logik, Sprachkonsistenz und genau dann, wenn Nutzer nicht den \"Happy Path\" gehen. Genau dort entscheidet sich, ob [[Vertrauen wächst oder bricht]].",
+            "Und persönlich war Three.js für mich der Teil, der am meisten Wachstum erzeugt hat: nicht, weil alles sofort funktioniert hat, sondern weil ich durch echte Probleme gelernt habe, [[visuelle Qualität mit technischer Stabilität zu verbinden]]."
+          ]
+        },
+        {
+          "title": "4) Systematik schlägt Motivation",
+          "paragraphs": [
+            "Fachlich nehme ich mit, dass Debugging kein \"Notfallmodus\" ist, sondern ein normaler Entwicklungsprozess. Gute Logs, reproduzierbare Schritte und kleine, gezielte Fixes haben dieses Projekt schneller gemacht als große, riskante Umbauten.",
+            "Persönlich nehme ich mit, dass ein Projekt dieser Größe nicht von Motivation allein getragen wird, sondern von [[Systematik]]: Prioritäten setzen, Entscheidungen dokumentieren, Dinge beenden, bevor man den nächsten Block aufmacht."
+          ]
+        }
+      ],
+      "keyline": "Fortschritt in der Praxis sieht selten spektakulär aus. Er entsteht in vielen sauberen Entscheidungen, die sich erst zusammen wie ein [[großer Sprung]] anfühlen."
+    },
+    "finale": [
+      "Mein Abschluss in einem Satz: [[Wieland AI wurde nicht durch einen einzelnen großen Wurf stark, sondern durch viele harte, konkrete Entscheidungen unter realem Druck]].",
+      "Genau deshalb fühlt sich dieses Fazit für mich nicht wie ein Ende an, sondern wie der Punkt, an dem aus Experimenten eine klare Richtung geworden ist."
+    ]
+  },
   "profile": {
     "eyebrow": "Profil",
     "title": "Dein Account",
     "titleAccent": "verwalten.",
     "lead": "E-Mail, Passwort, Abonnement - alles an einem Ort.",
+    "accountSection": "Konto",
+    "contactSection": "Kontaktdaten",
+    "securitySection": "Sicherheit",
+    "displayNameLabel": "Anzeigename",
     "emailSection": "E-Mail",
     "yourEmail": "Deine E-Mail",
     "change": "Ändern",
@@ -619,6 +815,8 @@
     "cancelSubscription": "Abonnement kündigen",
     "upgradePlan": "Plan upgraden",
     "adminNoCancel": "Als Admin kannst du das Abonnement nicht kündigen.",
+    "subscriptionPaidHint": "Du kannst dein Abonnement jederzeit kündigen.",
+    "subscriptionFreeHint": "Upgrade für mehr Leistung und Funktionen.",
     "memorySection": "Gedächtnis",
     "memoryLabel": "Gespeicherte Fakten",
     "memoryDescription": "Hier siehst du, was die AI über dich gespeichert hat. Du kannst einzelne Einträge oder alles löschen.",
@@ -639,6 +837,10 @@
       "title": "Fehler",
       "success": "Erfolg",
       "emailSame": "E-Mail ist identisch oder leer",
+      "displayNameSame": "Name ist identisch oder leer",
+      "displayNameInvalid": "Name muss 3-32 Zeichen haben (Buchstaben, Zahlen, _ -)",
+      "displayNameUpdate": "Fehler beim Aktualisieren des Namens",
+      "displayNameUnavailable": "Die Änderung des Anzeigenamens ist aktuell nicht verfügbar.",
       "emailUpdate": "Fehler beim Aktualisieren der E-Mail",
       "passwordFields": "Alle Felder sind erforderlich",
       "passwordMismatch": "Neue Passwörter stimmen nicht überein",
@@ -651,6 +853,7 @@
       "memoryDeleteAll": "Gedächtnis konnte nicht gelöscht werden"
     },
     "success": {
+      "displayNameUpdated": "Name erfolgreich aktualisiert!",
       "emailUpdated": "E-Mail erfolgreich aktualisiert!",
       "passwordUpdated": "Passwort erfolgreich aktualisiert!",
       "subscriptionCanceled": "Abonnement erfolgreich gekündigt. Du wirst auf Free-Plan zurückgestuft.",
@@ -804,8 +1007,10 @@
     "plan": "Plan:",
     "duration": "Laufzeit:",
     "monthlyCancelable": "Monatlich kündbar",
+    "dueNow": "heute fällig",
     "perMonth": "/Monat",
     "tax": "Zzgl. Steuern",
+    "proratedNote": "Anteiliges Upgrade. Ab dem nächsten Abrechnungszeitraum: ${{fullPrice}}/Monat.",
     "confirmUpgrade": "Upgrade bestätigen",
     "methods": {
       "card": "Kreditkarte",
@@ -820,8 +1025,15 @@
   "purchase": {
     "processing": "Zahlung wird bearbeitet...",
     "upgrading": "Upgrade auf {{plan}} Plan",
+    "downgrading": "Wechsel auf den {{plan}}-Plan",
+    "downgradeProcessing": "Abonnement wird aktualisiert...",
     "success": "Upgrade erfolgreich!",
     "welcome": "Willkommen im {{plan}} Plan. Viel Spaß!",
+    "downgradeConfirmTitle": "Downgrade bestätigen",
+    "downgradeConfirmText": "Du wirst auf {{plan}} wechseln. Der {{plan}}-Plan gilt erst ab nächstem Monat.",
+    "confirmDowngrade": "Downgrade bestätigen",
+    "downgradeSuccess": "Downgrade erfolgreich!",
+    "downgradeWelcome": "Du bist jetzt im {{plan}}-Plan.",
     "close": "Schließen"
   },
   "dashboard": {

@@ -11,16 +11,26 @@ import AlertModal from "../components/AlertModal";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { withLang } from "../utils/i18nRouting";
 
+// user profil page: account info (email/password), memories management, subscriptions, deletion
+// handlers für: email ändern, password ändern, memories löschen, account delete, subscription cancel
 function Profile({ isSidebarOpen, onSidebarToggle }) {
   const { t, i18n } = useTranslation();
-  const { user, authFetch, logout } = useAuth();
+  const { user, authFetch, logout, setUser } = useAuth();
   const navigate = useNavigate();
   const localPath = (path) => withLang(path, i18n.language);
 
   const isAdmin = (user?.plan || "").toLowerCase() === "admin";
+  const displayName =
+    String(user?.username || "").trim() ||
+    String(user?.email || "").split("@")[0] ||
+    "---";
+  const profileInitials = getProfileInitials(displayName);
 
+  // edit modes: welche sektion wird gerade editiert?
+  const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
+  const [newDisplayName, setNewDisplayName] = useState(user?.username || "");
   const [newEmail, setNewEmail] = useState(user?.email || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -33,6 +43,63 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
   const [deletingMemoryId, setDeletingMemoryId] = useState(null);
   const [isDeletingAllMemory, setIsDeletingAllMemory] = useState(false);
 
+  const handleDisplayNameChange = async (e) => {
+    e.preventDefault();
+    setAlert(null);
+
+    const trimmedName = String(newDisplayName || "").trim();
+    if (!trimmedName || trimmedName === user?.username) {
+      setAlert({
+        type: "error",
+        title: t("profile.errors.title"),
+        message: t("profile.errors.displayNameSame"),
+      });
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_-]{3,32}$/.test(trimmedName)) {
+      setAlert({
+        type: "error",
+        title: t("profile.errors.title"),
+        message: t("profile.errors.displayNameInvalid"),
+      });
+      return;
+    }
+
+    try {
+      const response = await authFetch("/api/auth/update-name", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmedName }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        setAlert({
+          type: "success",
+          title: t("profile.errors.success"),
+          message: t("profile.success.displayNameUpdated"),
+        });
+        setIsEditingDisplayName(false);
+      } else {
+        const data = await response.json().catch(() => ({}));
+        setAlert({
+          type: "error",
+          title: t("profile.errors.title"),
+          message: data.error || t("profile.errors.displayNameUpdate"),
+        });
+      }
+    } catch (err) {
+      setAlert({
+        type: "error",
+        title: t("profile.errors.title"),
+        message: t("profile.errors.displayNameUpdate"),
+      });
+    }
+  };
+
+  // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handleEmailChange = async (e) => {
     e.preventDefault();
     setAlert(null);
@@ -77,6 +144,7 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
     }
   };
 
+  // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     setAlert(null);
@@ -145,6 +213,7 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
     }
   };
 
+  // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handleDeleteAccount = async () => {
     setConfirmModal({
       title: t("profile.confirm.deleteTitle"),
@@ -352,17 +421,93 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
           <div className="profile-divider" />
 
           <div className="profile-content">
-            <div className="profile-section">
-              <h2 className="profile-section-title">
-                {t("profile.emailSection")}
+            <section className="profile-group">
+              <h2 className="profile-group-title">
+                {t("profile.accountSection", { defaultValue: "Konto" })}
+              </h2>
+              {!isEditingDisplayName ? (
+                <div className="profile-row-card">
+                  <div className="profile-row-left profile-account-left">
+                    <div className="profile-avatar" aria-hidden="true">
+                      {profileInitials}
+                    </div>
+                    <div className="profile-row-text">
+                      <span className="profile-row-title">{displayName}</span>
+                      <span className="profile-row-meta">
+                        {t("profile.displayNameLabel", {
+                          defaultValue: "Anzeigename",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="profile-row-right">
+                    <button
+                      className="profile-btn-secondary"
+                      onClick={() => {
+                        setNewDisplayName(user?.username || "");
+                        setIsEditingDisplayName(true);
+                      }}
+                    >
+                      {t("profile.change")}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="profile-row-card profile-row-card-edit">
+                  <form
+                    onSubmit={handleDisplayNameChange}
+                    className="profile-form"
+                  >
+                    <div className="profile-form-group">
+                      <label>
+                        {t("profile.displayNameLabel", {
+                          defaultValue: "Anzeigename",
+                        })}
+                      </label>
+                      <input
+                        type="text"
+                        value={newDisplayName}
+                        onChange={(e) => setNewDisplayName(e.target.value)}
+                        placeholder={t("profile.displayNameLabel")}
+                        required
+                      />
+                    </div>
+                    <div className="profile-form-buttons">
+                      <button type="submit" className="profile-btn-primary">
+                        {t("common.save")}
+                      </button>
+                      <button
+                        type="button"
+                        className="profile-btn-secondary"
+                        onClick={() => setIsEditingDisplayName(false)}
+                      >
+                        {t("common.cancel")}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </section>
+
+            <section className="profile-group">
+              <h2 className="profile-group-title">
+                {t("profile.contactSection", {
+                  defaultValue: "Kontaktdaten",
+                })}
               </h2>
               {!isEditingEmail ? (
-                <div className="profile-field">
-                  <span className="profile-field-label">
-                    {t("profile.yourEmail")}
-                  </span>
-                  <div className="profile-field-display">
-                    <span>{user?.email || "—"}</span>
+                <div className="profile-row-card">
+                  <div className="profile-row-left">
+                    <div className="profile-row-text">
+                      <span className="profile-row-label">
+                        {t("profile.emailSection", { defaultValue: "E-Mail" })}
+                      </span>
+                      <span className="profile-row-value">
+                        {user?.email || "---"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="profile-row-right">
                     <button
                       className="profile-btn-secondary"
                       onClick={() => setIsEditingEmail(true)}
@@ -372,116 +517,146 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
                   </div>
                 </div>
               ) : (
-                <form onSubmit={handleEmailChange} className="profile-form">
-                  <div className="profile-form-group">
-                    <label>{t("profile.newEmail")}</label>
-                    <input
-                      type="email"
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      placeholder={t("auth.placeholderEmail")}
-                      required
-                    />
-                  </div>
-                  <div className="profile-form-buttons">
-                    <button type="submit" className="profile-btn-primary">
-                      {t("common.save")}
-                    </button>
-                    <button
-                      type="button"
-                      className="profile-btn-secondary"
-                      onClick={() => setIsEditingEmail(false)}
-                    >
-                      {t("common.cancel")}
-                    </button>
-                  </div>
-                </form>
+                <div className="profile-row-card profile-row-card-edit">
+                  <form onSubmit={handleEmailChange} className="profile-form">
+                    <div className="profile-form-group">
+                      <label>{t("profile.newEmail")}</label>
+                      <input
+                        type="email"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        placeholder={t("auth.placeholderEmail")}
+                        required
+                      />
+                    </div>
+                    <div className="profile-form-buttons">
+                      <button type="submit" className="profile-btn-primary">
+                        {t("common.save")}
+                      </button>
+                      <button
+                        type="button"
+                        className="profile-btn-secondary"
+                        onClick={() => setIsEditingEmail(false)}
+                      >
+                        {t("common.cancel")}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               )}
-            </div>
+            </section>
 
-            <div className="profile-divider-thin" />
-
-            <div className="profile-section">
-              <h2 className="profile-section-title">
-                {t("profile.passwordSection")}
+            <section className="profile-group">
+              <h2 className="profile-group-title">
+                {t("profile.securitySection", { defaultValue: "Sicherheit" })}
               </h2>
               {!isEditingPassword ? (
-                <div className="profile-field">
-                  <span className="profile-field-label">
-                    {t("profile.changePassword")}
-                  </span>
-                  <button
-                    className="profile-btn-secondary"
-                    onClick={() => setIsEditingPassword(true)}
-                  >
-                    {t("profile.changePassword")}
-                  </button>
+                <div className="profile-row-card">
+                  <div className="profile-row-left">
+                    <div className="profile-row-text">
+                      <span className="profile-row-label">
+                        {t("profile.passwordSection", {
+                          defaultValue: "Passwort",
+                        })}
+                      </span>
+                      <span className="profile-row-value profile-password-dots">
+                        **********
+                      </span>
+                    </div>
+                  </div>
+                  <div className="profile-row-right">
+                    <button
+                      className="profile-btn-secondary"
+                      onClick={() => setIsEditingPassword(true)}
+                    >
+                      {t("profile.changePassword")}
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <form onSubmit={handlePasswordChange} className="profile-form">
-                  <div className="profile-form-group">
-                    <label>{t("profile.currentPassword")}</label>
-                    <input
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                    />
-                  </div>
-                  <div className="profile-form-group">
-                    <label>{t("profile.newPassword")}</label>
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                    />
-                  </div>
-                  <div className="profile-form-group">
-                    <label>{t("profile.confirmPassword")}</label>
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                    />
-                  </div>
-                  <div className="profile-form-buttons">
-                    <button type="submit" className="profile-btn-primary">
-                      {t("common.save")}
-                    </button>
-                    <button
-                      type="button"
-                      className="profile-btn-secondary"
-                      onClick={() => setIsEditingPassword(false)}
-                    >
-                      {t("common.cancel")}
-                    </button>
-                  </div>
-                </form>
+                <div className="profile-row-card profile-row-card-edit">
+                  <form
+                    onSubmit={handlePasswordChange}
+                    className="profile-form"
+                  >
+                    <div className="profile-form-group">
+                      <label>{t("profile.currentPassword")}</label>
+                      <input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="********"
+                        required
+                      />
+                    </div>
+                    <div className="profile-form-group">
+                      <label>{t("profile.newPassword")}</label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="********"
+                        required
+                      />
+                    </div>
+                    <div className="profile-form-group">
+                      <label>{t("profile.confirmPassword")}</label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="********"
+                        required
+                      />
+                    </div>
+                    <div className="profile-form-buttons">
+                      <button type="submit" className="profile-btn-primary">
+                        {t("common.save")}
+                      </button>
+                      <button
+                        type="button"
+                        className="profile-btn-secondary"
+                        onClick={() => setIsEditingPassword(false)}
+                      >
+                        {t("common.cancel")}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               )}
-            </div>
+            </section>
 
-            <div className="profile-divider-thin" />
-
-            <div className="profile-section">
-              <h2 className="profile-section-title">
+            <section className="profile-group">
+              <h2 className="profile-group-title">
                 {t("profile.subscription")}
               </h2>
-              <div className="profile-field">
-                <span className="profile-field-label">{t("profile.plan")}</span>
-                <div className="profile-field-display">
-                  <span className="profile-plan-badge">
-                    {user?.plan || "Free"}
-                  </span>
-                  {isAdmin && (
-                    <span className="profile-field-label">
-                      {t("profile.adminNoCancel")}
+              <div className="profile-row-card">
+                <div className="profile-row-left">
+                  <div className="profile-row-text">
+                    <span className="profile-plan-inline">
+                      <span className="profile-row-label">
+                        {t("profile.plan")}
+                      </span>
+                      <span className="profile-plan-badge">
+                        {user?.plan || "Free"}
+                      </span>
                     </span>
-                  )}
+                    <span className="profile-row-meta">
+                      {isAdmin
+                        ? t("profile.adminNoCancel")
+                        : user?.plan && user?.plan !== "Free"
+                          ? t("profile.subscriptionPaidHint", {
+                              defaultValue:
+                                "Du kannst dein Abonnement jederzeit kündigen.",
+                            })
+                          : t("profile.subscriptionFreeHint", {
+                              defaultValue:
+                                "Upgrade für mehr Leistung und Funktionen.",
+                            })}
+                    </span>
+                  </div>
+                </div>
+                <div className="profile-row-right">
                   {user?.plan && user?.plan !== "Free" && !isAdmin && (
                     <button
                       className="profile-btn-danger"
@@ -500,46 +675,79 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
                   )}
                 </div>
               </div>
-            </div>
+            </section>
 
-            <div className="profile-divider-thin" />
-
-            <div className="profile-section">
-              <h2 className="profile-section-title">
+            <section className="profile-group">
+              <h2 className="profile-group-title">
                 {t("profile.memorySection")}
               </h2>
-              <div className="profile-field">
-                <span className="profile-field-label">{t("profile.memoryLabel")}</span>
-                <p className="profile-field-description">
-                  {t("profile.memoryDescription")}
-                </p>
-                <button className="profile-btn-secondary" onClick={openMemoryModal}>
-                  {t("profile.openMemory")}
-                </button>
+              <div className="profile-row-card">
+                <div className="profile-row-left">
+                  <span className="profile-card-icon" aria-hidden="true">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="8"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      />
+                      <path
+                        d="M12 8.8v3.8l2.6 1.7"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <div className="profile-row-text">
+                    <span className="profile-row-title">
+                      {t("profile.memoryLabel")}
+                    </span>
+                    <span className="profile-row-meta">
+                      {t("profile.memoryDescription")}
+                    </span>
+                  </div>
+                </div>
+                <div className="profile-row-right">
+                  <button
+                    className="profile-btn-secondary"
+                    onClick={openMemoryModal}
+                  >
+                    {t("profile.openMemory")}
+                  </button>
+                </div>
               </div>
-            </div>
+            </section>
 
-            <div className="profile-divider-thin" />
-
-            <div className="profile-section profile-section-danger">
-              <h2 className="profile-section-title">
-                {t("profile.dangerZone")}
-              </h2>
-              <div className="profile-field">
-                <span className="profile-field-label">
-                  {t("profile.deleteAccount")}
-                </span>
-                <p className="profile-field-description">
-                  {t("profile.deleteDescription")}
-                </p>
-                <button
-                  className="profile-btn-danger"
-                  onClick={handleDeleteAccount}
-                >
-                  {t("profile.deleteAccount")}
-                </button>
+            <section className="profile-group">
+              <h2 className="profile-group-title">{t("profile.dangerZone")}</h2>
+              <div className="profile-row-card profile-row-card-danger">
+                <div className="profile-row-left">
+                  <div className="profile-row-text">
+                    <span className="profile-row-title">
+                      {t("profile.deleteAccount")}
+                    </span>
+                    <span className="profile-row-meta">
+                      {t("profile.deleteDescription")}
+                    </span>
+                  </div>
+                </div>
+                <div className="profile-row-right">
+                  <button
+                    className="profile-btn-danger"
+                    onClick={handleDeleteAccount}
+                  >
+                    {t("profile.deleteAccount")}
+                  </button>
+                </div>
               </div>
-            </div>
+            </section>
           </div>
         </div>
       </main>
@@ -563,11 +771,24 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
   );
 }
 
+// helper-block für parsing/aufbereitung, nimmt unten viel chaos raus
 function normalizeProfileLocale(language = "de") {
   const lang = String(language || "de").toLowerCase();
   if (lang.startsWith("en")) return "en-US";
   if (lang.startsWith("it")) return "it-IT";
   return "de-DE";
+}
+
+function getProfileInitials(name = "") {
+  const clean = String(name || "").trim();
+  if (!clean) return "--";
+
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+
+  return `${parts[0][0] || ""}${parts[1][0] || ""}`.toUpperCase();
 }
 
 function fallbackMemoryLabel(key = "") {
@@ -607,7 +828,10 @@ function MemoryModal({
 
   return (
     <div className="profile-memory-backdrop" onClick={onClose}>
-      <div className="profile-memory-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="profile-memory-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="profile-memory-modal-header">
           <div>
             <h2 className="profile-memory-modal-title">
@@ -622,7 +846,7 @@ function MemoryModal({
             onClick={onClose}
             disabled={loading || deletingAll || Boolean(deletingMemoryId)}
           >
-            ✕
+            {"\u00D7"}
           </button>
         </div>
 

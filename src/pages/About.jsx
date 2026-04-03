@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useTranslation } from "react-i18next";
@@ -13,22 +13,27 @@ import { useAuth } from "../context/AuthContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// about page: server stats anzeigen, komplexe scroll-animationen mit 3D-szene linking
 function About({ isSidebarOpen, onSidebarToggle }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const rootRef = useRef(null);
+  // animation state: scroll-position relativ zu viewport, szenen-rotation via scrollY
   const pageProgressRef = useRef(0);
   const sceneSpinRef = useRef(0);
   const [sceneProgress, setSceneProgress] = useState(0);
   const [sceneSpin, setSceneSpin] = useState(0);
   const [isSceneReady, setIsSceneReady] = useState(false);
   const introTl = useRef(null);
+
+  // lade server stats: user/chat/message counts von backend
   const [stats, setStats] = useState({
     total_users: null,
     total_chats: null,
     total_messages: null,
   });
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     fetch("/api/stats")
       .then((r) => r.json())
@@ -36,32 +41,40 @@ function About({ isSidebarOpen, onSidebarToggle }) {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
+  // animation und side-effects hier gebündelt, cleanup ist wichtig :/
+  useLayoutEffect(() => {
     if (!rootRef.current) return;
 
     const prefersReduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+    const isMobileViewport = window.matchMedia("(max-width: 768px)").matches;
     if (prefersReduced) return;
 
     const ctx = gsap.context(() => {
-      gsap.set(".about-page-shell #three-canvas", {
+      const shell = rootRef.current;
+      const threeCanvas = shell?.querySelector("#three-canvas");
+      const starsCanvas = shell?.querySelector("#stars-canvas");
+
+      if (!shell || !threeCanvas || !starsCanvas) return;
+
+      gsap.set(threeCanvas, {
         transformOrigin: "50% 50%",
         opacity: 0,
       });
-      gsap.set(".about-page-shell #stars-canvas", { opacity: 0 });
+      gsap.set(starsCanvas, { opacity: 0 });
       gsap.set(".about-hero-left > *", { opacity: 0, y: 26 });
       gsap.set(".about-stat-card", { opacity: 0, y: 30 });
 
       introTl.current = gsap
         .timeline({ paused: true })
-        .to(".about-page-shell #stars-canvas", {
+        .to(starsCanvas, {
           opacity: 0.42,
           duration: 0,
           ease: "power2.out",
         })
         .to(
-          ".about-page-shell #three-canvas",
+          threeCanvas,
           { opacity: 0.14, duration: 0.4, ease: "power2.out" },
           0,
         )
@@ -88,93 +101,98 @@ function About({ isSidebarOpen, onSidebarToggle }) {
           "-=0.1",
         );
 
-      gsap.utils.toArray(".about-reveal").forEach((item) => {
-        gsap.from(item, {
-          opacity: 0,
-          y: 60,
-          duration: 1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: item,
-            start: "top 82%",
-            toggleActions: "play none none reverse",
-          },
-        });
-      });
-
-      gsap.utils.toArray(".about-card, .about-stack-card").forEach((item) => {
-        gsap.fromTo(
-          item,
-          {
-            y: 30,
-          },
-          {
-            y: -20,
-            ease: "none",
+      if (!isMobileViewport) {
+        gsap.utils.toArray(".about-reveal").forEach((item) => {
+          gsap.from(item, {
+            opacity: 0,
+            y: 60,
+            duration: 1,
+            ease: "power3.out",
             scrollTrigger: {
               trigger: item,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: 1,
+              start: "top 82%",
+              toggleActions: "play none none reverse",
             },
-          },
-        );
-      });
+          });
+        });
 
-      gsap
-        .timeline({
-          scrollTrigger: {
-            trigger: ".about-hero",
-            start: "top top+=68",
-            end: "+=130%",
-            scrub: 1,
-            pin: true,
-            anticipatePin: 1,
-            pinSpacing: true,
-          },
-        })
-        .to(
-          ".about-hero-inner",
-          {
-            y: -60,
-            opacity: 0,
-            ease: "power2.in",
-            duration: 0.8,
-          },
-          0,
-        )
-        .to(
-          ".about-page-shell #three-canvas",
-          {
-            scale: 1.05,
-            y: -16,
-            opacity: 0.06,
-            ease: "power1.inOut",
-            duration: 0.8,
-          },
-          0,
-        )
-        .to(
-          ".about-page-shell #stars-canvas",
-          {
-            opacity: 0.1,
-            ease: "power1.inOut",
-            duration: 0.8,
-          },
-          0,
-        );
+        gsap.utils.toArray(".about-card, .about-stack-card").forEach((item) => {
+          gsap.fromTo(
+            item,
+            {
+              y: 30,
+            },
+            {
+              y: -20,
+              ease: "none",
+              scrollTrigger: {
+                trigger: item,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: 1,
+              },
+            },
+          );
+        });
 
-      ScrollTrigger.create({
-        trigger: ".about-page-shell",
-        start: "top top",
-        end: "bottom bottom",
-        scrub: true,
-        onUpdate: (self) => {
-          setSceneProgress(self.progress);
-        },
-      });
+        gsap
+          .timeline({
+            scrollTrigger: {
+              trigger: ".about-hero",
+              start: "top top+=68",
+              end: "+=130%",
+              scrub: 1,
+              pin: true,
+              anticipatePin: 1,
+              pinSpacing: true,
+            },
+          })
+          .to(
+            ".about-hero-inner",
+            {
+              y: -60,
+              opacity: 0,
+              ease: "power2.in",
+              duration: 0.8,
+            },
+            0,
+          )
+          .to(
+            threeCanvas,
+            {
+              scale: 1.05,
+              y: -16,
+              opacity: 0.06,
+              ease: "power1.inOut",
+              duration: 0.8,
+            },
+            0,
+          )
+          .to(
+            starsCanvas,
+            {
+              opacity: 0.1,
+              ease: "power1.inOut",
+              duration: 0.8,
+            },
+            0,
+          );
+
+        ScrollTrigger.create({
+          trigger: shell,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: true,
+          onUpdate: (self) => {
+            setSceneProgress(self.progress);
+          },
+        });
+      } else {
+        setSceneProgress(0);
+      }
     }, rootRef);
 
+    // handler separat halten, sonst wird die render-logik schnell wirr
     const handleScroll = () => setSceneSpin(window.scrollY * 0.0002);
     window.addEventListener("scroll", handleScroll, { passive: true });
 
@@ -184,6 +202,7 @@ function About({ isSidebarOpen, onSidebarToggle }) {
     };
   }, []);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     if (isSceneReady && introTl.current) {
       introTl.current.play();
@@ -191,15 +210,18 @@ function About({ isSidebarOpen, onSidebarToggle }) {
   }, [isSceneReady]);
 
   const fmt = (n) =>
-    n === null ? "…" : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+    n === null ? "?,?" : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
 
   const coreItems = t("about.core", { returnObjects: true });
 
+  // render: page mit bg-szenen (3D + starfield), hero section, stats, and scrollable content
   return (
     <div
       className={`page-wrapper content-page about-page-shell ${isSidebarOpen ? "sidebar-open" : ""}`}
       ref={rootRef}
     >
+      {/* bg-layer: 3D-szene + starfield + glow effects */}
+
       <div className="about-bg-layer" aria-hidden="true">
         <Starfield />
         <Scene3D

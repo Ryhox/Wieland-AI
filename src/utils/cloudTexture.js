@@ -1,5 +1,6 @@
 import * as THREE from "three";
 
+// make cloud tex: generate procedural cloud texture via canvas 2d mit random ellipses
 export function makeCloudTex() {
   const S = 512;
   const cv = document.createElement("canvas");

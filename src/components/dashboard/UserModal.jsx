@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
+// user modal: create/edit user form mit username, email, password, plan selection
 export default function UserModal({
   data,
   onSave,
@@ -19,6 +20,7 @@ export default function UserModal({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     if (data)
       setForm({
@@ -31,6 +33,7 @@ export default function UserModal({
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handleSubmit = async () => {
     setError("");
     if (!form.username || !form.email) {
@@ -65,15 +68,15 @@ export default function UserModal({
             </h2>
             {isEdit && (
               <span className="db-modal-sub">
-                #{data.id} · {t("dashboard.userModal.since")}{" "}
+                #{data.id} • {t("dashboard.userModal.since")}{" "}
                 {data.created_at
                   ? new Date(data.created_at).toLocaleDateString("de-DE")
-                  : "—"}
+                  : "---"}
               </span>
             )}
           </div>
           <button className="db-modal-close" onClick={onClose}>
-            ✕
+            {"\u00D7"}
           </button>
         </div>
 

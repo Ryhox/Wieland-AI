@@ -13,12 +13,16 @@ import { useAuth } from "../context/AuthContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// changelog page: timeline-animation zeigt entries progressive an je nach scroll
+// komplexe GSAP-scroll-trigger logik für timeline-fill und entry-reveal
 function Changelogs({ isSidebarOpen, onSidebarToggle }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const rootRef = useRef(null);
+  // changelog entries aus i18n laden (version, date, tag, title, changes)
   const entries = t("changelogs.entries", { returnObjects: true }) || [];
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     if (!rootRef.current) return;
     const prefersReduced = window.matchMedia(
@@ -31,19 +35,132 @@ function Changelogs({ isSidebarOpen, onSidebarToggle }) {
       gsap.set(".cl-page-shell #three-canvas", { opacity: 0 });
       gsap.set(".cl-hero-left > *", { opacity: 0, y: 44 });
       gsap.set(".cl-divider", { opacity: 0, x: -24 });
-      gsap.set(".cl-timeline-line", {
-        scaleY: 0,
+
+      const shell = rootRef.current;
+
+      const allEntries = gsap.utils.toArray(".cl-entry");
+      const firstEntry = allEntries[0] || null;
+      const lastEntry = allEntries[allEntries.length - 1] || firstEntry;
+      const deferredEntries = allEntries.slice(1);
+      // timeline skalierung: wie viel des timeline-tracks ist sichtbar?
+      const ENTRY_HIDDEN_Y = 44;
+
+      let initialTimelineScale = 0.14;
+      let targetTimelineScale = 1;
+      const timelineTrack = shell?.querySelector(".cl-timeline-track");
+      const timelineLine = shell?.querySelector(".cl-timeline-line");
+      const trackRect = timelineTrack?.getBoundingClientRect() || null;
+      const INITIAL_TIMELINE_EXTRA_PX = 24;
+      const FINAL_TIMELINE_EXTRA_PX = 28;
+      if (trackRect && firstEntry) {
+        const anchor =
+          firstEntry.querySelector(".cl-entry-dot-wrap") || firstEntry;
+        const anchorRect = anchor.getBoundingClientRect();
+        const visibleHeightPx =
+          anchorRect.top +
+          anchorRect.height * 0.5 -
+          trackRect.top +
+          INITIAL_TIMELINE_EXTRA_PX;
+
+        if (trackRect.height > 0) {
+          const ratio = visibleHeightPx / trackRect.height;
+          initialTimelineScale = Math.max(0.06, Math.min(1, ratio));
+        }
+      }
+
+      if (trackRect && lastEntry) {
+        const anchor =
+          lastEntry.querySelector(".cl-entry-dot-wrap") || lastEntry;
+        const anchorRect = anchor.getBoundingClientRect();
+        const targetHeightPx =
+          anchorRect.top +
+          anchorRect.height * 0.5 -
+          trackRect.top +
+          FINAL_TIMELINE_EXTRA_PX;
+
+        if (trackRect.height > 0) {
+          const ratio = targetHeightPx / trackRect.height;
+          targetTimelineScale = Math.max(initialTimelineScale, ratio);
+        }
+      }
+
+      const firstDeferredEntry = deferredEntries[0] || null;
+      const deferredMeta = trackRect
+        ? deferredEntries.map((entry) => {
+            const anchor = entry.querySelector(".cl-entry-dot-wrap") || entry;
+            const anchorRect = anchor.getBoundingClientRect();
+            const dotOffset =
+              anchorRect.top + anchorRect.height * 0.5 - trackRect.top;
+
+            return {
+              entry,
+              dotOffset,
+              shown: false,
+            };
+          })
+        : [];
+
+      gsap.set(timelineLine || ".cl-timeline-line", {
+        scaleY: initialTimelineScale,
         opacity: 0,
         transformOrigin: "top center",
       });
 
-      const allEntries = gsap.utils.toArray(".cl-entry");
-      const firstEntry = allEntries[0];
-      const restEntries = allEntries.slice(1);
+      gsap.set(allEntries, {
+        opacity: 0,
+        y: ENTRY_HIDDEN_Y,
+        visibility: "hidden",
+      });
+      const ENTRY_REVEAL_OFFSET_PX = 0;
+      const ENTRY_HIDE_OFFSET_PX = 8;
 
-      if (firstEntry) {
-        gsap.set(firstEntry, { opacity: 0, y: 44, visibility: "hidden" });
-      }
+      const revealDeferredEntriesForScale = (scaleValue) => {
+        if (!trackRect || deferredMeta.length === 0) return;
+        const lineTipPx = Math.max(0, scaleValue) * trackRect.height;
+
+        deferredMeta.forEach((meta) => {
+          const shouldShow =
+            lineTipPx >= meta.dotOffset + ENTRY_REVEAL_OFFSET_PX;
+          const shouldHide = lineTipPx <= meta.dotOffset - ENTRY_HIDE_OFFSET_PX;
+
+          if (!meta.shown && shouldShow) {
+            meta.shown = true;
+            gsap.set(meta.entry, { visibility: "visible" });
+            gsap.to(meta.entry, {
+              opacity: 1,
+              y: 0,
+              duration: 0.65,
+              ease: "power3.out",
+              overwrite: "auto",
+            });
+            return;
+          }
+
+          if (meta.shown && shouldHide) {
+            meta.shown = false;
+            gsap.to(meta.entry, {
+              opacity: 0,
+              y: ENTRY_HIDDEN_Y,
+              duration: 0.5,
+              ease: "power2.inOut",
+              overwrite: "auto",
+              onComplete: () => {
+                if (!meta.shown) {
+                  gsap.set(meta.entry, { visibility: "hidden" });
+                }
+              },
+            });
+          }
+        });
+      };
+
+      const syncDeferredEntriesWithLine = () => {
+        if (!timelineLine) return;
+        const currentScale =
+          Number(gsap.getProperty(timelineLine, "scaleY")) ||
+          initialTimelineScale;
+        revealDeferredEntriesForScale(currentScale);
+      };
 
       const tl = gsap.timeline();
       tl.to(".cl-page-shell #stars-canvas", {
@@ -78,57 +195,45 @@ function Changelogs({ isSidebarOpen, onSidebarToggle }) {
             opacity: 1,
             y: 0,
             visibility: "visible",
-            duration: 0.32,
-            ease: "power2.out",
+            duration: 0.45,
+            ease: "power3.out",
           },
           "+=0.03",
         )
         .to(
           ".cl-timeline-line",
           {
-            scaleY: 0.14,
             opacity: 1,
             duration: 0.72,
             ease: "power2.out",
           },
           "<",
-        );
+        )
+        .add(() => {
+          syncDeferredEntriesWithLine();
+        });
 
-      restEntries.forEach((entry) => {
-        gsap.set(entry, { opacity: 0, y: 44 });
+      if (timelineLine) {
         gsap.fromTo(
-          entry,
-          { opacity: 0, y: 44 },
+          timelineLine,
+          { scaleY: initialTimelineScale },
           {
-            opacity: 1,
-            y: 0,
-            visibility: "visible",
-            duration: 0.65,
-            ease: "power3.out",
+            scaleY: targetTimelineScale,
+            ease: "none",
+            immediateRender: false,
+            onUpdate: syncDeferredEntriesWithLine,
             scrollTrigger: {
-              trigger: entry,
-              start: "top 88%",
-              toggleActions: "play none none reverse",
+              trigger: firstDeferredEntry || ".cl-entries",
+              start: firstDeferredEntry ? "top bottom" : "top 75%",
+              end: () => ScrollTrigger.maxScroll(window),
+              scrub: 0.2,
+              invalidateOnRefresh: true,
+              onUpdate: syncDeferredEntriesWithLine,
+              onScrubComplete: syncDeferredEntriesWithLine,
             },
           },
         );
-      });
-
-      gsap.fromTo(
-        ".cl-timeline-line",
-        { scaleY: 0.14 },
-        {
-          scaleY: 1,
-          ease: "none",
-          immediateRender: false,
-          scrollTrigger: {
-            trigger: ".cl-entries",
-            start: "top 75%",
-            end: "bottom 55%",
-            scrub: 1.2,
-          },
-        },
-      );
+      }
     }, rootRef);
 
     return () => ctx.revert();

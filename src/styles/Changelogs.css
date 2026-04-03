@@ -1,3 +1,4 @@
+/* Changelogs Page Layout */
 .cl-page-shell {
   position: relative;
   overflow-x: hidden;
@@ -77,10 +78,11 @@
 
 .cl-container {
   max-width: 980px;
+  padding-top: 30px;
 }
 
 .cl-hero {
-  padding-top: 8px;
+  padding-top: 0;
   margin-bottom: 62px;
   min-height: min(38vh, 320px);
   display: flex;
@@ -332,13 +334,17 @@
 }
 
 .cl-list li::before {
-  content: "—";
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 1px;
+  background: rgba(232, 35, 250, 0.35);
   color: rgba(232, 35, 250, 0.35);
   flex-shrink: 0;
-  font-size: 11px;
-  margin-top: 2px;
+  margin-top: 11px;
 }
 
+/* mobile tweaks ab hier getrennt, sonst wirds schnell unklar */
 @media (max-width: 900px) {
   .cl-container {
     max-width: 760px;
@@ -372,7 +378,7 @@
   }
 
   .cl-entry-body::before {
-    content: attr(data-version) " · " attr(data-date);
+    content: attr(data-version) " - " attr(data-date);
     display: block;
     font-family: "DM Mono", monospace;
     font-size: 10px;

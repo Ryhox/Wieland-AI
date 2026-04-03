@@ -14,12 +14,15 @@ import ChatViewer from "../components/dashboard/ChatViewer";
 import { useAuth } from "../context/AuthContext";
 import { withLang } from "../utils/i18nRouting";
 
+// admin dashboard: 3 tabs (overview stats, users table, chats table) mit CRUD operations
+// sidebar icon nav, search/filter, pagination, user+chat modals für detail management
 export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
   const { t, i18n } = useTranslation();
   const { authFetch, user, logout } = useAuth();
   const navigate = useNavigate();
   const localPath = (path) => withLang(path, i18n.language);
 
+  // tab struktur: overview (stats), users (list), chats (list)
   const TABS = [
     { id: "overview", label: t("dashboard.tabs.overview"), icon: "◈" },
     { id: "users", label: t("dashboard.tabs.users"), icon: "◉" },
@@ -29,8 +32,10 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
   const [isOpen, setIsOpen] = useState(false);
   const sidebarRef = useRef(null);
 
+  // click-outside zum schließen der sidebar
   useEffect(() => {
     if (!isOpen) return;
+    // handler separat halten, sonst wird die render-logik schnell wirr
     const handler = (e) => {
       if (sidebarRef.current && !sidebarRef.current.contains(e.target))
         setIsOpen(false);
@@ -43,6 +48,7 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [chats, setChats] = useState([]);
+  // loading state pro endpoint: stats, users, chats
   const [loading, setLoading] = useState({
     stats: true,
     users: true,
@@ -53,7 +59,7 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
   const [chatPage, setChatPage] = useState(1);
   const [userFilter, setUserFilter] = useState("all");
   const PAGE_SIZE = 15;
-
+  // modals: user (create/edit), confirm-dialog (delete), chat-viewer (detail)\n
   const [userModal, setUserModal] = useState({ open: false, data: null });
   const [confirmModal, setConfirmModal] = useState({
     open: false,
@@ -61,7 +67,7 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
     label: "",
   });
   const [chatViewer, setChatViewer] = useState({ open: false, chat: null });
-
+  // fetch endpoints: /api/admin/stats, /api/admin/users, /api/admin/chats\n
   const fetchStats = useCallback(async () => {
     setLoading((l) => ({ ...l, stats: true }));
     try {
@@ -97,12 +103,14 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
     setLoading((l) => ({ ...l, chats: false }));
   }, [authFetch]);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     fetchStats();
     fetchUsers();
     fetchChats();
   }, []);
 
+  // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handleSaveUser = async (formData) => {
     const isEdit = !!formData.id;
     const res = await authFetch(
@@ -161,6 +169,7 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
     setSearch(u.username ?? "");
     setChatPage(1);
   };
+  // handler separat halten, sonst wird die render-logik schnell wirr
   const handleLogout = () => {
     setIsOpen(false);
     logout();

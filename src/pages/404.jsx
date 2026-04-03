@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,8 @@ import Scene3D from "../components/Scene3D";
 import { useAuth } from "../context/AuthContext";
 import { withLang } from "../utils/i18nRouting";
 
+// 404-error page mit 3D-szene fallback animation :)
+// user kann zurück zur startseite oder mit browser-history navigieren
 function NotFound({ isSidebarOpen, onSidebarToggle }) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -20,12 +22,15 @@ function NotFound({ isSidebarOpen, onSidebarToggle }) {
   const introTlRef = useRef(null);
   const [isSceneReady, setIsSceneReady] = useState(false);
 
+  // home-pfad mit korrekter sprache
   const homePath = withLang("/", i18n.language);
 
+  // sicherer rückweg: immer zur startseite (wenn history nicht funktioniert)
   const handleReturnSafety = () => {
     navigate(homePath);
   };
 
+  // intelligenter back-knopf: versucht history.back(), fallback zur startseite
   const handleGoBack = () => {
     if (window.history.length > 1) {
       navigate(-1);
@@ -34,7 +39,8 @@ function NotFound({ isSidebarOpen, onSidebarToggle }) {
     navigate(homePath);
   };
 
-  useEffect(() => {
+  // animation und side-effects hier gebündelt, cleanup ist wichtig :/
+  useLayoutEffect(() => {
     if (!rootRef.current) return;
 
     const prefersReduced = window.matchMedia(
@@ -139,6 +145,7 @@ function NotFound({ isSidebarOpen, onSidebarToggle }) {
     return () => ctx.revert();
   }, []);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     if (!introTlRef.current) return;
     if (isSceneReady) {
@@ -146,6 +153,7 @@ function NotFound({ isSidebarOpen, onSidebarToggle }) {
     }
   }, [isSceneReady]);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     if (isSceneReady) return undefined;
 
@@ -174,12 +182,13 @@ function NotFound({ isSidebarOpen, onSidebarToggle }) {
       </div>
 
       <Header isSidebarOpen={isSidebarOpen} onSidebarToggle={onSidebarToggle} />
-      {user && <Sidebar isOpen={isSidebarOpen} onOpenChange={onSidebarToggle} />}
+      {user && (
+        <Sidebar isOpen={isSidebarOpen} onOpenChange={onSidebarToggle} />
+      )}
 
       <main className="page-content nf-content-layer">
         <div className="page-container nf-container">
           <section className="nf-hero">
-
             <div className="nf-code-wrap" aria-hidden="true">
               <p className="nf-code">404</p>
             </div>
@@ -196,7 +205,9 @@ function NotFound({ isSidebarOpen, onSidebarToggle }) {
                 type="button"
                 onClick={handleReturnSafety}
               >
-                {t("notFound.returnSafety", { defaultValue: "Return to safety" })}
+                {t("notFound.returnSafety", {
+                  defaultValue: "Return to safety",
+                })}
               </button>
 
               <button

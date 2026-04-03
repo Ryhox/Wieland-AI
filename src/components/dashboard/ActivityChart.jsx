@@ -12,6 +12,7 @@ import {
   Legend,
 } from "recharts";
 
+// hier hängt der komplette seitenflow dran, also lieber klar halten
 function buildDailyData(items, dateKey, days = 30) {
   const now = new Date();
   const result = [];
@@ -208,7 +209,7 @@ export default function ActivityChart({ users, chats, loading }) {
                 )
               : 0}
           </span>
-          <span className="db-at-label">Ø Msgs/Chat</span>
+          <span className="db-at-label">fo Msgs/Chat</span>
         </div>
       </div>
     </div>

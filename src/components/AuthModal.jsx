@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import "../styles/AuthModal.css";
 
+// auth modal: login/register form with validation + error handling
 export default function AuthModal({ isOpen, onClose, onSuccess }) {
   const { t } = useTranslation();
   const { login } = useAuth();
@@ -18,6 +19,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
 
   if (!isOpen) return null;
 
+  // handler separat halten, sonst wird die render-logik schnell wirr
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setError("");
@@ -39,6 +41,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
     return null;
   };
 
+  // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handleSubmit = async (e) => {
     e.preventDefault();
     const err = validate();
@@ -90,6 +93,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
     setForm({ username: "", email: "", password: "", confirm: "" });
   };
 
+  // handler separat halten, sonst wird die render-logik schnell wirr
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) onClose();
   };
@@ -102,7 +106,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
           onClick={onClose}
           aria-label={t("common.close")}
         >
-          ✕
+          {"\u00D7"}
         </button>
 
         <div className="auth-modal-header">

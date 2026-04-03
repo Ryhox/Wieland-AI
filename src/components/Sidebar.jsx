@@ -5,6 +5,8 @@ import { useAuth } from "../context/AuthContext";
 import "../styles/Sidebar.css";
 import { withLang } from "../utils/i18nRouting";
 
+// Sidebar: chat history list + user menu (logout/profile) + new chat button
+// manages chat loading, search, deletion, and logout workflow
 export default function Sidebar({
   onNewChat,
   onDeleteChat,
@@ -17,6 +19,7 @@ export default function Sidebar({
   const { user, logout, authFetch } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  // localized paths dengan language code
   const localPath = (path) => withLang(path, i18n.language);
 
   const [chats, setChats] = useState([]);
@@ -29,6 +32,7 @@ export default function Sidebar({
     ? user.username.slice(0, 2).toUpperCase()
     : "?";
 
+  // load chat history from API
   async function loadChats() {
     try {
       const response = await authFetch("/api/history");
@@ -41,18 +45,21 @@ export default function Sidebar({
     }
   }
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     loadChats();
     const interval = setInterval(loadChats, 3000);
     return () => clearInterval(interval);
   }, []);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     const handler = () => loadChats();
     window.addEventListener("chatHistoryUpdated", handler);
     return () => window.removeEventListener("chatHistoryUpdated", handler);
   }, []);
 
+  // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     if (!isOpen) {
       setIsSearching(false);
@@ -62,6 +69,7 @@ export default function Sidebar({
 
   useEffect(() => {
     if (!isOpen) return;
+    // handler separat halten, sonst wird die render-logik schnell wirr
     const handler = (e) => {
       if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
         onOpenChange(false);
@@ -71,6 +79,7 @@ export default function Sidebar({
     return () => document.removeEventListener("mousedown", handler);
   }, [isOpen, onOpenChange]);
 
+  // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handleNewChat = async () => {
     if (!location.pathname.endsWith("/chat")) {
       navigate(localPath("/chat"));
@@ -84,6 +93,7 @@ export default function Sidebar({
     }
   };
 
+  // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handleLoadChat = async (filename) => {
     onLoadChat?.(filename);
     const ts = filename.match(/\d+/)?.[0];
@@ -92,6 +102,7 @@ export default function Sidebar({
     }
   };
 
+  // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handleDeleteChat = async (filename, e) => {
     e.stopPropagation();
     if (window.confirm(t("sidebar.deleteConfirm"))) {
@@ -295,7 +306,7 @@ export default function Sidebar({
               <>
                 <div className="sidebar-profile-info">
                   <span className="sidebar-profile-name">
-                    {user?.username ?? "—"}
+                    {user?.username ?? "---"}
                   </span>
                   <div
                     className="sidebar-profile-plan"
