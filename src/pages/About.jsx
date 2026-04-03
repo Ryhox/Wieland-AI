@@ -210,7 +210,7 @@ function About({ isSidebarOpen, onSidebarToggle }) {
   }, [isSceneReady]);
 
   const fmt = (n) =>
-    n === null ? "?,?" : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+    n === null ? "..." : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
 
   const coreItems = t("about.core", { returnObjects: true });
 
