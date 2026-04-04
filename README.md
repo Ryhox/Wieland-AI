@@ -360,14 +360,13 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 👨‍💻 Author
 
-Created and maintained by [Your Name/Organization]
+Created by Ryhox
 
 ---
 
 ## 📞 Support & Contact
 
 For questions or issues:
-- 📧 Email: [your-email@example.com]
 - 💬 Discussions: GitHub Discussions
 - 🐛 Issues: GitHub Issues
 
