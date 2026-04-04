@@ -51,7 +51,11 @@ async function request(path, method = "GET", body = null, headers = {}) {
     const response = await fetch(`${BASE_URL}${path}`, options);
     const text = await response.text();
     try {
-      return { ok: response.ok, status: response.status, data: JSON.parse(text) };
+      return {
+        ok: response.ok,
+        status: response.status,
+        data: JSON.parse(text),
+      };
     } catch {
       return { ok: response.ok, status: response.status, data: text };
     }
@@ -62,7 +66,7 @@ async function request(path, method = "GET", body = null, headers = {}) {
 
 async function registerAndAuth() {
   log(colors.cyan, "AUTH", "Registering test user...");
-  
+
   const regRes = await request("/api/auth/register", "POST", {
     username: TEST_USERNAME,
     email: TEST_EMAIL,
@@ -96,12 +100,12 @@ async function registerAndAuth() {
 
 async function testPrompt(message, expectedAction, description) {
   testResults.total++;
-  
+
   try {
     const response = await fetch(`${BASE_URL}/api/chat/stream`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${authToken}`,
+        Authorization: `Bearer ${authToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -144,7 +148,11 @@ async function testPrompt(message, expectedAction, description) {
     } else {
       testResults.failed++;
       log(colors.red, "FAIL", `${description}`);
-      log(colors.gray, "    ", `Expected: ${expectedAction}, Got: ${actualAction}`);
+      log(
+        colors.gray,
+        "    ",
+        `Expected: ${expectedAction}, Got: ${actualAction}`,
+      );
       log(colors.gray, "    ", `Message: "${message}"`);
     }
 
@@ -157,60 +165,116 @@ async function testPrompt(message, expectedAction, description) {
 }
 
 async function runTests() {
-  console.log(`\n${colors.blue}═══════════════════════════════════════════${colors.reset}`);
+  console.log(
+    `\n${colors.blue}═══════════════════════════════════════════${colors.reset}`,
+  );
   console.log(`${colors.blue}  Intent NLU Test Suite${colors.reset}`);
-  console.log(`${colors.blue}═══════════════════════════════════════════${colors.reset}\n`);
+  console.log(
+    `${colors.blue}═══════════════════════════════════════════${colors.reset}\n`,
+  );
 
   await registerAndAuth();
 
   // MEMORY_STORE Tests
   console.log(`\n${colors.cyan}📝 MEMORY_STORE Tests${colors.reset}`);
   console.log("─".repeat(60));
-  
+
   await testPrompt("I am 25 years old", "MEMORY_STORE", "EN: Store age");
   await testPrompt("My name is John Smith", "MEMORY_STORE", "EN: Store name");
   await testPrompt("I live in Berlin", "MEMORY_STORE", "EN: Store location");
-  await testPrompt("My favorite color is blue", "MEMORY_STORE", "EN: Store preference");
-  await testPrompt("I work as a software engineer", "MEMORY_STORE", "EN: Store occupation");
-  
+  await testPrompt(
+    "My favorite color is blue",
+    "MEMORY_STORE",
+    "EN: Store preference",
+  );
+  await testPrompt(
+    "I work as a software engineer",
+    "MEMORY_STORE",
+    "EN: Store occupation",
+  );
+
   await testPrompt("Ich bin 30 Jahre alt", "MEMORY_STORE", "DE: Store age");
-  await testPrompt("Mein Name ist Anna Müller", "MEMORY_STORE", "DE: Store name");
+  await testPrompt(
+    "Mein Name ist Anna Müller",
+    "MEMORY_STORE",
+    "DE: Store name",
+  );
   await testPrompt("Ich wohne in Wien", "MEMORY_STORE", "DE: Store location");
-  await testPrompt("Mein Lieblingsessen ist Schnitzel", "MEMORY_STORE", "DE: Store preference");
+  await testPrompt(
+    "Mein Lieblingsessen ist Schnitzel",
+    "MEMORY_STORE",
+    "DE: Store preference",
+  );
 
   // MEMORY_QUERY Tests
   console.log(`\n${colors.cyan}🔍 MEMORY_QUERY Tests${colors.reset}`);
   console.log("─".repeat(60));
-  
-  await testPrompt("What do you know about me?", "MEMORY_QUERY", "EN: Query general memory");
+
+  await testPrompt(
+    "What do you know about me?",
+    "MEMORY_QUERY",
+    "EN: Query general memory",
+  );
   await testPrompt("How old am I?", "MEMORY_QUERY", "EN: Query age");
   await testPrompt("What's my name?", "MEMORY_QUERY", "EN: Query name");
   await testPrompt("Where do I live?", "MEMORY_QUERY", "EN: Query location");
-  await testPrompt("What's my favorite food?", "MEMORY_QUERY", "EN: Query preference");
-  await testPrompt("Do you remember anything about me?", "MEMORY_QUERY", "EN: Query memory");
+  await testPrompt(
+    "What's my favorite food?",
+    "MEMORY_QUERY",
+    "EN: Query preference",
+  );
+  await testPrompt(
+    "Do you remember anything about me?",
+    "MEMORY_QUERY",
+    "EN: Query memory",
+  );
 
   await testPrompt("Wie alt bin ich?", "MEMORY_QUERY", "DE: Query age");
-  await testPrompt("Was weißt du über mich?", "MEMORY_QUERY", "DE: Query general");
+  await testPrompt(
+    "Was weißt du über mich?",
+    "MEMORY_QUERY",
+    "DE: Query general",
+  );
   await testPrompt("Wie heiße ich?", "MEMORY_QUERY", "DE: Query name");
   await testPrompt("Wo lebe ich?", "MEMORY_QUERY", "DE: Query location");
 
   // SEARCH_WEB Tests
   console.log(`\n${colors.cyan}🌐 SEARCH_WEB Tests${colors.reset}`);
   console.log("─".repeat(60));
-  
-  await testPrompt("What's the weather in Vienna today?", "SEARCH_WEB", "EN: Weather query");
+
+  await testPrompt(
+    "What's the weather in Vienna today?",
+    "SEARCH_WEB",
+    "EN: Weather query",
+  );
   await testPrompt("What are the latest news?", "SEARCH_WEB", "EN: News query");
-  await testPrompt("What's the current Bitcoin price?", "SEARCH_WEB", "EN: Price query");
-  await testPrompt("How is the weather in Berlin?", "SEARCH_WEB", "EN: Weather Berlin");
+  await testPrompt(
+    "What's the current Bitcoin price?",
+    "SEARCH_WEB",
+    "EN: Price query",
+  );
+  await testPrompt(
+    "How is the weather in Berlin?",
+    "SEARCH_WEB",
+    "EN: Weather Berlin",
+  );
   await testPrompt("What's trending today?", "SEARCH_WEB", "EN: Trends");
 
-  await testPrompt("Wie ist das Wetter in Wien?", "SEARCH_WEB", "DE: Weather Vienna");
-  await testPrompt("Was sind die aktuellen Nachrichten?", "SEARCH_WEB", "DE: News");
+  await testPrompt(
+    "Wie ist das Wetter in Wien?",
+    "SEARCH_WEB",
+    "DE: Weather Vienna",
+  );
+  await testPrompt(
+    "Was sind die aktuellen Nachrichten?",
+    "SEARCH_WEB",
+    "DE: News",
+  );
 
   // CHAT Tests
   console.log(`\n${colors.cyan}💬 CHAT Tests${colors.reset}`);
   console.log("─".repeat(60));
-  
+
   await testPrompt("Hello!", "CHAT", "EN: Greeting - Hello");
   await testPrompt("Hi there", "CHAT", "EN: Greeting - Hi");
   await testPrompt("Hey, how are you?", "CHAT", "EN: Small talk");
@@ -227,28 +291,46 @@ async function runTests() {
   // CLARIFICATION Tests
   console.log(`\n${colors.cyan}❓ CLARIFICATION Tests${colors.reset}`);
   console.log("─".repeat(60));
-  
-  await testPrompt("Create a website for me", "CHAT", "EN: Vague build request (needs clarification)");
+
+  await testPrompt(
+    "Create a website for me",
+    "CHAT",
+    "EN: Vague build request (needs clarification)",
+  );
   await testPrompt("Build me an app", "CHAT", "EN: Vague build request");
   await testPrompt("Generate a program", "CHAT", "EN: Vague build request");
 
   // Edge Cases
   console.log(`\n${colors.cyan}⚠️  Edge Cases${colors.reset}`);
   console.log("─".repeat(60));
-  
-  await testPrompt("I'm 25 and live in Berlin, what's the weather?", "SEARCH_WEB", "Ambiguous: Personal + Web");
-  await testPrompt("Mein Name ist Jörg Müller", "MEMORY_STORE", "Special characters");
+
+  await testPrompt(
+    "I'm 25 and live in Berlin, what's the weather?",
+    "SEARCH_WEB",
+    "Ambiguous: Personal + Web",
+  );
+  await testPrompt(
+    "Mein Name ist Jörg Müller",
+    "MEMORY_STORE",
+    "Special characters",
+  );
   await testPrompt("I like things", "MEMORY_STORE", "Vague preference");
 
   // Results Summary
-  console.log(`\n${colors.blue}═══════════════════════════════════════════${colors.reset}`);
-  console.log(`${colors.blue}  Test Results${colors.reset}`);
-  console.log(`${colors.blue}═══════════════════════════════════════════${colors.reset}`);
   console.log(
-    `${colors.green}✓ Passed: ${testResults.passed}${colors.reset} / ${colors.red}✗ Failed: ${testResults.failed}${colors.reset} / Total: ${testResults.total}`
+    `\n${colors.blue}═══════════════════════════════════════════${colors.reset}`,
   );
-  
-  const percentage = ((testResults.passed / testResults.total) * 100).toFixed(1);
+  console.log(`${colors.blue}  Test Results${colors.reset}`);
+  console.log(
+    `${colors.blue}═══════════════════════════════════════════${colors.reset}`,
+  );
+  console.log(
+    `${colors.green}✓ Passed: ${testResults.passed}${colors.reset} / ${colors.red}✗ Failed: ${testResults.failed}${colors.reset} / Total: ${testResults.total}`,
+  );
+
+  const percentage = ((testResults.passed / testResults.total) * 100).toFixed(
+    1,
+  );
   console.log(`Success Rate: ${percentage}%\n`);
 
   if (testResults.failed > 0) {

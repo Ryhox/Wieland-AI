@@ -263,7 +263,9 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
           <div className="pricing-plans">
             <div className="pricing-card">
               <span className="pricing-badge free-badge">Free</span>
-              <div className="pricing-plan-name">{t("pricing.planNames.free")}</div>
+              <div className="pricing-plan-name">
+                {t("pricing.planNames.free")}
+              </div>
               <div className="pricing-price-row">
                 <span className="pricing-price">0 €</span>
                 <span className="pricing-price-period">
@@ -299,8 +301,12 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
               <span className="pricing-recommended-badge">
                 {t("pricing.recommended")}
               </span>
-              <span className="pricing-badge">{t("pricing.planNames.pro")}</span>
-              <div className="pricing-plan-name">{t("pricing.planNames.pro")}</div>
+              <span className="pricing-badge">
+                {t("pricing.planNames.pro")}
+              </span>
+              <div className="pricing-plan-name">
+                {t("pricing.planNames.pro")}
+              </div>
               <div className="pricing-price-row">
                 <span className="pricing-price">4,99 €</span>
                 <span className="pricing-price-period">
@@ -333,8 +339,12 @@ function Pricing({ isSidebarOpen, onSidebarToggle }) {
             </div>
 
             <div className="pricing-card">
-              <span className="pricing-badge">{t("pricing.planNames.max")}</span>
-              <div className="pricing-plan-name">{t("pricing.planNames.max")}</div>
+              <span className="pricing-badge">
+                {t("pricing.planNames.max")}
+              </span>
+              <div className="pricing-plan-name">
+                {t("pricing.planNames.max")}
+              </div>
               <div className="pricing-price-row">
                 <span className="pricing-price">9,99 €</span>
                 <span className="pricing-price-period">

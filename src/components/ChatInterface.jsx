@@ -1032,37 +1032,42 @@ export default function ChatInterface({
     };
   }, []);
 
-  const showToast = useCallback((message, type = "success") => {
-    if (!message) return;
-    const id = Date.now();
-    const { x, y } = getToastFollowPosition(pointerPositionRef.current || {});
-    const TOAST_LIFETIME_MS = 2600;
-    const TOAST_FADE_DURATION_MS = 320;
+  const showToast = useCallback(
+    (message, type = "success") => {
+      if (!message) return;
+      const id = Date.now();
+      const { x, y } = getToastFollowPosition(pointerPositionRef.current || {});
+      const TOAST_LIFETIME_MS = 2600;
+      const TOAST_FADE_DURATION_MS = 320;
 
-    setToast({ message, type, id, x, y, leaving: false });
+      setToast({ message, type, id, x, y, leaving: false });
 
-    if (toastFadeTimeoutRef.current) clearTimeout(toastFadeTimeoutRef.current);
-    if (toastHideTimeoutRef.current) clearTimeout(toastHideTimeoutRef.current);
+      if (toastFadeTimeoutRef.current)
+        clearTimeout(toastFadeTimeoutRef.current);
+      if (toastHideTimeoutRef.current)
+        clearTimeout(toastHideTimeoutRef.current);
 
-    toastFadeTimeoutRef.current = setTimeout(() => {
-      setToast((prev) =>
-        prev && prev.id === id ? { ...prev, leaving: true } : prev,
+      toastFadeTimeoutRef.current = setTimeout(
+        () => {
+          setToast((prev) =>
+            prev && prev.id === id ? { ...prev, leaving: true } : prev,
+          );
+        },
+        Math.max(0, TOAST_LIFETIME_MS - TOAST_FADE_DURATION_MS),
       );
-    }, Math.max(0, TOAST_LIFETIME_MS - TOAST_FADE_DURATION_MS));
 
-    toastHideTimeoutRef.current = setTimeout(() => {
-      setToast((prev) => (prev && prev.id === id ? null : prev));
-    }, TOAST_LIFETIME_MS);
-  }, [getToastFollowPosition]);
+      toastHideTimeoutRef.current = setTimeout(() => {
+        setToast((prev) => (prev && prev.id === id ? null : prev));
+      }, TOAST_LIFETIME_MS);
+    },
+    [getToastFollowPosition],
+  );
 
   useEffect(() => {
     const updatePointer = (event) => {
       if (!event) return;
 
-      if (
-        Number.isFinite(event.clientX) &&
-        Number.isFinite(event.clientY)
-      ) {
+      if (Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
         pointerPositionRef.current = {
           x: event.clientX,
           y: event.clientY,
@@ -1103,8 +1108,10 @@ export default function ChatInterface({
   // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     return () => {
-      if (toastFadeTimeoutRef.current) clearTimeout(toastFadeTimeoutRef.current);
-      if (toastHideTimeoutRef.current) clearTimeout(toastHideTimeoutRef.current);
+      if (toastFadeTimeoutRef.current)
+        clearTimeout(toastFadeTimeoutRef.current);
+      if (toastHideTimeoutRef.current)
+        clearTimeout(toastHideTimeoutRef.current);
       clearQueuedClarifyPopup();
     };
   }, [clearQueuedClarifyPopup]);
@@ -1362,12 +1369,14 @@ export default function ChatInterface({
 
     const popupWasOpen = Boolean(clarifyPopup);
     // consume clarify-reply intent once at send start to avoid ref/state timing races
-    const clarifyReplyFromPopup = pendingClarifyReplyRef.current || popupWasOpen;
+    const clarifyReplyFromPopup =
+      pendingClarifyReplyRef.current || popupWasOpen;
     pendingClarifyReplyRef.current = false;
     // format reply as Q: question\nA: answer if it's a clarification response, otherwise use raw text
-    const requestText = clarifyReplyFromPopup && popupWasOpen
-      ? formatClarifyReply(clarifyPopup?.question, text)
-      : text;
+    const requestText =
+      clarifyReplyFromPopup && popupWasOpen
+        ? formatClarifyReply(clarifyPopup?.question, text)
+        : text;
 
     // dismiss the clarification popup once reply is processed
     clearQueuedClarifyPopup();
@@ -1585,9 +1594,10 @@ export default function ChatInterface({
                   : [];
                 return {
                   ...m,
-                  statusEvents: [...previousEvents, ...parsedChunk.events].slice(
-                    -10,
-                  ),
+                  statusEvents: [
+                    ...previousEvents,
+                    ...parsedChunk.events,
+                  ].slice(-10),
                 };
               }),
             );
@@ -1608,7 +1618,6 @@ export default function ChatInterface({
               m.id === aiId ? { ...m, content: previewText } : m,
             ),
           );
-
         }
 
         // nach dem stream klar trennen zwischen sichtbarer antwort und popup payload
@@ -2131,7 +2140,10 @@ export default function ChatInterface({
 
                                 if (internetAccess && getModelRank(m.id) < 1) {
                                   setInternetAccess(false);
-                                  showToast(t("chat.internetModelLocked"), "error");
+                                  showToast(
+                                    t("chat.internetModelLocked"),
+                                    "error",
+                                  );
                                 }
                               }
                             }}
@@ -2412,7 +2424,11 @@ function ActivityIcon({ type = "" }) {
     strokeLinejoin: "round",
   };
 
-  if (type === "search_start" || type === "search_done" || type === "search_error") {
+  if (
+    type === "search_start" ||
+    type === "search_done" ||
+    type === "search_error"
+  ) {
     return (
       <svg {...iconProps}>
         <circle cx="11" cy="11" r="7" />
@@ -2421,7 +2437,11 @@ function ActivityIcon({ type = "" }) {
     );
   }
 
-  if (type === "memory_start" || type === "memory_done" || type === "memory_error") {
+  if (
+    type === "memory_start" ||
+    type === "memory_done" ||
+    type === "memory_error"
+  ) {
     return (
       <svg {...iconProps}>
         <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -2465,7 +2485,10 @@ function ActivityFeed({ events = [] }) {
         const pageHost = getActivitySourceHost(event?.url || "");
 
         return (
-          <div key={key} className={`activity-item activity-${type || "thinking"}`}>
+          <div
+            key={key}
+            className={`activity-item activity-${type || "thinking"}`}
+          >
             <span className="activity-icon-wrap" aria-hidden="true">
               <ActivityIcon type={type} />
             </span>
@@ -2481,7 +2504,9 @@ function ActivityFeed({ events = [] }) {
 
               {type === "search_done" && (
                 <>
-                  <span>{t("chat.activity.searchDone", { count: sources.length })}</span>
+                  <span>
+                    {t("chat.activity.searchDone", { count: sources.length })}
+                  </span>
                   {sources.length > 0 && (
                     <div className="activity-source-list">
                       {sources.map((source, sourceIndex) => {
@@ -2496,7 +2521,10 @@ function ActivityFeed({ events = [] }) {
 
                         if (!url) {
                           return (
-                            <span key={`${label}-${sourceIndex}`} className="activity-source-chip">
+                            <span
+                              key={`${label}-${sourceIndex}`}
+                              className="activity-source-chip"
+                            >
                               {label}
                             </span>
                           );
@@ -2519,9 +2547,13 @@ function ActivityFeed({ events = [] }) {
                 </>
               )}
 
-              {type === "search_error" && <span>{t("chat.activity.searchUnavailable")}</span>}
+              {type === "search_error" && (
+                <span>{t("chat.activity.searchUnavailable")}</span>
+              )}
 
-              {type === "memory_start" && <span>{t("chat.activity.memoryStart")}</span>}
+              {type === "memory_start" && (
+                <span>{t("chat.activity.memoryStart")}</span>
+              )}
 
               {type === "memory_done" && (
                 <>
@@ -2550,17 +2582,22 @@ function ActivityFeed({ events = [] }) {
                 </>
               )}
 
-              {type === "memory_error" && <span>{t("chat.activity.memoryUnavailable")}</span>}
+              {type === "memory_error" && (
+                <span>{t("chat.activity.memoryUnavailable")}</span>
+              )}
 
               {type === "page_read" && (
                 <span>
                   {t("chat.activity.pageRead", {
-                    title: pageTitle || pageHost || t("chat.activity.currentPage"),
+                    title:
+                      pageTitle || pageHost || t("chat.activity.currentPage"),
                   })}
                 </span>
               )}
 
-              {(!type || type === "thinking") && <span>{t("chat.activity.thinking")}</span>}
+              {(!type || type === "thinking") && (
+                <span>{t("chat.activity.thinking")}</span>
+              )}
             </div>
           </div>
         );
@@ -2643,7 +2680,9 @@ function MessageRow({
               </div>
             ) : msg.content === "" ? (
               <div className="typing-state-stack">
-                {statusEvents.length > 0 && <ActivityFeed events={statusEvents} />}
+                {statusEvents.length > 0 && (
+                  <ActivityFeed events={statusEvents} />
+                )}
                 <TypingLoader />
               </div>
             ) : (

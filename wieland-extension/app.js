@@ -2138,42 +2138,146 @@ async function getActivePageContext() {
     if (/^(chrome|chrome-extension|edge|about|view-source):/i.test(tab.url))
       return null;
 
-    const results = await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
+    const frameResults = await chrome.scripting.executeScript({
+      target: { tabId: tab.id, allFrames: true },
       func: () => {
-        const root =
-          document.querySelector('main, article, [role="main"]') ||
-          document.body;
         const title = document.title || "";
         const url = location.href || "";
+        const root =
+          document.querySelector('main, article, [role="main"]') ||
+          document.body ||
+          document.documentElement;
+
+        const normalizeLine = (value = "") =>
+          String(value || "")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        const appendFromNodeList = (
+          chunks,
+          nodes,
+          minLength = 1,
+          maxChunks = 320,
+        ) => {
+          for (const node of nodes || []) {
+            const line = normalizeLine(node?.textContent || "");
+            if (!line || line.length < minLength) continue;
+            chunks.push(line);
+            if (chunks.length >= maxChunks) break;
+          }
+        };
+
+        const appendFromTextBlocks = (
+          chunks,
+          text,
+          minLength = 25,
+          maxChunks = 320,
+        ) => {
+          const blocks = String(text || "")
+            .split(/\n+/)
+            .map((line) => normalizeLine(line))
+            .filter((line) => line.length >= minLength);
+
+          for (const block of blocks) {
+            chunks.push(block);
+            if (chunks.length >= maxChunks) break;
+          }
+        };
 
         const chunks = [];
-        const headingNodes = root.querySelectorAll("h1, h2, h3");
-        for (const node of headingNodes) {
-          const t = (node.textContent || "").trim();
-          if (t) chunks.push(t);
-          if (chunks.length >= 80) break;
+
+        appendFromNodeList(
+          chunks,
+          root?.querySelectorAll?.("h1, h2, h3"),
+          2,
+          80,
+        );
+        appendFromNodeList(chunks, root?.querySelectorAll?.("p, li"), 25, 280);
+
+        // Fallback for static/offline pages: use visible text if semantic tags are sparse.
+        if (chunks.join("\n").length < 600) {
+          appendFromTextBlocks(
+            chunks,
+            root?.innerText || document.body?.innerText || "",
+            20,
+            320,
+          );
         }
 
-        const textNodes = root.querySelectorAll("p, li");
-        for (const node of textNodes) {
-          const t = (node.textContent || "").replace(/\s+/g, " ").trim();
-          if (t && t.length > 25) chunks.push(t);
-          if (chunks.length >= 280) break;
+        // Last fallback: derive readable text from raw HTML.
+        if (chunks.join("\n").length < 320) {
+          const html = String(document.documentElement?.outerHTML || "");
+          const htmlText = html
+            .replace(/<script[\s\S]*?<\/script>/gi, " ")
+            .replace(/<style[\s\S]*?<\/style>/gi, " ")
+            .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+            .replace(/<[^>]+>/g, " ")
+            .replace(/&nbsp;/gi, " ")
+            .replace(/&amp;/gi, "&")
+            .replace(/&quot;/gi, '"')
+            .replace(/&#39;/gi, "'")
+            .replace(/&lt;/gi, "<")
+            .replace(/&gt;/gi, ">")
+            .replace(/\s+/g, " ")
+            .trim();
+
+          const sentences = (htmlText.match(/[^.!?]{25,}[.!?]?/g) || []).slice(
+            0,
+            260,
+          );
+          appendFromTextBlocks(chunks, sentences.join("\n"), 20, 320);
         }
 
-        let content = chunks.join("\n");
+        const metaDescription = normalizeLine(
+          document
+            .querySelector(
+              'meta[name="description"], meta[property="og:description"]',
+            )
+            ?.getAttribute("content") || "",
+        );
+        if (metaDescription) chunks.unshift(metaDescription);
+
+        const unique = [];
+        const seen = new Set();
+        for (const chunk of chunks) {
+          const key = chunk.toLowerCase();
+          if (!chunk || seen.has(key)) continue;
+          seen.add(key);
+          unique.push(chunk);
+          if (unique.length >= 320) break;
+        }
+
+        let content = unique.join("\n");
         content = content
           .replace(/\s+\n/g, "\n")
           .replace(/\n{3,}/g, "\n\n")
           .trim();
+
+        if (!content) {
+          content = normalizeLine(title || url);
+        }
         if (content.length > 4500) content = content.slice(0, 4500);
 
         return { title, url, content };
       },
     });
 
-    return results?.[0]?.result || null;
+    const candidates = (frameResults || [])
+      .map((entry) => entry?.result)
+      .filter((entry) => entry && typeof entry === "object");
+    if (!candidates.length) return null;
+
+    const scoreCandidate = (candidate) => {
+      const contentLen = String(candidate?.content || "").length;
+      const titleLen = String(candidate?.title || "").length;
+      return contentLen * 5 + titleLen;
+    };
+
+    return (
+      [...candidates].sort(
+        (a, b) => scoreCandidate(b) - scoreCandidate(a),
+      )[0] || null
+    );
   } catch {
     return null;
   }
@@ -2206,9 +2310,10 @@ async function sendMessage() {
   const clarifyReplyFromPopup = pendingClarifyReply || popupWasOpen;
   pendingClarifyReply = false;
 
-  const requestText = clarifyReplyFromPopup && popupWasOpen
-    ? formatClarifyReply(activeClarifyPopup?.question, text)
-    : text;
+  const requestText =
+    clarifyReplyFromPopup && popupWasOpen
+      ? formatClarifyReply(activeClarifyPopup?.question, text)
+      : text;
 
   hideClarifyPopup();
 
@@ -2364,7 +2469,10 @@ async function sendMessage() {
       const { done, value } = await reader.read();
       if (done) break;
       const rawChunk = decoder.decode(value, { stream: true });
-      const parsedChunk = extractStatusEventsFromChunk(rawChunk, statusEventCarry);
+      const parsedChunk = extractStatusEventsFromChunk(
+        rawChunk,
+        statusEventCarry,
+      );
       statusEventCarry = parsedChunk.carry;
 
       if (parsedChunk.events.length) {
@@ -2382,7 +2490,6 @@ async function sendMessage() {
 
       updateMessage(aiId, previewText);
       scrollToBottom();
-
     }
 
     if (statusEventCarry) {
@@ -2441,7 +2548,9 @@ function appendMessageStatusEvents(id, incomingEvents = []) {
   const msg = messages.find((m) => m.id === id);
   if (!msg) return;
 
-  const previousEvents = Array.isArray(msg.statusEvents) ? msg.statusEvents : [];
+  const previousEvents = Array.isArray(msg.statusEvents)
+    ? msg.statusEvents
+    : [];
   const mergedEvents = [...previousEvents, ...nextEvents].slice(-10);
   updateMessage(id, msg.content || "", { statusEvents: mergedEvents });
 }
@@ -2662,7 +2771,10 @@ async function regenerate() {
       const { done, value } = await reader.read();
       if (done) break;
       const rawChunk = decoder.decode(value, { stream: true });
-      const parsedChunk = extractStatusEventsFromChunk(rawChunk, statusEventCarry);
+      const parsedChunk = extractStatusEventsFromChunk(
+        rawChunk,
+        statusEventCarry,
+      );
       statusEventCarry = parsedChunk.carry;
 
       if (parsedChunk.events.length) {
@@ -2680,7 +2792,6 @@ async function regenerate() {
 
       updateMessage(aiId, previewText);
       scrollToBottom();
-
     }
 
     if (statusEventCarry) {
@@ -3086,7 +3197,11 @@ function rememberPointerPosition(event = null) {
   }
 
   const touch = event.touches?.[0] || event.changedTouches?.[0];
-  if (touch && Number.isFinite(touch.clientX) && Number.isFinite(touch.clientY)) {
+  if (
+    touch &&
+    Number.isFinite(touch.clientX) &&
+    Number.isFinite(touch.clientY)
+  ) {
     lastPointerPosition = { x: touch.clientX, y: touch.clientY };
   }
 }

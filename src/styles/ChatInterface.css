@@ -602,7 +602,8 @@
   z-index: 120;
 }
 
-.chat-interface-wrapper.layout-home .chat-input-container.welcome-mode.has-preview {
+.chat-interface-wrapper.layout-home
+  .chat-input-container.welcome-mode.has-preview {
   gap: 10px;
 }
 
@@ -618,7 +619,9 @@
   z-index: 260;
 }
 
-.chat-interface-wrapper.layout-home .chat-input-container.welcome-mode .image-previews-container {
+.chat-interface-wrapper.layout-home
+  .chat-input-container.welcome-mode
+  .image-previews-container {
   width: min(620px, 100%);
   margin: 0 auto;
   justify-content: flex-start;

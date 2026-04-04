@@ -1683,7 +1683,9 @@ function writeStatusEvent(res, type, payload = {}) {
   }
 
   try {
-    res.write(`${STATUS_STREAM_EVENT_START}${encoded}${STATUS_STREAM_EVENT_END}`);
+    res.write(
+      `${STATUS_STREAM_EVENT_START}${encoded}${STATUS_STREAM_EVENT_END}`,
+    );
   } catch {}
 }
 
@@ -2670,7 +2672,7 @@ async function saveUserMemories(userId, candidates = []) {
   for (const candidate of candidates) {
     const value = normalizeMemoryText(candidate?.value, 180);
     if (!candidate?.key || !value) continue;
-    
+
     // Use the same key normalization as sanitizeMemoryCandidate to ensure consistency
     const key = normalizeSuggestedMemoryKey(candidate?.key, value);
 
@@ -2712,7 +2714,7 @@ async function saveUserMemories(userId, candidates = []) {
       [userId, key, value, candidate.explicit ? 1 : 0],
     );
     savedCount++;
-    
+
     if (INTENT_NLU_DEBUG) {
       console.log(
         `[memory-save] Saved: key="${key}" value="${value.slice(0, 30)}" explicit=${candidate.explicit ? 1 : 0}`,
@@ -2801,7 +2803,7 @@ async function getRelevantUserMemories(
   );
 
   const rows = rowsRes.rows || [];
-  
+
   if (INTENT_NLU_DEBUG) {
     console.log(
       `[memory-query] Found ${rows.length} rows, returning up to ${Math.min(rows.length, 6)}`,
@@ -2812,7 +2814,7 @@ async function getRelevantUserMemories(
       );
     }
   }
-  
+
   if (!rows.length) return [];
 
   const seenSingleValueKeys = new Set();
