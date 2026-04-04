@@ -155,6 +155,7 @@
 .fz-container {
   max-width: 1020px;
   padding-top: 42px;
+
 }
 
 .fz-hero {
@@ -239,12 +240,18 @@
     transparent
   );
   transform-origin: left center;
+      backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+
 }
 
 .fz-story {
   display: flex;
   flex-direction: column;
   gap: 44px;
+      backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+
 }
 
 .fz-act {
@@ -298,6 +305,9 @@
 .fz-reflection {
   margin: 48px 0 0;
   padding-top: 28px;
+      backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+
 }
 
 .fz-reflection-intro {
@@ -405,6 +415,9 @@
   margin: 26px 0 64px;
   padding-top: 22px;
   border-top: 1px solid rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3);
+
 }
 
 .fz-finale p {
