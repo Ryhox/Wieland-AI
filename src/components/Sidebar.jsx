@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import "../styles/Sidebar.css";
 import { withLang } from "../utils/i18nRouting";
+import ConfirmationModal from "./ConfirmationModal";
 
 // Sidebar: chat history list + user menu (logout/profile) + new chat button
 // manages chat loading, search, deletion, and logout workflow
@@ -25,6 +26,7 @@ export default function Sidebar({
   const [chats, setChats] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [confirmModal, setConfirmModal] = useState(null);
   const sidebarRef = useRef(null);
   const searchInputRef = useRef(null);
 
@@ -105,21 +107,27 @@ export default function Sidebar({
   // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handleDeleteChat = async (filename, e) => {
     e.stopPropagation();
-    if (window.confirm(t("sidebar.deleteConfirm"))) {
-      try {
-        const response = await authFetch(`/api/history/${filename}`, {
-          method: "DELETE",
-        });
-        if (response.ok) {
-          await onDeleteChat(filename);
-          await loadChats();
-        } else {
-          alert(t("sidebar.deleteError"));
+    setConfirmModal({
+      title: t("sidebar.deleteConfirm"),
+      message: t("sidebar.deleteConfirm"),
+      onConfirm: async () => {
+        try {
+          const response = await authFetch(`/api/history/${filename}`, {
+            method: "DELETE",
+          });
+          if (response.ok) {
+            await onDeleteChat(filename);
+            await loadChats();
+          } else {
+            // Error will be shown after modal closes
+            console.error(t("sidebar.deleteError"));
+          }
+        } catch {
+          console.error(t("sidebar.deleteError"));
         }
-      } catch {
-        alert(t("sidebar.deleteError"));
-      }
-    }
+        setConfirmModal(null);
+      },
+    });
   };
 
   const handleLogout = () => {
@@ -349,6 +357,15 @@ export default function Sidebar({
           </div>
         </button>
       </div>
+
+      {confirmModal && (
+        <ConfirmationModal
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+        />
+      )}
     </aside>
   );
 }
