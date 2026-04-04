@@ -168,13 +168,32 @@
     "options": "Optionen",
     "internetSection": "Internetzugang",
     "internetAccess": "Internet nutzen",
+    "internetPlanLocked": "Internetzugang ist erst ab Pro verfügbar.",
+    "internetModelLocked": "Internetzugang ist mit 2B nicht verfugbar. Bitte 4B oder 8B waehlen.",
     "internetOn": "An",
     "internetOff": "Aus",
     "copied": "Kopiert!",
     "memorySaved": "Im Gedachtnis gespeichert ({{count}}).",
     "regenerate": "Neu generieren",
     "planModelLocked": "Dieses Modell wird automatisch durch deinen Plan festgelegt.",
-    "aiStyle": "KI-Stil"
+    "aiStyle": "KI-Stil",
+    "activity": {
+      "thinking": "Denke nach...",
+      "readingPage": "Lese Seitenkontext...",
+      "readingMemory": "Lese Memory...",
+      "searchingWeb": "Suche im Internet...",
+      "searchUnavailable": "Internetsuche nicht verfugbar.",
+      "memoryUnavailable": "Memory-Lookup nicht verfugbar.",
+      "searchStart": "Suche: \"{{query}}\"",
+      "searchDone": "Gefunden: {{count}} Quelle",
+      "searchDone_plural": "Gefunden: {{count}} Quellen",
+      "sourceFallback": "Quelle {{index}}",
+      "memoryStart": "Prufe Memory...",
+      "memoryDone": "In Memory gefunden:",
+      "memoryEmpty": "Keine passende Memory gefunden.",
+      "pageRead": "Lese Seite: {{title}}",
+      "currentPage": "aktuelle Seite"
+    }
   },
   "sidebar": {
     "menu": "Menü",
@@ -427,8 +446,14 @@
     "recommended": "Empfohlen",
     "perMonth": "/ Monat",
     "freeForever": "Für immer kostenlos.",
+    "freePlanHint": "Für immer kostenlos. Internetzugang ab Pro.",
     "supportDev": "Unterstütze die Entwicklung von Wieland AI.",
     "maxQuality": "Maximale Qualität mit Wieland 8B.",
+    "planNames": {
+      "free": "Kostenlos",
+      "pro": "Pro",
+      "max": "Max"
+    },
     "manage": "Verwalten",
     "upgrade": "Upgrade",
     "downgrade": "Downgrade",
@@ -442,6 +467,7 @@
         { "text": "Unbegrenzte Gespräche", "enabled": true },
         { "text": "Bild-Upload & Analyse", "enabled": true },
         { "text": "Gesprächsverlauf", "enabled": true },
+        { "text": "Internetzugang", "enabled": false },
         { "text": "Prioritäts-Support", "enabled": false },
         { "text": "Wieland 4B Modell", "enabled": false },
         { "text": "Wieland 8B Modell", "enabled": false }
@@ -452,6 +478,7 @@
           "text": "Unterstützt die Entwicklung von Wieland AI",
           "enabled": true
         },
+        { "text": "Internetzugang", "enabled": true },
         { "text": "Prioritäts-Support", "enabled": true },
         { "text": "Frühzeitiger Zugang zu neuen Releases", "enabled": true },
         { "text": "Wieland 4B Modell", "enabled": true },

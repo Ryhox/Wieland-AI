@@ -393,6 +393,8 @@ const CLARIFY_JSON_BLOCK_RE =
   /\[\[\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]([\s\S]*?)\[\[\s*\/\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
 const CLARIFY_OPTION_LINE_RE = /^\s*([A-E])[)\].:-]\s*(.+)$/i;
 const CLARIFY_OPTION_IDS = ["A", "B", "C", "D", "E"];
+const STATUS_STREAM_EVENT_START = "\u0002WIELAND_STATUS:";
+const STATUS_STREAM_EVENT_END = "\u0003";
 const POPUP_IDEA_PLACEHOLDER_BY_LANG = {
   de: "Beschreibe deine Idee",
   en: "Describe your idea",
@@ -777,6 +779,63 @@ function getClarificationStreamPreview(rawText = "") {
   return { text: source, suppress: false };
 }
 
+function extractStatusEventsFromChunk(rawChunk = "", carry = "") {
+  const source = `${String(carry || "")}${String(rawChunk || "")}`;
+  if (!source) return { cleanText: "", events: [], carry: "" };
+
+  const events = [];
+  let cleanText = "";
+  let cursor = 0;
+
+  while (cursor < source.length) {
+    const start = source.indexOf(STATUS_STREAM_EVENT_START, cursor);
+    if (start < 0) {
+      cleanText += source.slice(cursor);
+      return { cleanText, events, carry: "" };
+    }
+
+    cleanText += source.slice(cursor, start);
+    const payloadStart = start + STATUS_STREAM_EVENT_START.length;
+    const end = source.indexOf(STATUS_STREAM_EVENT_END, payloadStart);
+
+    if (end < 0) {
+      return {
+        cleanText,
+        events,
+        carry: source.slice(start),
+      };
+    }
+
+    const payloadRaw = source.slice(payloadStart, end);
+    let parsed = null;
+    try {
+      parsed = JSON.parse(payloadRaw);
+    } catch {}
+
+    if (parsed?.__wieland_status === true && parsed?.type) {
+      events.push(parsed);
+    } else {
+      cleanText += source.slice(start, end + STATUS_STREAM_EVENT_END.length);
+    }
+
+    cursor = end + STATUS_STREAM_EVENT_END.length;
+  }
+
+  return { cleanText, events, carry: "" };
+}
+
+function getActivitySourceHost(rawUrl = "") {
+  const value = String(rawUrl || "").trim();
+  if (!value) return "";
+
+  try {
+    const host = new URL(value).hostname || "";
+    return host.replace(/^www\./i, "");
+  } catch {
+    return value;
+  }
+}
+
 let token = null;
 let user = null;
 let currentChatId = null;
@@ -786,6 +845,13 @@ let abortController = null;
 let selectedModel = "qwen3-vl:2b-instruct";
 let aiStyle = "formal";
 let internetAccess = true;
+let lastPointerPosition = { x: null, y: null };
+const TOAST_LIFETIME_MS = 3000;
+const TOAST_FADE_DURATION_MS = 340;
+const TOAST_VIEWPORT_MARGIN = 16;
+const TOAST_POINTER_OFFSET_X = 18;
+const TOAST_POINTER_OFFSET_Y = 0;
+const TOAST_ESTIMATED_WIDTH = 340;
 let imageFile = null;
 let imagePreview = null;
 let sidebarOpen = false;
@@ -881,6 +947,65 @@ function getClarifyInputPlaceholder() {
   );
 }
 
+function buildLocalClarifyFallbackPayload(sourceText = "") {
+  const lang = ["de", "en", "it"].includes(currentLang) ? currentLang : "de";
+  const text = String(sourceText || "").trim();
+
+  const byLang = {
+    de: {
+      question: "Kurze Rückfrage: Was möchtest du genau erstellen?",
+      options: [
+        { id: "A", label: "Landingpage" },
+        { id: "B", label: "Komplette Website" },
+        { id: "C", label: "Web-App" },
+        { id: "D", label: "Browser-Erweiterung" },
+      ],
+      freeformPlaceholder: "Beschreibe deine Idee",
+      skipLabel: "Überspringen",
+    },
+    en: {
+      question: "Quick follow-up: What exactly do you want to build?",
+      options: [
+        { id: "A", label: "Landing page" },
+        { id: "B", label: "Full website" },
+        { id: "C", label: "Web app" },
+        { id: "D", label: "Browser extension" },
+      ],
+      freeformPlaceholder: "Describe your idea",
+      skipLabel: "Skip",
+    },
+    it: {
+      question: "Domanda veloce: cosa vuoi creare esattamente?",
+      options: [
+        { id: "A", label: "Landing page" },
+        { id: "B", label: "Sito completo" },
+        { id: "C", label: "Web app" },
+        { id: "D", label: "Estensione browser" },
+      ],
+      freeformPlaceholder: "Descrivi la tua idea",
+      skipLabel: "Salta",
+    },
+  };
+
+  const base = byLang[lang] || byLang.de;
+  const refinedQuestion = text
+    ? toSingleSentenceQuestion(text, base.question)
+    : base.question;
+
+  return sanitizeClarifyPayload(
+    {
+      question: refinedQuestion,
+      options: base.options,
+      allowFreeform: true,
+      freeformPlaceholder: base.freeformPlaceholder,
+      skipLabel: base.skipLabel,
+      step: 1,
+      totalSteps: 1,
+    },
+    base.question,
+  );
+}
+
 // apply AI style selection: toggle button state + store selection
 function applyAiStyleSelection(styleId = "") {
   const styleButtons = [...$$(".plus-menu-item[data-style]")];
@@ -939,12 +1064,50 @@ function updateModelButtonState() {
   modelLabelEl.textContent = modelLabelFor(selectedModel);
 }
 
+function isInternetAllowedForCurrentSelection() {
+  return planRank(user?.plan) >= 1 && selectedModel !== "qwen3-vl:2b-instruct";
+}
+
+function getInternetLockMessage() {
+  if (planRank(user?.plan) < 1) return tr("chat.internetPlanLocked");
+  if (selectedModel === "qwen3-vl:2b-instruct") {
+    return tr("chat.internetModelLocked");
+  }
+  return "";
+}
+
+function enforceInternetConstraint(persist = false) {
+  if (!internetAccess || isInternetAllowedForCurrentSelection()) {
+    updateInternetToggleUI();
+    return;
+  }
+
+  internetAccess = false;
+  updateInternetToggleUI();
+
+  if (persist) {
+    void chromeSet({ [EXT_WEB_ACCESS_KEY]: false });
+  }
+}
+
 function updateInternetToggleUI() {
   if (btnToggleInternet) {
-    btnToggleInternet.classList.toggle("active-toggle", internetAccess);
+    const internetAllowed = isInternetAllowedForCurrentSelection();
+    const internetEnabled = internetAllowed && internetAccess;
+    const lockMessage = getInternetLockMessage();
+    btnToggleInternet.classList.toggle("active-toggle", internetEnabled);
+    btnToggleInternet.classList.toggle("locked", !internetAllowed);
     btnToggleInternet.setAttribute(
       "title",
-      internetAccess ? tr("chat.internetOn") : tr("chat.internetOff"),
+      !internetAllowed
+        ? lockMessage || tr("chat.internetModelLocked")
+        : internetEnabled
+          ? tr("chat.internetOn")
+          : tr("chat.internetOff"),
+    );
+    btnToggleInternet.setAttribute(
+      "aria-disabled",
+      internetAllowed ? "false" : "true",
     );
   }
 }
@@ -1266,13 +1429,32 @@ function hideClarifyPopup() {
 // handle clarification popup option selection: set als chat reply + submit
 function sendClarifyReply(rawValue = "") {
   const value = String(rawValue || "").trim();
-  if (!value || isSending) return;
+  if (!value) return;
 
   hideClarifyPopup();
   // mark request als clarify reply für backend
   pendingClarifyReply = true;
   chatInput.value = value;
   chatInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+  if (isSending) {
+    abortController?.abort();
+
+    // wait until current stream fully settles, then send clarify reply
+    let retriesLeft = 25;
+    const retrySend = () => {
+      if (!isSending) {
+        void sendMessage();
+        return;
+      }
+      if (retriesLeft <= 0) return;
+      retriesLeft -= 1;
+      setTimeout(retrySend, 60);
+    };
+    setTimeout(retrySend, 0);
+    return;
+  }
+
   void sendMessage();
 }
 
@@ -1625,8 +1807,8 @@ function showChat() {
   sidebarAvatar.textContent = initials;
   sidebarName.textContent = user?.username ?? "—";
   sidebarPlan.textContent = user?.plan ?? "Free";
-
   updateModelForPlan();
+  enforceInternetConstraint(true);
   updateModelDropdown();
   void preloadModel(selectedModel);
 
@@ -1689,6 +1871,12 @@ modelOptions.forEach((opt) => {
     }
     selectedModel = opt.dataset.model;
     modelLabelEl.textContent = modelLabelFor(selectedModel);
+    if (internetAccess && !isInternetAllowedForCurrentSelection()) {
+      internetAccess = false;
+      updateInternetToggleUI();
+      void chromeSet({ [EXT_WEB_ACCESS_KEY]: false });
+      toast(tr("chat.internetModelLocked"), "error");
+    }
     updateModelDropdown();
     modelDropdown.classList.add("hidden");
     void preloadModel(selectedModel);
@@ -1828,6 +2016,14 @@ btnUploadImg.addEventListener("click", () => {
 });
 
 btnToggleInternet?.addEventListener("click", async () => {
+  if (!isInternetAllowedForCurrentSelection()) {
+    internetAccess = false;
+    updateInternetToggleUI();
+    await chromeSet({ [EXT_WEB_ACCESS_KEY]: false });
+    toast(getInternetLockMessage() || tr("chat.internetModelLocked"), "error");
+    return;
+  }
+
   internetAccess = !internetAccess;
   updateInternetToggleUI();
   await chromeSet({ [EXT_WEB_ACCESS_KEY]: internetAccess });
@@ -2005,15 +2201,15 @@ async function sendMessage() {
     chatInput.value.trim() || (imageFile ? tr("chat.describeImage") : "");
   if (!text || isSending) return;
 
-  // check ob user antwortet auf clarify popup (option selection)
-  const clarifyReplyFromPopup = isClarifyPopupOpen();
-  const requestText = clarifyReplyFromPopup
+  const popupWasOpen = isClarifyPopupOpen();
+  // consume clarify-reply intent atomar at send start to avoid timing races
+  const clarifyReplyFromPopup = pendingClarifyReply || popupWasOpen;
+  pendingClarifyReply = false;
+
+  const requestText = clarifyReplyFromPopup && popupWasOpen
     ? formatClarifyReply(activeClarifyPopup?.question, text)
     : text;
 
-  if (clarifyReplyFromPopup) {
-    pendingClarifyReply = true;
-  }
   hideClarifyPopup();
 
   // UI state: disable input, show stop button
@@ -2107,12 +2303,13 @@ async function sendMessage() {
 
   // add empty AI message placeholder (wird gefüllt mit streaming)
   const aiId = uid();
-  messages.push({ content: "", isUser: false, id: aiId });
+  messages.push({ content: "", isUser: false, id: aiId, statusEvents: [] });
   renderMessages();
   scrollToBottom();
 
   abortController = new AbortController();
   let fullText = "";
+  let statusEventCarry = "";
 
   try {
     // build FormData für multipart request (message + context + model settings)
@@ -2121,13 +2318,16 @@ async function sendMessage() {
     fd.append("context", JSON.stringify(context));
     fd.append("model", selectedModel);
     fd.append("aiStyle", aiStyle);
-    fd.append("internetAccess", internetAccess ? "true" : "false");
+    fd.append(
+      "internetAccess",
+      isInternetAllowedForCurrentSelection() && internetAccess
+        ? "true"
+        : "false",
+    );
     fd.append("clientSource", "extension");
 
     // optional: mark wenn user antwortet auf clarify popup
-    const clarifyReply = pendingClarifyReply;
-    pendingClarifyReply = false;
-    if (clarifyReply) {
+    if (clarifyReplyFromPopup) {
       fd.append("clarifyReply", "true");
     }
 
@@ -2152,7 +2352,6 @@ async function sendMessage() {
     const memoryCount = Number(
       res.headers.get("X-Wieland-Memory-Count") || "0",
     );
-    const clarifyForced = res.headers.get("X-Wieland-Clarify-Forced") === "1";
 
     if (memorySaved && memoryCount > 0) {
       toast(tr("chat.memorySaved", { count: memoryCount }), "success");
@@ -2164,17 +2363,36 @@ async function sendMessage() {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      fullText += decoder.decode(value, { stream: true });
+      const rawChunk = decoder.decode(value, { stream: true });
+      const parsedChunk = extractStatusEventsFromChunk(rawChunk, statusEventCarry);
+      statusEventCarry = parsedChunk.carry;
+
+      if (parsedChunk.events.length) {
+        appendMessageStatusEvents(aiId, parsedChunk.events);
+      }
+
+      if (!parsedChunk.cleanText) {
+        continue;
+      }
+
+      fullText += parsedChunk.cleanText;
 
       const preview = getClarificationStreamPreview(fullText);
       const previewText = preview.text;
 
       updateMessage(aiId, previewText);
       scrollToBottom();
+
+    }
+
+    if (statusEventCarry) {
+      fullText += statusEventCarry;
+      statusEventCarry = "";
     }
 
     const clarification = extractClarificationPayload(fullText);
     const clarificationPayload = clarification.payload;
+    const streamPayloadSeen = Boolean(clarificationPayload);
     const finalAssistantText =
       clarification.cleanedText || fullText || tr("chat.shortError");
 
@@ -2184,9 +2402,10 @@ async function sendMessage() {
       scrollToBottom();
     }
 
-    if (clarificationPayload) {
+    if (clarificationPayload && streamPayloadSeen) {
       queueClarifyPopup(clarificationPayload, {
-        immediate: clarifyForced,
+        immediate: true,
+        liveUpdate: true,
       });
     }
 
@@ -2213,14 +2432,36 @@ async function sendMessage() {
 }
 
 // update message content in state + re-render DOM (for streaming updates)
-function updateMessage(id, content) {
+function appendMessageStatusEvents(id, incomingEvents = []) {
+  const nextEvents = Array.isArray(incomingEvents)
+    ? incomingEvents.filter((event) => event && typeof event === "object")
+    : [];
+  if (!nextEvents.length) return;
+
+  const msg = messages.find((m) => m.id === id);
+  if (!msg) return;
+
+  const previousEvents = Array.isArray(msg.statusEvents) ? msg.statusEvents : [];
+  const mergedEvents = [...previousEvents, ...nextEvents].slice(-10);
+  updateMessage(id, msg.content || "", { statusEvents: mergedEvents });
+}
+
+function updateMessage(id, content, options = {}) {
   // find message in state + update content
   const msg = messages.find((m) => m.id === id);
-  if (msg) msg.content = content;
+  if (!msg) return;
+
+  msg.content = String(content || "");
+  if (Array.isArray(options?.statusEvents)) {
+    msg.statusEvents = options.statusEvents;
+  }
+
   // re-render message DOM: markdown parse + code block copy buttons
   const el = document.querySelector(`[data-msg-id="${id}"] .message-bubble`);
   if (el) {
-    el.innerHTML = content ? renderMarkdown(content) : typingLoaderHTML();
+    el.innerHTML = msg.content
+      ? renderMarkdown(msg.content)
+      : renderTypingStateHTML(msg.statusEvents || []);
     bindCodeCopyButtons(el);
   }
 }
@@ -2294,7 +2535,9 @@ function createMessageEl(msg, idx) {
     bubbleHTML += escapeHtml(textOnly);
   } else {
     // AI message: markdown render oder loading animation
-    bubbleHTML = msg.content ? renderMarkdown(msg.content) : typingLoaderHTML();
+    bubbleHTML = msg.content
+      ? renderMarkdown(msg.content)
+      : renderTypingStateHTML(msg.statusEvents || []);
   }
 
   // assemble message bubble + action buttons
@@ -2356,7 +2599,7 @@ async function regenerate() {
   abortController = new AbortController();
 
   const aiId = uid();
-  messages.push({ content: "", isUser: false, id: aiId });
+  messages.push({ content: "", isUser: false, id: aiId, statusEvents: [] });
   renderMessages();
 
   const context = messages.slice(0, -1).map((m) => ({
@@ -2365,6 +2608,7 @@ async function regenerate() {
   }));
 
   let fullText = "";
+  let statusEventCarry = "";
 
   try {
     const fd = new FormData();
@@ -2383,7 +2627,12 @@ async function regenerate() {
     fd.append("context", JSON.stringify(context.slice(0, -1)));
     fd.append("model", selectedModel);
     fd.append("aiStyle", aiStyle);
-    fd.append("internetAccess", internetAccess ? "true" : "false");
+    fd.append(
+      "internetAccess",
+      isInternetAllowedForCurrentSelection() && internetAccess
+        ? "true"
+        : "false",
+    );
     fd.append("clientSource", "extension");
     if (pageContext) {
       fd.append("pageContext", JSON.stringify(pageContext));
@@ -2402,7 +2651,6 @@ async function regenerate() {
     const memoryCount = Number(
       res.headers.get("X-Wieland-Memory-Count") || "0",
     );
-    const clarifyForced = res.headers.get("X-Wieland-Clarify-Forced") === "1";
 
     if (memorySaved && memoryCount > 0) {
       toast(tr("chat.memorySaved", { count: memoryCount }), "success");
@@ -2413,17 +2661,36 @@ async function regenerate() {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      fullText += decoder.decode(value, { stream: true });
+      const rawChunk = decoder.decode(value, { stream: true });
+      const parsedChunk = extractStatusEventsFromChunk(rawChunk, statusEventCarry);
+      statusEventCarry = parsedChunk.carry;
+
+      if (parsedChunk.events.length) {
+        appendMessageStatusEvents(aiId, parsedChunk.events);
+      }
+
+      if (!parsedChunk.cleanText) {
+        continue;
+      }
+
+      fullText += parsedChunk.cleanText;
 
       const preview = getClarificationStreamPreview(fullText);
       const previewText = preview.text;
 
       updateMessage(aiId, previewText);
       scrollToBottom();
+
+    }
+
+    if (statusEventCarry) {
+      fullText += statusEventCarry;
+      statusEventCarry = "";
     }
 
     const clarification = extractClarificationPayload(fullText);
     const clarificationPayload = clarification.payload;
+    const streamPayloadSeen = Boolean(clarificationPayload);
     const finalAssistantText =
       clarification.cleanedText || fullText || tr("chat.shortError");
 
@@ -2433,9 +2700,10 @@ async function regenerate() {
       scrollToBottom();
     }
 
-    if (clarificationPayload) {
+    if (clarificationPayload && streamPayloadSeen) {
       queueClarifyPopup(clarificationPayload, {
-        immediate: clarifyForced,
+        immediate: true,
+        liveUpdate: true,
       });
     }
 
@@ -2477,6 +2745,9 @@ function renderMarkdown(raw = "") {
       if (!block) return "";
       return renderCodeBlockHtml(block.code, block.lang);
     })
+    .replace(/^###\s+(.+)$/gm, "<h3>$1</h3>")
+    .replace(/^##\s+(.+)$/gm, "<h2>$1</h2>")
+    .replace(/^#\s+(.+)$/gm, "<h1>$1</h1>")
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*(.*?)\*\*/gs, "<strong>$1</strong>")
     .replace(/__(.*?)__/gs, "<strong>$1</strong>")
@@ -2611,6 +2882,122 @@ function bindCodeCopyButtons(rootEl) {
   });
 }
 
+function escapeHtmlAttr(value = "") {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function activityIconSVG(type = "") {
+  if (
+    type === "search_start" ||
+    type === "search_done" ||
+    type === "search_error"
+  ) {
+    return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="16.65" y1="16.65" x2="21" y2="21"></line></svg>';
+  }
+
+  if (
+    type === "memory_start" ||
+    type === "memory_done" ||
+    type === "memory_error"
+  ) {
+    return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M8 2v6"></path><path d="M16 2v6"></path><path d="M8 22v-3"></path><path d="M16 22v-3"></path></svg>';
+  }
+
+  if (type === "page_read") {
+    return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h7l5 5v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"></path><path d="M15 3v6h6"></path></svg>';
+  }
+
+  return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.2 4.8L19 9l-4.8 2.2L12 16l-2.2-4.8L5 9l4.8-2.2z"></path></svg>';
+}
+
+function renderActivityFeedHTML(events = []) {
+  const list = Array.isArray(events) ? events.slice(-8) : [];
+  if (!list.length) return "";
+
+  const itemsHtml = list
+    .map((event) => {
+      const type = String(event?.type || "");
+      const safeType = type || "thinking";
+      let contentHtml = "";
+
+      if (type === "search_start") {
+        const query = String(event?.query || "").trim();
+        contentHtml = `<span>${escapeHtml(tr("chat.activity.searchStart", { query }))}</span>`;
+      } else if (type === "search_done") {
+        const sources = Array.isArray(event?.sources) ? event.sources : [];
+        const sourceChips = sources
+          .map((source, index) => {
+            const rawUrl = String(source?.url || "").trim();
+            const label =
+              getActivitySourceHost(rawUrl) ||
+              String(source?.title || "").trim() ||
+              tr("chat.activity.sourceFallback", { index: index + 1 });
+
+            let safeUrl = "";
+            try {
+              const parsed = new URL(rawUrl);
+              if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+                safeUrl = parsed.toString();
+              }
+            } catch {}
+
+            if (!safeUrl) {
+              return `<span class="activity-source-chip">${escapeHtml(label)}</span>`;
+            }
+
+            return `<a class="activity-source-chip" href="${escapeHtmlAttr(safeUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`;
+          })
+          .join("");
+
+        contentHtml = `<span>${escapeHtml(tr("chat.activity.searchDone", { count: sources.length }))}</span>${sourceChips ? `<div class="activity-source-list">${sourceChips}</div>` : ""}`;
+      } else if (type === "search_error") {
+        contentHtml = `<span>${escapeHtml(tr("chat.activity.searchUnavailable"))}</span>`;
+      } else if (type === "memory_start") {
+        contentHtml = `<span>${escapeHtml(tr("chat.activity.memoryStart"))}</span>`;
+      } else if (type === "memory_done") {
+        const items = Array.isArray(event?.items) ? event.items : [];
+        const memoryChips = items
+          .map((item) => {
+            const label = String(item?.label || "").trim();
+            const value = String(item?.value || "").trim();
+            const chipText = value ? `${label}: ${value}` : label;
+            if (!chipText) return "";
+            return `<span class="activity-memory-chip">${escapeHtml(chipText)}</span>`;
+          })
+          .filter(Boolean)
+          .join("");
+
+        contentHtml = `<span>${escapeHtml(items.length ? tr("chat.activity.memoryDone") : tr("chat.activity.memoryEmpty"))}</span>${memoryChips ? `<div class="activity-memory-list">${memoryChips}</div>` : ""}`;
+      } else if (type === "memory_error") {
+        contentHtml = `<span>${escapeHtml(tr("chat.activity.memoryUnavailable"))}</span>`;
+      } else if (type === "page_read") {
+        const title =
+          String(event?.title || "").trim() ||
+          getActivitySourceHost(event?.url || "") ||
+          tr("chat.activity.currentPage");
+        contentHtml = `<span>${escapeHtml(tr("chat.activity.pageRead", { title }))}</span>`;
+      } else {
+        contentHtml = `<span>${escapeHtml(tr("chat.activity.thinking"))}</span>`;
+      }
+
+      return `<div class="activity-item activity-${escapeHtmlAttr(safeType)}"><span class="activity-icon-wrap">${activityIconSVG(type)}</span><div class="activity-content">${contentHtml}</div></div>`;
+    })
+    .join("");
+
+  return `<div class="activity-feed">${itemsHtml}</div>`;
+}
+
+function renderTypingStateHTML(statusEvents = []) {
+  const list = Array.isArray(statusEvents) ? statusEvents : [];
+  const activityHtml = renderActivityFeedHTML(list);
+
+  return `<div class="typing-state-stack">${activityHtml}${typingLoaderHTML()}</div>`;
+}
+
 function typingLoaderHTML() {
   return `<div class="loader">
     <div class="circle"><div class="dot"></div><div class="outline"></div></div>
@@ -2690,13 +3077,80 @@ function scrollToBottom() {
   });
 }
 
+function rememberPointerPosition(event = null) {
+  if (!event) return;
+
+  if (Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
+    lastPointerPosition = { x: event.clientX, y: event.clientY };
+    return;
+  }
+
+  const touch = event.touches?.[0] || event.changedTouches?.[0];
+  if (touch && Number.isFinite(touch.clientX) && Number.isFinite(touch.clientY)) {
+    lastPointerPosition = { x: touch.clientX, y: touch.clientY };
+  }
+}
+
+function getToastFollowPosition(pointer = lastPointerPosition) {
+  const margin = TOAST_VIEWPORT_MARGIN;
+  const width = Number(window.innerWidth || 0);
+  const height = Number(window.innerHeight || 0);
+  const maxX = Math.max(margin, width - margin - TOAST_ESTIMATED_WIDTH);
+  const maxY = Math.max(margin, height - margin);
+
+  const rawX = Number.isFinite(pointer?.x)
+    ? pointer.x + TOAST_POINTER_OFFSET_X
+    : maxX;
+  const rawY = Number.isFinite(pointer?.y)
+    ? pointer.y + TOAST_POINTER_OFFSET_Y
+    : maxY;
+
+  return {
+    x: Math.max(margin, Math.min(maxX, rawX)),
+    y: Math.max(margin, Math.min(maxY, rawY)),
+  };
+}
+
+function positionToastElement(el) {
+  if (!el || !el.isConnected) return;
+  const pos = getToastFollowPosition(lastPointerPosition);
+  el.style.left = `${pos.x}px`;
+  el.style.top = `${pos.y}px`;
+}
+
+document.addEventListener("pointermove", rememberPointerPosition, {
+  passive: true,
+});
+document.addEventListener("pointerdown", rememberPointerPosition, {
+  passive: true,
+});
+document.addEventListener("touchstart", rememberPointerPosition, {
+  passive: true,
+});
+
 // show temporary toast notification (auto-dismiss nach 3s)
 function toast(msg, type = "error") {
   const el = document.createElement("div");
   el.className = `toast ${type}`;
   el.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3000);
+  positionToastElement(el);
+
+  const fadeDelay = Math.max(0, TOAST_LIFETIME_MS - TOAST_FADE_DURATION_MS);
+  const fadeTimer = setTimeout(() => {
+    if (el.isConnected) {
+      el.classList.add("leaving");
+    }
+  }, fadeDelay);
+
+  const removeToast = () => {
+    clearTimeout(fadeTimer);
+    if (el.isConnected) {
+      el.remove();
+    }
+  };
+
+  setTimeout(removeToast, TOAST_LIFETIME_MS);
 }
 
 initStarsBackground();

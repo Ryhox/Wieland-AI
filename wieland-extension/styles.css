@@ -1044,6 +1044,102 @@ body {
   min-height: 18px;
 }
 
+.message-bubble .typing-state-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 12px;
+  line-height: 1.32;
+  animation: activitySlideIn 0.2s ease-out;
+}
+
+.activity-icon-wrap {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.62);
+  margin-top: 1px;
+}
+
+.activity-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.activity-source-list,
+.activity-memory-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.activity-source-chip,
+.activity-memory-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.82);
+  text-decoration: none;
+}
+
+.activity-source-chip:hover {
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+}
+
+.activity-search_done .activity-icon-wrap,
+.activity-memory_done .activity-icon-wrap {
+  color: rgba(126, 255, 180, 0.9);
+}
+
+.activity-search_error .activity-icon-wrap,
+.activity-memory_error .activity-icon-wrap {
+  color: rgba(255, 132, 132, 0.95);
+}
+
+.activity-thinking .activity-icon-wrap {
+  color: rgba(255, 255, 255, 0.48);
+}
+
+@keyframes activitySlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .message-bubble .circle {
   display: flex;
   align-items: center;
@@ -1310,6 +1406,16 @@ body {
   border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
+.plus-menu-item.locked {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
+.plus-menu-item.locked:hover {
+  background: none;
+  color: #e0e0e0;
+}
+
 .plus-menu-divider {
   height: 1px;
   background: rgba(255, 255, 255, 0.1);
@@ -1417,17 +1523,41 @@ body {
 
 .toast {
   position: fixed;
-  bottom: 80px;
   left: 50%;
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(0, -50%) scale(1);
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 12px;
   z-index: 500;
-  animation: popupIn 0.2s ease-out;
-  max-width: 90%;
-  text-align: center;
+  animation: toastIn 0.16s ease-out;
+  max-width: min(340px, calc(100vw - 24px));
+  text-align: left;
   pointer-events: none;
+  opacity: 1;
+  transition:
+    left 0.08s linear,
+    top 0.08s linear,
+    opacity 0.24s ease,
+    transform 0.24s ease;
+  will-change: left, top, opacity, transform;
+}
+
+.toast.leaving {
+  opacity: 0;
+  transform: translate(0, -50%) scale(0.96);
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translate(0, -50%) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(0, -50%) scale(1);
+  }
 }
 
 .toast.error {

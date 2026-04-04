@@ -164,13 +164,32 @@
     "options": "Opzioni",
     "internetSection": "Accesso Internet",
     "internetAccess": "Usa internet",
+    "internetPlanLocked": "L'accesso a Internet e disponibile dal piano Pro.",
+    "internetModelLocked": "L'accesso a Internet non e disponibile con 2B. Scegli 4B o 8B.",
     "internetOn": "On",
     "internetOff": "Off",
     "copied": "Copiato!",
     "memorySaved": "Salvato in memoria ({{count}}).",
     "regenerate": "Rigenera",
     "planModelLocked": "Questo modello e impostato automaticamente dal tuo piano.",
-    "aiStyle": "Stile AI"
+    "aiStyle": "Stile AI",
+    "activity": {
+      "thinking": "Sto pensando...",
+      "readingPage": "Leggo il contesto della pagina...",
+      "readingMemory": "Leggo la memoria...",
+      "searchingWeb": "Cerco su internet...",
+      "searchUnavailable": "Ricerca web non disponibile.",
+      "memoryUnavailable": "Ricerca memoria non disponibile.",
+      "searchStart": "Cerco: \"{{query}}\"",
+      "searchDone": "Trovata {{count}} fonte",
+      "searchDone_plural": "Trovate {{count}} fonti",
+      "sourceFallback": "Fonte {{index}}",
+      "memoryStart": "Controllo memoria...",
+      "memoryDone": "Trovato in memoria:",
+      "memoryEmpty": "Nessun ricordo corrispondente.",
+      "pageRead": "Leggo pagina: {{title}}",
+      "currentPage": "pagina corrente"
+    }
   },
   "sidebar": {
     "menu": "Menu",
@@ -427,8 +446,14 @@
     "recommended": "Consigliato",
     "perMonth": "/ mese",
     "freeForever": "Gratis per sempre.",
+    "freePlanHint": "Gratis per sempre. L'accesso a Internet parte dal piano Pro.",
     "supportDev": "Supporta lo sviluppo di Wieland AI.",
     "maxQuality": "Massima qualita con Wieland 8B.",
+    "planNames": {
+      "free": "Gratuito",
+      "pro": "Pro",
+      "max": "Max"
+    },
     "manage": "Gestisci",
     "upgrade": "Upgrade",
     "downgrade": "Downgrade",
@@ -442,6 +467,7 @@
         { "text": "Chat illimitate", "enabled": true },
         { "text": "Upload e analisi immagini", "enabled": true },
         { "text": "Cronologia chat", "enabled": true },
+        { "text": "Accesso a Internet", "enabled": false },
         { "text": "Supporto prioritario", "enabled": false },
         { "text": "Modello Wieland 4B", "enabled": false },
         { "text": "Modello Wieland 8B", "enabled": false }
@@ -449,6 +475,7 @@
       "pro": [
         { "text": "Tutto del piano Free", "enabled": true },
         { "text": "Supporta lo sviluppo di Wieland AI", "enabled": true },
+        { "text": "Accesso a Internet", "enabled": true },
         { "text": "Supporto prioritario", "enabled": true },
         { "text": "Accesso anticipato alle nuove funzioni", "enabled": true },
         { "text": "Modello Wieland 4B", "enabled": true },

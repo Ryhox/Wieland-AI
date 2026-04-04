@@ -336,12 +336,108 @@
 }
 
 /* Loading animation */
+.message-bubble .typing-state-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+}
+
 .message-bubble .loader {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 8px;
   min-height: 18px;
+}
+
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 12px;
+  line-height: 1.32;
+  animation: activitySlideIn 0.2s ease-out;
+}
+
+.activity-icon-wrap {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.62);
+  margin-top: 1px;
+}
+
+.activity-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.activity-source-list,
+.activity-memory-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.activity-source-chip,
+.activity-memory-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.82);
+  text-decoration: none;
+}
+
+.activity-source-chip:hover {
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+}
+
+.activity-search_done .activity-icon-wrap,
+.activity-memory_done .activity-icon-wrap {
+  color: rgba(126, 255, 180, 0.9);
+}
+
+.activity-search_error .activity-icon-wrap,
+.activity-memory_error .activity-icon-wrap {
+  color: rgba(255, 132, 132, 0.95);
+}
+
+.activity-thinking .activity-icon-wrap {
+  color: rgba(255, 255, 255, 0.48);
+}
+
+@keyframes activitySlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message-bubble .circle {
@@ -506,6 +602,10 @@
   z-index: 120;
 }
 
+.chat-interface-wrapper.layout-home .chat-input-container.welcome-mode.has-preview {
+  gap: 10px;
+}
+
 .chat-input-container.welcome-mode .input-row {
   position: relative;
   z-index: 130;
@@ -516,6 +616,12 @@
 .chat-input-container.welcome-mode .plus-popup,
 .chat-input-container.welcome-mode .model-dropdown {
   z-index: 260;
+}
+
+.chat-interface-wrapper.layout-home .chat-input-container.welcome-mode .image-previews-container {
+  width: min(620px, 100%);
+  margin: 0 auto;
+  justify-content: flex-start;
 }
 
 .image-previews-container {
@@ -919,6 +1025,16 @@
   border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
+.plus-popup-item.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.plus-popup-item.locked:hover {
+  background: none;
+  color: #e0e0e0;
+}
+
 .plus-popup-section-title {
   padding: 6px 10px 2px;
   font-size: 11px;
@@ -950,18 +1066,47 @@
 
 .chat-toast {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
+  left: 50%;
+  top: 50%;
+  transform: translate(0, -50%) scale(1);
   z-index: 320;
   pointer-events: none;
   padding: 10px 14px;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
+  max-width: min(360px, calc(100vw - 24px));
+  text-align: center;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #fff;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  opacity: 1;
+  text-align: left;
+  transition:
+    left 0.08s linear,
+    top 0.08s linear,
+    opacity 0.24s ease,
+    transform 0.24s ease;
+  will-change: left, top, opacity, transform;
+  animation: chatToastIn 0.16s ease-out;
+}
+
+.chat-toast.leaving {
+  opacity: 0;
+  transform: translate(0, -50%) scale(0.96);
+}
+
+@keyframes chatToastIn {
+  from {
+    opacity: 0;
+    transform: translate(0, -50%) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(0, -50%) scale(1);
+  }
 }
 
 .chat-toast.success {
@@ -1255,8 +1400,6 @@
   }
 
   .chat-toast {
-    right: 12px;
-    bottom: 12px;
     max-width: calc(100% - 24px);
   }
 

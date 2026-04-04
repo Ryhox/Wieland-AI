@@ -48,6 +48,7 @@ function Home({ isSidebarOpen, onSidebarToggle }) {
         onMessagesChange={setHasMessages}
         sidebarOpen={isSidebarOpen}
         onSidebarChange={onSidebarToggle}
+        pageVariant="home"
         inputOffset={hasMessages ? 50 : 425} // Je nachdem ob Messages vorhanden
         onNewChatRef={(fn) => {
           newChatRef.current = fn; // Child gibt New-Chat Funktion zurück

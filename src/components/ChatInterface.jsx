@@ -10,8 +10,8 @@ const MAX_IMAGE_MB = 10;
 const MODEL_PRELOAD_REFRESH_MS = 10 * 60 * 1000;
 const CLARIFY_POPUP_DELAY_MS = 0;
 const CLARIFY_TYPE_INTERVAL_MS = 18;
-const CLARIFY_QUESTION_CHARS_PER_TICK = 1;
-const CLARIFY_OPTION_CHARS_PER_TICK = 1;
+const CLARIFY_QUESTION_CHARS_PER_TICK = 3;
+const CLARIFY_OPTION_CHARS_PER_TICK = 2;
 
 // hier hängt der komplette seitenflow dran, also lieber klar halten
 function normalizeUiLang(value = "") {
@@ -177,6 +177,8 @@ const CLARIFY_JSON_CLOSE_RE =
 const CLARIFY_JSON_TOKEN_RE = /WIELAND[\s_-]*CLARIFY[\s_-]*JSON/i;
 const CLARIFY_OPTION_LINE_RE = /^\s*([A-E])[)\].:-]\s*(.+)$/i;
 const CLARIFY_OPTION_IDS = ["A", "B", "C", "D", "E"];
+const STATUS_STREAM_EVENT_START = "\u0002WIELAND_STATUS:";
+const STATUS_STREAM_EVENT_END = "\u0003";
 
 // normalize clarify label key: strip accents + whitespace to canonicalize option labels
 function normalizeClarifyLabelKey(value = "") {
@@ -419,6 +421,65 @@ function sanitizeClarifyPayload(payload = {}, fallbackQuestion = "") {
   };
 }
 
+function buildLocalClarifyFallbackPayload(sourceText = "", language = "de") {
+  const lang = normalizeUiLang(language);
+  const text = String(sourceText || "").trim();
+
+  const byLang = {
+    de: {
+      question: "Kurze Rueckfrage: Was moechtest du genau erstellen?",
+      options: [
+        { id: "A", label: "Landingpage" },
+        { id: "B", label: "Komplette Website" },
+        { id: "C", label: "Web-App" },
+        { id: "D", label: "Browser-Erweiterung" },
+      ],
+      freeformPlaceholder: "Beschreibe deine Idee",
+      skipLabel: "Ueberspringen",
+    },
+    en: {
+      question: "Quick follow-up: What exactly do you want to build?",
+      options: [
+        { id: "A", label: "Landing page" },
+        { id: "B", label: "Full website" },
+        { id: "C", label: "Web app" },
+        { id: "D", label: "Browser extension" },
+      ],
+      freeformPlaceholder: "Describe your idea",
+      skipLabel: "Skip",
+    },
+    it: {
+      question: "Domanda veloce: cosa vuoi creare esattamente?",
+      options: [
+        { id: "A", label: "Landing page" },
+        { id: "B", label: "Sito completo" },
+        { id: "C", label: "Web app" },
+        { id: "D", label: "Estensione browser" },
+      ],
+      freeformPlaceholder: "Descrivi la tua idea",
+      skipLabel: "Salta",
+    },
+  };
+
+  const base = byLang[lang] || byLang.de;
+  const refinedQuestion = text
+    ? toSingleSentenceQuestion(text, base.question)
+    : base.question;
+
+  return sanitizeClarifyPayload(
+    {
+      question: refinedQuestion,
+      options: base.options,
+      allowFreeform: true,
+      freeformPlaceholder: base.freeformPlaceholder,
+      skipLabel: base.skipLabel,
+      step: 1,
+      totalSteps: 1,
+    },
+    base.question,
+  );
+}
+
 // parse plain text clarification fallback: extract Q/A from plain text if JSON parsing fails
 function parsePlainTextClarificationFallback(rawText = "") {
   const source = String(rawText || "").trim();
@@ -560,6 +621,63 @@ function getClarificationStreamPreview(rawText = "") {
   return { text: source, suppress: false };
 }
 
+function extractStatusEventsFromChunk(rawChunk = "", carry = "") {
+  const source = `${String(carry || "")}${String(rawChunk || "")}`;
+  if (!source) return { cleanText: "", events: [], carry: "" };
+
+  const events = [];
+  let cleanText = "";
+  let cursor = 0;
+
+  while (cursor < source.length) {
+    const start = source.indexOf(STATUS_STREAM_EVENT_START, cursor);
+    if (start < 0) {
+      cleanText += source.slice(cursor);
+      return { cleanText, events, carry: "" };
+    }
+
+    cleanText += source.slice(cursor, start);
+    const payloadStart = start + STATUS_STREAM_EVENT_START.length;
+    const end = source.indexOf(STATUS_STREAM_EVENT_END, payloadStart);
+
+    if (end < 0) {
+      return {
+        cleanText,
+        events,
+        carry: source.slice(start),
+      };
+    }
+
+    const payloadRaw = source.slice(payloadStart, end);
+    let parsed = null;
+    try {
+      parsed = JSON.parse(payloadRaw);
+    } catch {}
+
+    if (parsed?.__wieland_status === true && parsed?.type) {
+      events.push(parsed);
+    } else {
+      cleanText += source.slice(start, end + STATUS_STREAM_EVENT_END.length);
+    }
+
+    cursor = end + STATUS_STREAM_EVENT_END.length;
+  }
+
+  return { cleanText, events, carry: "" };
+}
+
+function getActivitySourceHost(rawUrl = "") {
+  const value = String(rawUrl || "").trim();
+  if (!value) return "";
+
+  try {
+    const host = new URL(value).hostname || "";
+    return host.replace(/^www\./i, "");
+  } catch {
+    return value;
+  }
+}
+
 // escape html text: prevent XSS by escaping <, >, &
 function escapeHtmlText(value = "") {
   return String(value || "")
@@ -681,6 +799,9 @@ function renderMarkdown(raw = "") {
       if (!block) return "";
       return renderCodeBlockHtml(block.code, block.lang);
     })
+    .replace(/^###\s+(.+)$/gm, "<h3>$1</h3>")
+    .replace(/^##\s+(.+)$/gm, "<h2>$1</h2>")
+    .replace(/^#\s+(.+)$/gm, "<h1>$1</h1>")
     .replace(/\*\*(.*?)\*\*/gs, "<strong>$1</strong>")
     .replace(/__(.*?)__/gs, "<strong>$1</strong>")
     .replace(/\*(.*?)\*/gs, "<em>$1</em>")
@@ -756,6 +877,7 @@ export default function ChatInterface({
   isLoading = false,
   sidebarOpen,
   onSidebarChange,
+  pageVariant = "default",
   inputOffset = 50,
   onNewChatRef,
   onLoadChatRef,
@@ -767,6 +889,8 @@ export default function ChatInterface({
   const isModelAllowed = (modelId, plan = "Free") => {
     return getModelRank(modelId) <= getPlanRank(plan);
   };
+
+  const isInternetAllowedForPlan = getPlanRank(user?.plan) >= 1;
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -801,6 +925,22 @@ export default function ChatInterface({
     setSelectedModel(getPlanModel(user?.plan));
   }, [user?.plan]);
 
+  const isInternetAllowedForModel = getModelRank(selectedModel) >= 1;
+  const isInternetToggleAllowed =
+    isInternetAllowedForPlan && isInternetAllowedForModel;
+  const internetLockMessage = !isInternetAllowedForPlan
+    ? t("chat.internetPlanLocked")
+    : !isInternetAllowedForModel
+      ? t("chat.internetModelLocked")
+      : "";
+  const effectiveInternetAccess = isInternetToggleAllowed && internetAccess;
+
+  useEffect(() => {
+    if (!isInternetToggleAllowed && internetAccess) {
+      setInternetAccess(false);
+    }
+  }, [isInternetToggleAllowed, internetAccess]);
+
   // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     try {
@@ -819,7 +959,9 @@ export default function ChatInterface({
   const plusMenuRef = useRef(null);
   const modelDropdownRef = useRef(null);
   const modelWarmUntilRef = useRef({});
-  const toastTimeoutRef = useRef(null);
+  const toastFadeTimeoutRef = useRef(null);
+  const toastHideTimeoutRef = useRef(null);
+  const pointerPositionRef = useRef({ x: null, y: null });
   const sendMessageRef = useRef(null);
   const pendingClarifyReplyRef = useRef(false);
   const clarifyPopupTimeoutRef = useRef(null);
@@ -865,17 +1007,104 @@ export default function ChatInterface({
     [clearQueuedClarifyPopup],
   );
 
+  const getToastFollowPosition = useCallback((pointer = {}) => {
+    if (typeof window === "undefined") {
+      return { x: null, y: null };
+    }
+
+    const margin = 16;
+    const estimatedToastWidth = 340;
+    const width = Number(window.innerWidth || 0);
+    const height = Number(window.innerHeight || 0);
+    const maxX = Math.max(margin, width - margin - estimatedToastWidth);
+    const maxY = Math.max(margin, height - margin);
+
+    const rawX = Number.isFinite(pointer.x)
+      ? pointer.x + 18
+      : Math.max(margin, width - margin - estimatedToastWidth);
+    const rawY = Number.isFinite(pointer.y)
+      ? pointer.y
+      : Math.max(margin, height - margin);
+
+    return {
+      x: Math.max(margin, Math.min(maxX, rawX)),
+      y: Math.max(margin, Math.min(maxY, rawY)),
+    };
+  }, []);
+
   const showToast = useCallback((message, type = "success") => {
     if (!message) return;
-    setToast({ message, type, id: Date.now() });
-    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-    toastTimeoutRef.current = setTimeout(() => setToast(null), 2600);
+    const id = Date.now();
+    const { x, y } = getToastFollowPosition(pointerPositionRef.current || {});
+    const TOAST_LIFETIME_MS = 2600;
+    const TOAST_FADE_DURATION_MS = 320;
+
+    setToast({ message, type, id, x, y, leaving: false });
+
+    if (toastFadeTimeoutRef.current) clearTimeout(toastFadeTimeoutRef.current);
+    if (toastHideTimeoutRef.current) clearTimeout(toastHideTimeoutRef.current);
+
+    toastFadeTimeoutRef.current = setTimeout(() => {
+      setToast((prev) =>
+        prev && prev.id === id ? { ...prev, leaving: true } : prev,
+      );
+    }, Math.max(0, TOAST_LIFETIME_MS - TOAST_FADE_DURATION_MS));
+
+    toastHideTimeoutRef.current = setTimeout(() => {
+      setToast((prev) => (prev && prev.id === id ? null : prev));
+    }, TOAST_LIFETIME_MS);
+  }, [getToastFollowPosition]);
+
+  useEffect(() => {
+    const updatePointer = (event) => {
+      if (!event) return;
+
+      if (
+        Number.isFinite(event.clientX) &&
+        Number.isFinite(event.clientY)
+      ) {
+        pointerPositionRef.current = {
+          x: event.clientX,
+          y: event.clientY,
+        };
+        return;
+      }
+
+      const touch = event.touches?.[0] || event.changedTouches?.[0];
+      if (
+        touch &&
+        Number.isFinite(touch.clientX) &&
+        Number.isFinite(touch.clientY)
+      ) {
+        pointerPositionRef.current = {
+          x: touch.clientX,
+          y: touch.clientY,
+        };
+      }
+    };
+
+    document.addEventListener("pointermove", updatePointer, {
+      passive: true,
+    });
+    document.addEventListener("pointerdown", updatePointer, {
+      passive: true,
+    });
+    document.addEventListener("touchstart", updatePointer, {
+      passive: true,
+    });
+
+    return () => {
+      document.removeEventListener("pointermove", updatePointer);
+      document.removeEventListener("pointerdown", updatePointer);
+      document.removeEventListener("touchstart", updatePointer);
+    };
   }, []);
 
   // effect-block getrennt halten damit updates nicht gegeneinander laufen
   useEffect(() => {
     return () => {
-      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      if (toastFadeTimeoutRef.current) clearTimeout(toastFadeTimeoutRef.current);
+      if (toastHideTimeoutRef.current) clearTimeout(toastHideTimeoutRef.current);
       clearQueuedClarifyPopup();
     };
   }, [clearQueuedClarifyPopup]);
@@ -1131,10 +1360,12 @@ export default function ChatInterface({
     // guard: abort if empty or already processing previous message
     if (!text || isSending) return;
 
-    // check if this message is a reply to the clarification popup (user picked option or freeform)
-    const clarifyReplyFromPopup = Boolean(clarifyPopup);
+    const popupWasOpen = Boolean(clarifyPopup);
+    // consume clarify-reply intent once at send start to avoid ref/state timing races
+    const clarifyReplyFromPopup = pendingClarifyReplyRef.current || popupWasOpen;
+    pendingClarifyReplyRef.current = false;
     // format reply as Q: question\nA: answer if it's a clarification response, otherwise use raw text
-    const requestText = clarifyReplyFromPopup
+    const requestText = clarifyReplyFromPopup && popupWasOpen
       ? formatClarifyReply(clarifyPopup?.question, text)
       : text;
 
@@ -1147,11 +1378,6 @@ export default function ChatInterface({
       pendingInputRef.current = requestText;
       setAuthModalOpen(true);
       return;
-    }
-
-    // mark that this message is responding to clarification (used by streaming handler to avoid repeat popups)
-    if (clarifyReplyFromPopup) {
-      pendingClarifyReplyRef.current = true;
     }
 
     // set sending state (disables send button) and clear input field immediately
@@ -1200,7 +1426,8 @@ export default function ChatInterface({
       withUser,
       selectedModel,
       aiStyle,
-      internetAccess,
+      effectiveInternetAccess,
+      clarifyReplyFromPopup,
     );
   }, [
     input,
@@ -1212,7 +1439,7 @@ export default function ChatInterface({
     clearImage,
     selectedModel,
     aiStyle,
-    internetAccess,
+    effectiveInternetAccess,
     uploadImage,
     clearQueuedClarifyPopup,
     clarifyPopup,
@@ -1233,18 +1460,37 @@ export default function ChatInterface({
   const sendClarifyReply = useCallback(
     (rawReply) => {
       const reply = String(rawReply || "").trim();
-      if (!reply || isSending) return;
+      if (!reply) return;
 
       clearQueuedClarifyPopup();
       setClarifyPopup(null);
       pendingClarifyReplyRef.current = true;
       setInput(reply);
 
+      if (abortRef.current) {
+        abortRef.current.abort();
+
+        let retriesLeft = 25;
+        const retrySend = () => {
+          if (!abortRef.current) {
+            sendMessageRef.current?.();
+            return;
+          }
+
+          if (retriesLeft <= 0) return;
+          retriesLeft -= 1;
+          setTimeout(retrySend, 60);
+        };
+
+        setTimeout(retrySend, 0);
+        return;
+      }
+
       setTimeout(() => {
         sendMessageRef.current?.();
       }, 0);
     },
-    [isSending, clearQueuedClarifyPopup],
+    [clearQueuedClarifyPopup],
   );
 
   const runStream = useCallback(
@@ -1256,18 +1502,20 @@ export default function ChatInterface({
       model = AVAILABLE_MODELS[0].id,
       style = "formal",
       useInternet = false,
+      clarifyReply = false,
     ) => {
       // create placeholder message in UI for AI response (empty at first, fills as tokens arrive)
       const aiId = uid();
       setMessages((prev) => [
         ...prev,
-        { content: "", isUser: false, id: aiId },
+        { content: "", isUser: false, id: aiId, statusEvents: [] },
       ]);
 
       // setup abort controller for stop button (allows user to cancel mid-stream)
       const controller = new AbortController();
       abortRef.current = controller;
       let fullText = "";
+      let statusEventCarry = "";
 
       try {
         // build FormData payload for /api/chat/stream endpoint
@@ -1281,8 +1529,6 @@ export default function ChatInterface({
         fd.append("clientSource", "web"); // track that request came from web (vs extension)
 
         // mark if this is a response to clarification popup (prevents repeat clarifications)
-        const clarifyReply = pendingClarifyReplyRef.current;
-        pendingClarifyReplyRef.current = false;
         if (clarifyReply) {
           fd.append("clarifyReply", "true");
         }
@@ -1308,8 +1554,6 @@ export default function ChatInterface({
         const memoryCount = Number(
           res.headers.get("X-Wieland-Memory-Count") || "0",
         );
-        const clarifyForced =
-          res.headers.get("X-Wieland-Clarify-Forced") === "1";
 
         // show toast if server extracted and saved memory items
         if (memorySaved && memoryCount > 0) {
@@ -1325,7 +1569,35 @@ export default function ChatInterface({
         while (true) {
           const { done, value } = await reader.read();
           if (done) break; // stream ended
-          fullText += decoder.decode(value, { stream: true });
+          const rawChunk = decoder.decode(value, { stream: true });
+          const parsedChunk = extractStatusEventsFromChunk(
+            rawChunk,
+            statusEventCarry,
+          );
+          statusEventCarry = parsedChunk.carry;
+
+          if (parsedChunk.events.length) {
+            setMessages((prev) =>
+              prev.map((m) => {
+                if (m.id !== aiId) return m;
+                const previousEvents = Array.isArray(m.statusEvents)
+                  ? m.statusEvents
+                  : [];
+                return {
+                  ...m,
+                  statusEvents: [...previousEvents, ...parsedChunk.events].slice(
+                    -10,
+                  ),
+                };
+              }),
+            );
+          }
+
+          if (!parsedChunk.cleanText) {
+            continue;
+          }
+
+          fullText += parsedChunk.cleanText;
 
           // extract visible text preview (hide [[WIELAND_CLARIFY_JSON]] markers from UI)
           const preview = getClarificationStreamPreview(fullText);
@@ -1336,12 +1608,14 @@ export default function ChatInterface({
               m.id === aiId ? { ...m, content: previewText } : m,
             ),
           );
+
         }
 
         // nach dem stream klar trennen zwischen sichtbarer antwort und popup payload
         // extract clarification popup data from response (if present) + get clean visible text
         const clarification = extractClarificationPayload(fullText);
         const clarificationPayload = clarification.payload; // parsed popup question/options or null
+        const streamPayloadSeen = Boolean(clarificationPayload);
         const finalAssistantText =
           clarification.cleanedText || fullText || t("chat.shortError");
 
@@ -1356,9 +1630,10 @@ export default function ChatInterface({
         }
 
         // if response includes clarification popup, queue it for display
-        if (clarificationPayload) {
+        if (clarificationPayload && streamPayloadSeen) {
           queueClarifyPopup(clarificationPayload, {
-            immediate: clarifyForced, // force immediate display if server marked it urgent
+            immediate: true,
+            liveUpdate: true,
           });
         }
 
@@ -1395,11 +1670,20 @@ export default function ChatInterface({
         setIsSending(false);
       }
     },
-    [saveChat, showToast, t, queueClarifyPopup],
+    [saveChat, showToast, t, queueClarifyPopup, i18n.language],
   );
 
   // Stop ongoing token generation by aborting fetch request
-  const stopGeneration = () => abortRef.current?.abort();
+  const stopGeneration = useCallback(() => {
+    abortRef.current?.abort();
+
+    if (!currentChatRef.current && messages.length > 0) {
+      const partial = messages.filter((m) => String(m?.content || "").trim());
+      if (partial.length > 1) {
+        void saveChat(partial, null, true);
+      }
+    }
+  }, [messages, saveChat]);
 
   // Send message on Enter key press (allow Shift+Enter for newline)
   const handleKeyDown = (e) => {
@@ -1485,7 +1769,7 @@ export default function ChatInterface({
         truncated,
         selectedModel,
         aiStyle,
-        internetAccess,
+        effectiveInternetAccess,
       );
       return;
     }
@@ -1545,9 +1829,16 @@ export default function ChatInterface({
       truncated,
       selectedModel,
       aiStyle,
-      internetAccess,
+      effectiveInternetAccess,
     );
-  }, [messages, isSending, runStream, selectedModel, aiStyle, internetAccess]);
+  }, [
+    messages,
+    isSending,
+    runStream,
+    selectedModel,
+    aiStyle,
+    effectiveInternetAccess,
+  ]);
 
   // Copy message text to clipboard (strip image URLs first)
   const copyText = useCallback(
@@ -1583,7 +1874,7 @@ export default function ChatInterface({
 
   return (
     <div
-      className={`chat-interface-wrapper ${isLoading ? "loading" : ""}`}
+      className={`chat-interface-wrapper layout-${pageVariant} ${isLoading ? "loading" : ""}`}
       style={{ "--chat-input-offset": `${inputOffset}px` }}
     >
       {user && (
@@ -1679,8 +1970,18 @@ export default function ChatInterface({
               </button>
               <div className="plus-popup-divider" />
               <button
-                className={`plus-popup-item plus-popup-toggle ${internetAccess ? "active" : ""}`}
-                onClick={() => setInternetAccess((prev) => !prev)}
+                className={`plus-popup-item plus-popup-toggle ${effectiveInternetAccess ? "active" : ""} ${!isInternetToggleAllowed ? "locked" : ""}`}
+                onClick={() => {
+                  if (!isInternetToggleAllowed) {
+                    showToast(
+                      internetLockMessage || t("chat.internetModelLocked"),
+                      "error",
+                    );
+                    return;
+                  }
+                  setInternetAccess((prev) => !prev);
+                }}
+                title={!isInternetToggleAllowed ? internetLockMessage : ""}
               >
                 <GlobeIcon /> {t("chat.internetAccess")}
               </button>
@@ -1754,7 +2055,11 @@ export default function ChatInterface({
 
             <textarea
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+              }}
               onKeyDown={handleKeyDown}
               placeholder={
                 !user
@@ -1823,6 +2128,11 @@ export default function ChatInterface({
                               if (allowed) {
                                 setSelectedModel(m.id);
                                 setShowModelDropdown(false);
+
+                                if (internetAccess && getModelRank(m.id) < 1) {
+                                  setInternetAccess(false);
+                                  showToast(t("chat.internetModelLocked"), "error");
+                                }
                               }
                             }}
                             disabled={!allowed}
@@ -1874,7 +2184,19 @@ export default function ChatInterface({
       </div>
 
       {toast && (
-        <div className={`chat-toast ${toast.type}`}>{toast.message}</div>
+        <div
+          className={`chat-toast ${toast.type}${toast.leaving ? " leaving" : ""}`}
+          style={
+            Number.isFinite(toast.x) && Number.isFinite(toast.y)
+              ? {
+                  left: `${toast.x}px`,
+                  top: `${toast.y}px`,
+                }
+              : undefined
+          }
+        >
+          {toast.message}
+        </div>
       )}
 
       <AuthModal
@@ -2078,6 +2400,175 @@ function ClarifyPopup({ data, onSelect }) {
   );
 }
 
+function ActivityIcon({ type = "" }) {
+  const iconProps = {
+    width: "13",
+    height: "13",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+  };
+
+  if (type === "search_start" || type === "search_done" || type === "search_error") {
+    return (
+      <svg {...iconProps}>
+        <circle cx="11" cy="11" r="7" />
+        <line x1="16.65" y1="16.65" x2="21" y2="21" />
+      </svg>
+    );
+  }
+
+  if (type === "memory_start" || type === "memory_done" || type === "memory_error") {
+    return (
+      <svg {...iconProps}>
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="M8 2v6" />
+        <path d="M16 2v6" />
+        <path d="M8 22v-3" />
+        <path d="M16 22v-3" />
+      </svg>
+    );
+  }
+
+  if (type === "page_read") {
+    return (
+      <svg {...iconProps}>
+        <path d="M8 3h7l5 5v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
+        <path d="M15 3v6h6" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...iconProps}>
+      <path d="M12 2l2.2 4.8L19 9l-4.8 2.2L12 16l-2.2-4.8L5 9l4.8-2.2z" />
+    </svg>
+  );
+}
+
+function ActivityFeed({ events = [] }) {
+  const { t } = useTranslation();
+  const list = Array.isArray(events) ? events.slice(-8) : [];
+  if (list.length === 0) return null;
+
+  return (
+    <div className="activity-feed" aria-live="polite">
+      {list.map((event, index) => {
+        const type = String(event?.type || "");
+        const key = `${event?.at || ""}-${type}-${index}`;
+        const sources = Array.isArray(event?.sources) ? event.sources : [];
+        const items = Array.isArray(event?.items) ? event.items : [];
+        const pageTitle = String(event?.title || "").trim();
+        const pageHost = getActivitySourceHost(event?.url || "");
+
+        return (
+          <div key={key} className={`activity-item activity-${type || "thinking"}`}>
+            <span className="activity-icon-wrap" aria-hidden="true">
+              <ActivityIcon type={type} />
+            </span>
+
+            <div className="activity-content">
+              {type === "search_start" && (
+                <span>
+                  {t("chat.activity.searchStart", {
+                    query: String(event?.query || "").trim(),
+                  })}
+                </span>
+              )}
+
+              {type === "search_done" && (
+                <>
+                  <span>{t("chat.activity.searchDone", { count: sources.length })}</span>
+                  {sources.length > 0 && (
+                    <div className="activity-source-list">
+                      {sources.map((source, sourceIndex) => {
+                        const url = String(source?.url || "").trim();
+                        const host = getActivitySourceHost(url);
+                        const label =
+                          host ||
+                          String(source?.title || "").trim() ||
+                          t("chat.activity.sourceFallback", {
+                            index: sourceIndex + 1,
+                          });
+
+                        if (!url) {
+                          return (
+                            <span key={`${label}-${sourceIndex}`} className="activity-source-chip">
+                              {label}
+                            </span>
+                          );
+                        }
+
+                        return (
+                          <a
+                            key={`${url}-${sourceIndex}`}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="activity-source-chip"
+                          >
+                            {label}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {type === "search_error" && <span>{t("chat.activity.searchUnavailable")}</span>}
+
+              {type === "memory_start" && <span>{t("chat.activity.memoryStart")}</span>}
+
+              {type === "memory_done" && (
+                <>
+                  <span>
+                    {items.length > 0
+                      ? t("chat.activity.memoryDone")
+                      : t("chat.activity.memoryEmpty")}
+                  </span>
+                  {items.length > 0 && (
+                    <div className="activity-memory-list">
+                      {items.map((item, itemIndex) => {
+                        const label = String(item?.label || "").trim();
+                        const value = String(item?.value || "").trim();
+                        const chipText = value ? `${label}: ${value}` : label;
+                        return (
+                          <span
+                            key={`${chipText}-${itemIndex}`}
+                            className="activity-memory-chip"
+                          >
+                            {chipText}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {type === "memory_error" && <span>{t("chat.activity.memoryUnavailable")}</span>}
+
+              {type === "page_read" && (
+                <span>
+                  {t("chat.activity.pageRead", {
+                    title: pageTitle || pageHost || t("chat.activity.currentPage"),
+                  })}
+                </span>
+              )}
+
+              {(!type || type === "thinking") && <span>{t("chat.activity.thinking")}</span>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // Render individual chat message: user text/images or AI response with edit/copy actions
 function MessageRow({
   msg,
@@ -2100,6 +2591,7 @@ function MessageRow({
   const imageUrl = extractImageUrl(msg.content);
   // Plaintext version without image markup (for display/copy functionality)
   const textOnly = stripImg(msg.content);
+  const statusEvents = Array.isArray(msg.statusEvents) ? msg.statusEvents : [];
 
   // Intercept code copy button clicks via event delegation (avoid per-button listeners)
   const handleAssistantContentClick = (event) => {
@@ -2150,7 +2642,10 @@ function MessageRow({
                 {textOnly && <span>{textOnly}</span>}
               </div>
             ) : msg.content === "" ? (
-              <TypingLoader />
+              <div className="typing-state-stack">
+                {statusEvents.length > 0 && <ActivityFeed events={statusEvents} />}
+                <TypingLoader />
+              </div>
             ) : (
               <div
                 onClick={handleAssistantContentClick}
@@ -2255,6 +2750,7 @@ function MessageRow({
 
 function TypingLoader() {
   const { t } = useTranslation();
+
   return (
     <div className="loader" aria-label={t("common.loading")}>
       {[0, 1, 2, 3].map((i) => (

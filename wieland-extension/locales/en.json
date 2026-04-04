@@ -46,6 +46,8 @@
     "uploadImage": "Upload image",
     "internetSection": "Internet Access",
     "internetAccess": "Use internet",
+    "internetPlanLocked": "Internet access is available from Pro.",
+    "internetModelLocked": "Internet access is not available with 2B. Please choose 4B or 8B.",
     "internetOn": "On",
     "internetOff": "Off",
     "styleSection": "AI Style",
@@ -71,7 +73,23 @@
     "ctxUrl": "URL: {value}",
     "ctxContent": "Page content:",
     "unknown": "Unknown",
-    "imageAlt": "Image"
+    "imageAlt": "Image",
+    "activity": {
+      "thinking": "Thinking...",
+      "readingPage": "Reading page context...",
+      "readingMemory": "Reading memory...",
+      "searchingWeb": "Searching the internet...",
+      "searchUnavailable": "Internet search unavailable.",
+      "memoryUnavailable": "Memory lookup unavailable.",
+      "searchStart": "Searching: \"{query}\"",
+      "searchDone": "Found {count} source(s)",
+      "sourceFallback": "Source {index}",
+      "memoryStart": "Checking memory...",
+      "memoryDone": "Found in memory:",
+      "memoryEmpty": "No matching memory found.",
+      "pageRead": "Reading page: {title}",
+      "currentPage": "current page"
+    }
   },
   "models": {
     "free": "2B - Free",

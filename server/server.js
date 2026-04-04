@@ -1032,6 +1032,7 @@ const SYSTEM_BASE = `You are a LOCAL AI assistant named "Wieland".
 - Do not claim you cannot create websites or code.
 - You do NOT represent any company (Alibaba, OpenAI, Anthropic, etc.).
 - Internet snippets can be provided by the server. Use them only when present.
+- The server may provide trusted user-memory facts in system messages. Use those facts when the user asks about themselves.
 - Answer only what the user asked. Skip unrelated prefaces and meta commentary.
 - Do not mention date/time/timezone/calendar details unless the user explicitly asks for them.
 - Do not narrate internal actions (for example: "checks the clock" or "checks the server clock").
@@ -1051,6 +1052,8 @@ const CLARIFY_JSON_BLOCK_END = "[[/WIELAND_CLARIFY_JSON]]";
 const CLARIFY_JSON_BLOCK_ANY_RE =
   /\[\[\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]([\s\S]*?)\[\[\s*\/\s*WIELAND[\s_-]*CLARIFY[\s_-]*JSON\s*\]\]/i;
 const CLARIFY_OPTION_LINE_RE = /^\s*[A-E][)\].:-]\s*.+$/i;
+const STATUS_STREAM_EVENT_START = "\u0002WIELAND_STATUS:";
+const STATUS_STREAM_EVENT_END = "\u0003";
 const SERVER_TIMEZONE =
   process.env.RUNTIME_TIMEZONE ||
   Intl.DateTimeFormat().resolvedOptions().timeZone ||
@@ -1159,6 +1162,16 @@ function getLastUserContextMessage(context = []) {
   for (let i = context.length - 1; i >= 0; i--) {
     const item = context[i];
     if (item?.role === "user") {
+      return String(item?.content || "");
+    }
+  }
+  return "";
+}
+
+function getLastAssistantContextMessage(context = []) {
+  for (let i = context.length - 1; i >= 0; i--) {
+    const item = context[i];
+    if (item?.role === "assistant") {
       return String(item?.content || "");
     }
   }
@@ -1277,6 +1290,26 @@ function isLikelyVagueBuildRequestForClarification(text = "") {
   if (hasSpecificScopeHint) return false;
 
   return wordCount <= 20;
+}
+
+function looksLikeFollowupClarificationAnswer(
+  userText = "",
+  lastAssistantText = "",
+) {
+  const assistantText = String(lastAssistantText || "").trim();
+  if (!assistantText) return false;
+
+  const assistantAskedClarification =
+    hasClarificationPayload(assistantText) || /[?]/.test(assistantText);
+  if (!assistantAskedClarification) return false;
+
+  const compactedUser = compactIntentText(userText, 200);
+  if (!compactedUser) return false;
+  if (looksLikeGreetingOrSmalltalk(compactedUser)) return false;
+  if (isLikelyVagueBuildRequestForClarification(userText)) return false;
+
+  const wordCount = compactedUser.split(" ").filter(Boolean).length;
+  return wordCount > 0 && wordCount <= 8;
 }
 
 const DE_LANGUAGE_HINT_WORDS = new Set([
@@ -1627,6 +1660,33 @@ function buildClarificationResponseText(payload = null) {
   ].join("\n");
 }
 
+function writeStatusEvent(res, type, payload = {}) {
+  if (!res || res.writableEnded || res.destroyed) return;
+
+  const eventType = String(type || "")
+    .trim()
+    .toLowerCase();
+  if (!eventType) return;
+
+  const event = {
+    __wieland_status: true,
+    type: eventType,
+    at: Date.now(),
+    ...(payload && typeof payload === "object" ? payload : {}),
+  };
+
+  let encoded = "";
+  try {
+    encoded = JSON.stringify(event);
+  } catch {
+    return;
+  }
+
+  try {
+    res.write(`${STATUS_STREAM_EVENT_START}${encoded}${STATUS_STREAM_EVENT_END}`);
+  } catch {}
+}
+
 // build forced clarification fallback: generate clarification payload from context wenn LLM clarify request fehlschlägt
 async function buildForcedClarificationFallbackPayload(
   message = "",
@@ -1656,37 +1716,49 @@ async function buildForcedClarificationFallbackPayload(
   ].join("\n");
 
   async function requestPayload(systemInstruction) {
-    const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: systemInstruction },
-          { role: "user", content: routerUserPayload },
-        ],
-        stream: false,
-        format: "json",
-        options: {
-          think: false,
-          num_ctx: 1024,
-          num_predict: 180,
-          temperature: 0,
-          ...OLLAMA_ANTI_REPEAT_OPTIONS,
-        },
-        keep_alive: OLLAMA_KEEP_ALIVE,
-      }),
-      signal: AbortSignal.timeout(
-        Math.max(2000, Math.min(INTENT_NLU_TIMEOUT_MS, 8000)),
-      ),
-    });
+    const timeoutMs = Math.max(2000, Math.min(INTENT_NLU_TIMEOUT_MS, 8000));
+    const controller = new AbortController();
+    const timeoutHandle = setTimeout(() => {
+      controller.abort();
+    }, timeoutMs);
 
-    if (!res.ok) return null;
+    if (typeof timeoutHandle?.unref === "function") {
+      timeoutHandle.unref();
+    }
 
-    const data = await res.json();
-    const raw = String(data?.message?.content || "");
-    const parsed = parseJsonObjectFromText(raw);
-    return sanitizeClarificationPayload(parsed);
+    try {
+      const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemInstruction },
+            { role: "user", content: routerUserPayload },
+          ],
+          stream: false,
+          format: "json",
+          options: {
+            think: false,
+            num_ctx: 1024,
+            num_predict: 180,
+            temperature: 0,
+            ...OLLAMA_ANTI_REPEAT_OPTIONS,
+          },
+          keep_alive: OLLAMA_KEEP_ALIVE,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) return null;
+
+      const data = await res.json();
+      const raw = String(data?.message?.content || "");
+      const parsed = parseJsonObjectFromText(raw);
+      return sanitizeClarificationPayload(parsed);
+    } finally {
+      clearTimeout(timeoutHandle);
+    }
   }
 
   try {
@@ -2065,6 +2137,14 @@ async function analyzeMessageIntentWithModel(
     previousUserMessage,
     INTENT_NLU_MAX_MESSAGE_CHARS,
   );
+  const rawLastAssistantText = String(metadata?.lastAssistantMessage || "");
+  const cleanedLastAssistantText = rawLastAssistantText
+    ? stripImageMarkdown(rawLastAssistantText)
+        .replace(new RegExp(CLARIFY_JSON_BLOCK_ANY_RE.source, "gi"), " ")
+        .replace(/\s+/g, " ")
+        .trim()
+    : "";
+  const lastAssistantText = normalizeMemoryText(cleanedLastAssistantText, 300);
   const clientSource = normalizeClientSource(metadata?.clientSource || "");
   const hasPageContext = metadata?.hasPageContext === true;
   const preferPageContext = metadata?.preferPageContext === true;
@@ -2120,8 +2200,8 @@ async function analyzeMessageIntentWithModel(
     `Output schema: {"action":"${actionSchema}","memory_items":[{"key":"string","value":"string"}],"search_query":"","needs_clarification":false,"clarify_option_reply":false}`,
     "",
     ...(sourceContextInstruction ? [sourceContextInstruction, ""] : []),
-    "MEMORY_STORE: user shares personal info. Extract key+value pairs.",
-    "MEMORY_QUERY: user asks what you remember about them.",
+    "MEMORY_STORE: user SHARES or STATES personal info (e.g., 'I am 20 years old', 'My name is John', 'I work as engineer', 'I live in Berlin', 'My favorite color is blue', 'Ich bin 20 Jahre alt', 'Mein Name ist Anna'). Extract key+value pairs from statements that provide personal facts.",
+    "MEMORY_QUERY: user ASKS what you remember about them or their stored info (e.g., 'how old am I', 'what is my name', 'where do I live', 'wie alt bin ich', 'wie heiße ich', 'what do you know about me'). Do NOT extract into memory_items, return empty array.",
     "SEARCH_WEB: needs live/current internet data.",
     ...(allowReadPageAction
       ? [
@@ -2130,6 +2210,9 @@ async function analyzeMessageIntentWithModel(
         ]
       : []),
     "POPUP_ACTION: user is replying to an existing clarification popup (option-style reply).",
+    "Context hint: last_assistant_message is the assistant turn before current_user_message.",
+    "If last_assistant_message already asked a clarifying question, set needs_clarification=false.",
+    "If current_user_message is a concise answer to last_assistant_message (for example: Chrome, React, A), set needs_clarification=false.",
     "Set needs_clarification=true when the user asks to build/create software but key scope details are missing.",
     "If an image is attached and the user asks to identify/describe it, needs_clarification must be false.",
     "For vague build requests, use action CHAT with needs_clarification=true.",
@@ -2138,7 +2221,20 @@ async function analyzeMessageIntentWithModel(
     "CHAT: everything else.",
     "",
     'Input: "I am 20 years old" -> {"action":"MEMORY_STORE","memory_items":[{"key":"age","value":"20"}],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "My name is John Smith" -> {"action":"MEMORY_STORE","memory_items":[{"key":"name","value":"John Smith"}],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "I live in Berlin" -> {"action":"MEMORY_STORE","memory_items":[{"key":"location","value":"Berlin"}],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "I work as a software engineer" -> {"action":"MEMORY_STORE","memory_items":[{"key":"occupation","value":"software engineer"}],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "My favorite color is blue" -> {"action":"MEMORY_STORE","memory_items":[{"key":"favorite_color","value":"blue"}],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
     'Input: "what do you know about me" -> {"action":"MEMORY_QUERY","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "how old am I" -> {"action":"MEMORY_QUERY","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "what is my name" -> {"action":"MEMORY_QUERY","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "where do I live" -> {"action":"MEMORY_QUERY","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "wie alt bin ich" -> {"action":"MEMORY_QUERY","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "was weißt du über mich" -> {"action":"MEMORY_QUERY","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "wie heiße ich" -> {"action":"MEMORY_QUERY","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "Ich bin 20 Jahre alt" -> {"action":"MEMORY_STORE","memory_items":[{"key":"age","value":"20"}],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "Mein Name ist Anna Müller" -> {"action":"MEMORY_STORE","memory_items":[{"key":"name","value":"Anna Müller"}],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "Ich wohne in Wien" -> {"action":"MEMORY_STORE","memory_items":[{"key":"location","value":"Wien"}],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
     'Input: "whats the weather in Vienna" -> {"action":"SEARCH_WEB","memory_items":[],"search_query":"weather Vienna","needs_clarification":false,"clarify_option_reply":false}',
     'Input: "what are the news today?" -> {"action":"SEARCH_WEB","memory_items":[],"search_query":"news today","needs_clarification":false,"clarify_option_reply":false}',
     'Input: "heyho!" -> {"action":"CHAT","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
@@ -2148,6 +2244,7 @@ async function analyzeMessageIntentWithModel(
         ]
       : []),
     'Input: "what is this" (with image attached) -> {"action":"CHAT","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "Chrome" (last_assistant_message asked implementation details) -> {"action":"CHAT","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
     'Input: "generate a website for me" -> {"action":"CHAT","memory_items":[],"search_query":"","needs_clarification":true,"clarify_option_reply":false}',
     'Input: "A" -> {"action":"POPUP_ACTION","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":true}',
   ].join("\n");
@@ -2155,6 +2252,9 @@ async function analyzeMessageIntentWithModel(
   const userPayload = [
     `current_user_message: ${userText}`,
     ...(previousText ? [`previous_user_message: ${previousText}`] : []),
+    ...(lastAssistantText
+      ? [`last_assistant_message: ${lastAssistantText}`]
+      : []),
     `client_source: ${clientSource || "unknown"}`,
     `has_page_context: ${hasPageContext ? "true" : "false"}`,
     `prefer_page_context: ${preferPageContext ? "true" : "false"}`,
@@ -2165,52 +2265,100 @@ async function analyzeMessageIntentWithModel(
     instruction,
     timeoutMs = INTENT_NLU_TIMEOUT_MS,
   ) {
+    const effectiveTimeoutMs = Math.max(
+      900,
+      Number(timeoutMs) || INTENT_NLU_TIMEOUT_MS,
+    );
+
     console.log(
       "[intent-call] calling model:",
       intentNluModel,
       "timeoutMs:",
-      timeoutMs,
+      effectiveTimeoutMs,
       "message:",
       userText,
     );
 
-    const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: intentNluModel,
-        messages: [
-          { role: "system", content: instruction },
-          { role: "user", content: userPayload },
-        ],
-        stream: false,
-        format: "json",
-        options: {
-          think: false,
-          num_ctx: 1024,
-          num_predict: 60,
-          temperature: 0,
-          ...OLLAMA_ANTI_REPEAT_OPTIONS,
-        },
-        keep_alive: OLLAMA_KEEP_ALIVE,
-      }),
-      signal: AbortSignal.timeout(timeoutMs),
-    });
+    const controller = new AbortController();
+    const timeoutHandle = setTimeout(() => {
+      controller.abort();
+    }, effectiveTimeoutMs);
 
-    if (!res.ok) return null;
+    if (typeof timeoutHandle?.unref === "function") {
+      timeoutHandle.unref();
+    }
 
-    const data = await res.json();
-    const raw = String(data?.message?.content || "");
-    console.log("[intent-raw]", raw);
+    try {
+      const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: intentNluModel,
+          messages: [
+            { role: "system", content: instruction },
+            { role: "user", content: userPayload },
+          ],
+          stream: false,
+          format: "json",
+          options: {
+            think: false,
+            num_ctx: 1024,
+            num_predict: 60,
+            temperature: 0,
+            ...OLLAMA_ANTI_REPEAT_OPTIONS,
+          },
+          keep_alive: OLLAMA_KEEP_ALIVE,
+        }),
+        signal: controller.signal,
+      });
 
-    const parsed = parseJsonObjectFromText(raw);
-    if (!parsed || typeof parsed !== "object") return null;
-    return parsed;
+      if (!res.ok) return null;
+
+      const data = await res.json();
+      const raw = String(data?.message?.content || "");
+      console.log("[intent-raw]", raw);
+
+      const parsed = parseJsonObjectFromText(raw);
+      if (!parsed || typeof parsed !== "object") return null;
+      return parsed;
+    } catch (err) {
+      const isAbortTimeout =
+        controller.signal.aborted &&
+        (err?.name === "AbortError" || err?.name === "TimeoutError");
+
+      if (isAbortTimeout) {
+        const timeoutError = new Error(
+          `The operation was aborted due to timeout (${effectiveTimeoutMs}ms)`,
+        );
+        timeoutError.name = "TimeoutError";
+        throw timeoutError;
+      }
+
+      throw err;
+    } finally {
+      clearTimeout(timeoutHandle);
+    }
   }
 
   try {
     const timeoutMs = Math.max(2000, Math.min(INTENT_NLU_TIMEOUT_MS, 8000));
-    const parsed = await requestIntentObject(systemInstruction, timeoutMs);
+    let parsed = null;
+
+    try {
+      parsed = await requestIntentObject(systemInstruction, timeoutMs);
+    } catch (err) {
+      if (err?.name !== "TimeoutError") throw err;
+
+      const retryTimeoutMs = Math.min(timeoutMs + 2000, 10_000);
+      console.warn(
+        "[intent-retry] timeout -> retrying once with timeoutMs:",
+        retryTimeoutMs,
+        "message:",
+        userText,
+      );
+      parsed = await requestIntentObject(systemInstruction, retryTimeoutMs);
+    }
+
     if (!parsed) return emptyIntent;
 
     const routerAction = normalizeRouterAction(
@@ -2247,6 +2395,12 @@ async function analyzeMessageIntentWithModel(
       : forceSearchWebForLiveQuery
         ? "SEARCH_WEB"
         : effectiveAction;
+
+    if (INTENT_NLU_DEBUG) {
+      console.log(
+        `[intent-classified] action="${routedAction}" routerAction="${routerAction}" effectiveAction="${effectiveAction}"`,
+      );
+    }
 
     if (forceChatForWebReadPage) {
       console.log("[intent-override] READ_PAGE -> CHAT (web client)");
@@ -2392,12 +2546,25 @@ async function analyzeMessageIntentWithModel(
 
     if (
       modelIntent.needsClarification &&
-      !isLikelyVagueBuildRequestForClarification(userText)
+      looksLikeFollowupClarificationAnswer(userText, rawLastAssistantText)
     ) {
       modelIntent.needsClarification = false;
       if (INTENT_NLU_DEBUG) {
         console.log(
-          "[intent-override] needs_clarification -> false (non-vague-build message)",
+          "[intent-override] needs_clarification -> false (follow-up answer to assistant clarification)",
+        );
+      }
+    }
+
+    const heuristicNeedsClarification =
+      isLikelyVagueBuildRequestForClarification(userText);
+
+    // Keep model intent authoritative; only uplift with heuristic fallback.
+    if (!modelIntent.needsClarification && heuristicNeedsClarification) {
+      modelIntent.needsClarification = true;
+      if (INTENT_NLU_DEBUG) {
+        console.log(
+          "[intent-override] needs_clarification -> true (heuristic fallback)",
         );
       }
     }
@@ -2415,14 +2582,97 @@ async function analyzeMessageIntentWithModel(
   }
 }
 
+async function checkNeedsClarification(
+  message,
+  assistantResponse,
+  context = [],
+) {
+  const userText = normalizeMemoryText(message, INTENT_NLU_MAX_MESSAGE_CHARS);
+  const assistantText = normalizeMemoryText(assistantResponse, 600);
+  if (!userText) return false;
+
+  const lastAssistantCtx = getLastAssistantContextMessage(context);
+  const previousAssistantText = normalizeMemoryText(lastAssistantCtx, 300);
+
+  const systemInstruction = [
+    "You are a JSON classifier. Output ONLY raw JSON, nothing else.",
+    'Schema: {"needs_clarification": boolean}',
+    "Set needs_clarification=true ONLY when:",
+    "- The user asked to build/create software/website/app/script with key scope details missing.",
+    "- The assistant_response could not give a concrete answer due to missing details.",
+    "Set needs_clarification=false when:",
+    "- The assistant_response already asked its own clarifying question.",
+    "- The assistant_response already delivered a complete solution or detailed answer.",
+    "- The user is replying to a previous assistant question.",
+    "- The message is a greeting, small talk, or simple Q&A.",
+    "- The user provided a specific choice or answer (e.g. 'Chrome', 'React', 'A').",
+    "- The message is a time, date, weather, or factual lookup question.",
+    "- The message is 5 words or fewer and does not mention building/creating software.",
+  ].join("\n");
+
+  const userPayload = [
+    `user_message: ${userText}`,
+    `assistant_response: ${assistantText || ""}`,
+    ...(previousAssistantText
+      ? [`previous_assistant_response: ${previousAssistantText}`]
+      : []),
+  ].join("\n");
+
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(() => {
+    controller.abort();
+  }, 4000);
+
+  if (typeof timeoutHandle?.unref === "function") {
+    timeoutHandle.unref();
+  }
+
+  try {
+    const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: getIntentNluModel(),
+        messages: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: userPayload },
+        ],
+        stream: false,
+        format: "json",
+        options: {
+          think: false,
+          num_ctx: 768,
+          num_predict: 12,
+          temperature: 0,
+          ...OLLAMA_ANTI_REPEAT_OPTIONS,
+        },
+        keep_alive: OLLAMA_KEEP_ALIVE,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) return false;
+
+    const data = await res.json();
+    const parsed = parseJsonObjectFromText(data?.message?.content || "");
+    return toIntentBoolean(parsed?.needs_clarification);
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeoutHandle);
+  }
+}
+
 // save user memories: persist extracted memory candidates to database, handle duplicates + explicit flag
 async function saveUserMemories(userId, candidates = []) {
   let savedCount = 0;
 
   for (const candidate of candidates) {
-    const key = normalizeMemoryText(candidate?.key, 60).toLowerCase();
     const value = normalizeMemoryText(candidate?.value, 180);
-    if (!key || !value) continue;
+    if (!candidate?.key || !value) continue;
+    
+    // Use the same key normalization as sanitizeMemoryCandidate to ensure consistency
+    const key = normalizeSuggestedMemoryKey(candidate?.key, value);
 
     const existing = await pool.query(
       `SELECT id, is_explicit FROM user_memories
@@ -2438,6 +2688,11 @@ async function saveUserMemories(userId, candidates = []) {
            SET is_explicit = 1, updated_at = CURRENT_TIMESTAMP
            WHERE id = ?`,
           [existing.rows[0].id],
+        );
+      }
+      if (INTENT_NLU_DEBUG) {
+        console.log(
+          `[memory-save] Skipped existing: key="${key}" value="${value.slice(0, 30)}"`,
         );
       }
       continue;
@@ -2457,6 +2712,12 @@ async function saveUserMemories(userId, candidates = []) {
       [userId, key, value, candidate.explicit ? 1 : 0],
     );
     savedCount++;
+    
+    if (INTENT_NLU_DEBUG) {
+      console.log(
+        `[memory-save] Saved: key="${key}" value="${value.slice(0, 30)}" explicit=${candidate.explicit ? 1 : 0}`,
+      );
+    }
   }
 
   return savedCount;
@@ -2493,6 +2754,12 @@ async function getRelevantUserMemories(
   for (const key of externalHintKeys || []) {
     const normalized = normalizeHintKey(key);
     if (normalized) keyHints.add(normalized);
+  }
+
+  if (INTENT_NLU_DEBUG) {
+    console.log(
+      `[memory-query] userId="${userId}" hints=[${[...keyHints].join(", ")}]`,
+    );
   }
 
   const whereClauses = ["user_id = ?"];
@@ -2534,6 +2801,18 @@ async function getRelevantUserMemories(
   );
 
   const rows = rowsRes.rows || [];
+  
+  if (INTENT_NLU_DEBUG) {
+    console.log(
+      `[memory-query] Found ${rows.length} rows, returning up to ${Math.min(rows.length, 6)}`,
+    );
+    for (const row of rows.slice(0, 3)) {
+      console.log(
+        `  - key="${row.memory_key}" value="${row.memory_value.slice(0, 30)}"`,
+      );
+    }
+  }
+  
   if (!rows.length) return [];
 
   const seenSingleValueKeys = new Set();
@@ -2583,9 +2862,11 @@ function formatMemoryLabel(key = "") {
 // build user memory system message: format memory items into system prompt block with labels and values
 function buildUserMemorySystemMessage(memories = []) {
   const lines = [
-    "Known user memory (private profile).",
-    "Use this only when relevant to the current request.",
-    "Do not mention memory items that are not needed for the answer.",
+    "Known user memory provided by the application for this authenticated user.",
+    "If the user asks about their own stored details (for example age, name, location, or preferences), answer directly from these memory items.",
+    "Do not claim you cannot access personal data when this memory block is present.",
+    "If a requested detail is not present here, say it is not stored yet.",
+    "Only mention memory items that are relevant to the current request.",
   ];
 
   for (const memory of memories) {
@@ -2839,6 +3120,7 @@ function buildFactualSafetySystemMessage({
   const lines = [
     "Factual safety behavior:",
     "- Never invent exact facts (dates, places, numbers, statistics, names).",
+    "- Exact values from explicit system context (for example user memory or web snippets) are provided facts, not guesses.",
     "- If confidence is low, say uncertainty in one short sentence.",
   ];
 
@@ -3579,12 +3861,13 @@ app.post("/api/chat/preload", requireAuth, async (req, res) => {
 });
 
 // Flow: (1) image upload → base64 encode
-//       (2) intent NLU analysis (asksTime, asksLiveWeb, needsMemoryContext, needsClarification)
+//       (2) intent NLU analysis for routing/memory/web (no pre-stream clarification forcing)
 //       (3) memory context injection (prev messages + relevant user memories)
 //       (4) web search if needed (internet access + search intent)
 //       (5) build runtime system context (server time, timezone, previous context)
-//       (6) call Ollama streaming endpoint → collect tokens + process clarification
-//       (7) save memory candidates + save chat history
+//       (6) call Ollama streaming endpoint → collect tokens
+//       (7) post-stream clarification check (user message + full assistant response)
+//       (8) save memory candidates + save chat history
 app.post(
   "/api/chat/stream",
   requireAuth,
@@ -3634,7 +3917,10 @@ app.post(
 
     // optional request parameters
     const aiStyle = req.body.aiStyle || "formal";
-    const internetAccessEnabled = isEnvEnabled(req.body.internetAccess, false);
+    const internetAccessEnabled =
+      getPlanRank(userPlan) >= getPlanRank("pro") &&
+      getModelRank(model) >= getModelRank("qwen3-vl:4b-instruct") &&
+      isEnvEnabled(req.body.internetAccess, false);
     const clarifyReply = isEnvEnabled(req.body.clarifyReply, false);
     const pageContext = parseClientPageContext(req.body.pageContext);
     const preferPageContext = isEnvEnabled(req.body.preferPageContext, false);
@@ -3653,6 +3939,7 @@ app.post(
 
     // analyze message intent via NLU model: erkennt web search, time queries, memory context, clarification needs
     const previousUserMessage = getLastUserContextMessage(context);
+    const lastAssistantMessage = getLastAssistantContextMessage(context);
     let intentSignals = emptyMessageIntentSignals();
     if (message) {
       intentSignals = await analyzeMessageIntentWithModel(
@@ -3663,6 +3950,7 @@ app.post(
           hasPageContext: Boolean(pageContext),
           preferPageContext,
           hasImageInput: currentMessageImages.length > 0,
+          lastAssistantMessage,
         },
       );
     }
@@ -3679,6 +3967,7 @@ app.post(
           explicitWebLookup: intentSignals.explicitWebLookup,
           webSearchQuery: intentSignals.webSearchQuery || "",
           clientSource: clientSource || "unknown",
+          hasAssistantContext: Boolean(lastAssistantMessage),
           hasPageContext: Boolean(pageContext),
           hasImageInput: currentMessageImages.length > 0,
           prefersPageContext: intentSignals.prefersPageContext,
@@ -3725,36 +4014,16 @@ app.post(
       console.warn("Memory save failed:", err?.message || err);
     }
 
-    // retrieve relevant memories from user DB for context injection
-    let relevantUserMemories = [];
-    if (memoryShouldInject) {
-      try {
-        relevantUserMemories = await getRelevantUserMemories(
-          req.userId,
-          message,
-          6,
-          memoryHintKeys,
-        );
-        if (relevantUserMemories.length) {
-          // mark memories as used for ranking
-          await markUserMemoriesUsed(relevantUserMemories);
-        }
-      } catch (err) {
-        console.warn("Memory lookup failed:", err?.message || err);
-      }
-    }
-
     // web search decision: check if needs live internet data
+    let relevantUserMemories = [];
     let webSources = [];
     let webUnavailable = false;
     const optionClarifyReply =
       clarifyReply && Boolean(intentSignals.clarifyOptionReply);
-    const clarifyEligibleByText =
-      isLikelyVagueBuildRequestForClarification(message);
-    const shouldForceClarification =
-      intentSignals.needsClarification &&
-      !clarifyReply &&
-      clarifyEligibleByText;
+    const shouldForceClarification = false;
+    const preIntentSaysNoClarify =
+      intentSignals.needsClarification === false &&
+      !isLikelyVagueBuildRequestForClarification(message);
     const shouldAttachClarificationStyleMessage = clarifyReply;
     const shouldLookupWeb =
       internetAccessEnabled &&
@@ -3771,6 +4040,12 @@ app.post(
       intentSignals.webSearchQuery || message,
       INTENT_NLU_MAX_MESSAGE_CHARS,
     );
+    const shouldEmitStatusEvents =
+      clientSource === "web" || clientSource === "extension";
+    const emitStatusEvent = (type, payload = {}) => {
+      if (!shouldEmitStatusEvents) return;
+      writeStatusEvent(res, type, payload);
+    };
 
     // SSE headers für streaming response
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
@@ -3788,16 +4063,72 @@ app.post(
       "X-Wieland-Memory-Saved, X-Wieland-Memory-Count, X-Wieland-Clarify-Forced",
     );
 
+    if (typeof res.flushHeaders === "function") {
+      try {
+        res.flushHeaders();
+      } catch {}
+    }
+
+    if (pageContext?.content) {
+      emitStatusEvent("page_read", {
+        title: normalizeMemoryText(pageContext.title || "", 120),
+        url: normalizeMemoryText(pageContext.url || "", 260),
+      });
+    }
+
+    // retrieve relevant memories from user DB for context injection
+    if (memoryShouldInject) {
+      emitStatusEvent("memory_start", {
+        hints: (memoryHintKeys || []).slice(0, 6),
+      });
+
+      try {
+        relevantUserMemories = await getRelevantUserMemories(
+          req.userId,
+          message,
+          6,
+          memoryHintKeys,
+        );
+
+        if (relevantUserMemories.length) {
+          // mark memories as used for ranking
+          await markUserMemoriesUsed(relevantUserMemories);
+          emitStatusEvent("memory_done", {
+            items: relevantUserMemories.slice(0, 6).map((memory) => ({
+              label: formatMemoryLabel(memory.memory_key),
+              value: normalizeMemoryText(memory.memory_value, 90),
+            })),
+          });
+        } else {
+          emitStatusEvent("memory_done", { items: [] });
+        }
+      } catch (err) {
+        console.warn("Memory lookup failed:", err?.message || err);
+        emitStatusEvent("memory_error");
+      }
+    }
+
     // web search: fetch live sources wenn needed
     if (shouldLookupWeb && webLookupQuery) {
+      emitStatusEvent("search_start", { query: webLookupQuery });
+
       try {
         webSources = await fetchWebSources(webLookupQuery);
         if (!webSources.length) {
           webUnavailable = true;
+          emitStatusEvent("search_done", { sources: [] });
+        } else {
+          emitStatusEvent("search_done", {
+            sources: webSources.slice(0, MAX_WEB_SOURCES).map((source) => ({
+              title: normalizeMemoryText(source.title || "", 120),
+              url: normalizeMemoryText(source.url || "", 260),
+            })),
+          });
         }
       } catch (err) {
         webUnavailable = true;
         console.warn("Web access unavailable:", err?.message || err);
+        emitStatusEvent("search_error");
       }
     }
 
@@ -3921,6 +4252,8 @@ app.post(
     res.once("close", abortUpstream);
 
     try {
+      emitStatusEvent("thinking");
+
       const ollamaRes = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -4034,31 +4367,38 @@ app.post(
         streamedAssistantText = repairedAssistantText;
       }
 
-      if (shouldForceClarification && !res.writableEnded && !res.destroyed) {
-        const finalPayload = await buildForcedClarificationFallbackPayload(
-          message,
+      if (
+        !clarifyReply &&
+        !preIntentSaysNoClarify &&
+        !upstreamAbort.signal.aborted &&
+        !res.writableEnded &&
+        !res.destroyed
+      ) {
+        const alreadyHasClarification = hasClarificationPayload(
           streamedAssistantText,
         );
 
-        if (finalPayload) {
-          const separator = streamedAssistantText.trim() ? "\n" : "";
-          const finalBlock =
-            CLARIFY_JSON_BLOCK_START +
-            JSON.stringify(finalPayload) +
-            CLARIFY_JSON_BLOCK_END;
-          res.write(`${separator}${finalBlock}`);
-        } else {
-          const retryPayload = await buildForcedClarificationFallbackPayload(
+        if (!alreadyHasClarification) {
+          const needsClarify = await checkNeedsClarification(
             message,
-            "",
+            streamedAssistantText,
+            context,
           );
-          if (retryPayload) {
-            const separator = streamedAssistantText.trim() ? "\n" : "";
-            const retryBlock =
-              CLARIFY_JSON_BLOCK_START +
-              JSON.stringify(retryPayload) +
-              CLARIFY_JSON_BLOCK_END;
-            res.write(`${separator}${retryBlock}`);
+
+          if (needsClarify) {
+            const finalPayload = await buildForcedClarificationFallbackPayload(
+              message,
+              streamedAssistantText,
+            );
+
+            if (finalPayload) {
+              const separator = streamedAssistantText.trim() ? "\n" : "";
+              const finalBlock =
+                CLARIFY_JSON_BLOCK_START +
+                JSON.stringify(finalPayload) +
+                CLARIFY_JSON_BLOCK_END;
+              res.write(`${separator}${finalBlock}`);
+            }
           }
         }
       }

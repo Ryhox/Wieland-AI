@@ -87,6 +87,7 @@ function ChatPage() {
         chatId={actualFilename}
         sidebarOpen={sidebarOpen}
         onSidebarChange={setSidebarOpen}
+        pageVariant="chat"
         inputOffset={hasMessages ? 50 : 425}
         onNewChatRef={(fn) => {
           newChatRef.current = fn;

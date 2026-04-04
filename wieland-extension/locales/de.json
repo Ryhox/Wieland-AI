@@ -46,6 +46,8 @@
     "uploadImage": "Bild hochladen",
     "internetSection": "Internetzugang",
     "internetAccess": "Internet nutzen",
+    "internetPlanLocked": "Internetzugang ist erst ab Pro verfügbar.",
+    "internetModelLocked": "Internetzugang ist mit 2B nicht verfugbar. Bitte 4B oder 8B waehlen.",
     "internetOn": "An",
     "internetOff": "Aus",
     "styleSection": "KI-Stil",
@@ -71,7 +73,23 @@
     "ctxUrl": "URL: {value}",
     "ctxContent": "Seiteninhalt:",
     "unknown": "Unbekannt",
-    "imageAlt": "Bild"
+    "imageAlt": "Bild",
+    "activity": {
+      "thinking": "Denke nach...",
+      "readingPage": "Lese Seitenkontext...",
+      "readingMemory": "Lese Memory...",
+      "searchingWeb": "Suche im Internet...",
+      "searchUnavailable": "Internetsuche nicht verfugbar.",
+      "memoryUnavailable": "Memory-Lookup nicht verfugbar.",
+      "searchStart": "Suche: \"{query}\"",
+      "searchDone": "Gefunden: {count} Quelle(n)",
+      "sourceFallback": "Quelle {index}",
+      "memoryStart": "Prufe Memory...",
+      "memoryDone": "In Memory gefunden:",
+      "memoryEmpty": "Keine passende Memory gefunden.",
+      "pageRead": "Lese Seite: {title}",
+      "currentPage": "aktuelle Seite"
+    }
   },
   "models": {
     "free": "2B - Free",
