@@ -247,6 +247,11 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
     });
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate(localPath("/"));
+  };
+
   const handleCancelSubscription = async () => {
     setConfirmModal({
       title: t("profile.confirm.cancelTitle"),
@@ -726,6 +731,27 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
 
             <section className="profile-group">
               <h2 className="profile-group-title">{t("profile.dangerZone")}</h2>
+              <div className="profile-row-card">
+                <div className="profile-row-left">
+                  <div className="profile-row-text">
+                    <span className="profile-row-title">{t("sidebar.logout")}</span>
+                    <span className="profile-row-meta">
+                      {t("profile.logoutDescription", {
+                        defaultValue: "Meldet dich aus deinem Konto ab.",
+                      })}
+                    </span>
+                  </div>
+                </div>
+                <div className="profile-row-right">
+                  <button
+                    className="profile-btn-secondary"
+                    onClick={handleLogout}
+                  >
+                    {t("sidebar.logout")}
+                  </button>
+                </div>
+              </div>
+
               <div className="profile-row-card profile-row-card-danger">
                 <div className="profile-row-left">
                   <div className="profile-row-text">

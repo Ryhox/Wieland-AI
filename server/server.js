@@ -51,7 +51,7 @@ const INTENT_NLU_MAX_MESSAGE_CHARS = Math.max(
   120,
   parseInt(process.env.INTENT_NLU_MAX_MESSAGE_CHARS || "520", 10) || 520,
 );
-const INTENT_NLU_MODEL = process.env.INTENT_NLU_MODEL || "qwen3-vl:2b-instruct";
+const INTENT_NLU_MODEL = process.env.INTENT_NLU_MODEL || "qwen3-vl:4b-instruct";
 const INTENT_NLU_TIMEOUT_MS = Math.max(
   900,
   parseInt(
@@ -3817,15 +3817,15 @@ async function generateChatTitle(
 }
 
 async function resolveUserPlan(req) {
-  if (req?.userPlan) return req.userPlan;
-
   try {
+    if (!req?.userId) return normalizePlan(req?.userPlan || "free");
+
     const planResult = await pool.query(`SELECT plan FROM users WHERE id = ?`, [
       req.userId,
     ]);
-    return normalizePlan(planResult.rows[0]?.plan || "free");
+    return normalizePlan(planResult.rows[0]?.plan || req?.userPlan || "free");
   } catch {
-    return "free";
+    return normalizePlan(req?.userPlan || "free");
   }
 }
 
@@ -4450,8 +4450,9 @@ app.post("/api/history/save", requireAuth, async (req, res) => {
   if (!Array.isArray(messages))
     return res.status(400).json({ error: "messages must be array" });
 
+  const userPlan = await resolveUserPlan(req);
   const client = await pool.connect();
-  const titleModel = getModelForPlan(req.userPlan || "free");
+  const titleModel = getModelForPlan(userPlan);
   let txStarted = false;
   try {
     // transaction: atomare chat + message insert/update
