@@ -846,6 +846,33 @@ app.get("/api/admin/stats", requireAuth, requireAdmin, async (_req, res) => {
   }
 });
 
+// endpoint: POST create new user (admin)
+app.post("/api/admin/users", requireAuth, requireAdmin, async (req, res) => {
+  const { username, email, password, plan } = req.body ?? {};
+  if (!isValidUsername(username))
+    return res.status(400).json({ error: "Invalid username" });
+  if (!isValidEmail(email))
+    return res.status(400).json({ error: "Invalid email" });
+  if (!isValidPassword(password))
+    return res.status(400).json({ error: "Password too short" });
+
+  try {
+    const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const result = await pool.query(
+      `INSERT INTO users (username, email, password_hash, plan) VALUES (?, ?, ?, ?) RETURNING id, username, email, plan`,
+      [username.trim(), email.trim().toLowerCase(), hash, plan ?? "Free"]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    if (err.code === "23505") {
+      const field = err.constraint?.includes("email") ? "Email" : "Username";
+      return res.status(409).json({ error: `${field} already taken` });
+    }
+    console.error("Admin create user error:", err.message);
+    res.status(500).json({ error: "Failed to create user" });
+  }
+});
+
 // endpoint: GET alle user mit chat count (admin dashboard)
 app.get("/api/admin/users", requireAuth, requireAdmin, async (_req, res) => {
   try {
@@ -1026,11 +1053,11 @@ app.get(
     }
   },
 );
-const SYSTEM_BASE = `You are a LOCAL AI assistant named "Wieland".
+const SYSTEM_BASE = `You are an AI assistant named "Wieland".
 - You CAN analyze images provided in this conversation.
 - You CAN generate complete website/app/code solutions when asked.
 - Do not claim you cannot create websites or code.
-- You do NOT represent any company (Alibaba, OpenAI, Anthropic, etc.).
+- You do NOT represent any company (Alibaba, OpenAI, Anthropic, etc.) ALSO NEVER MENTION THIS IN A CONVERSATION.
 - Internet snippets can be provided by the server. Use them only when present.
 - The server may provide trusted user-memory facts in system messages. Use those facts when the user asks about themselves.
 - Answer only what the user asked. Skip unrelated prefaces and meta commentary.
@@ -1694,11 +1721,22 @@ async function buildForcedClarificationFallbackPayload(
   message = "",
   assistantDraft = "",
 ) {
+  if (INTENT_NLU_DEBUG) {
+    console.log("[clarify-fallback] starting, model:", INTENT_NLU_MODEL);
+  }
   const userText = normalizeMemoryText(message, INTENT_NLU_MAX_MESSAGE_CHARS);
-  if (!userText) return null;
+  if (!userText) {
+    if (INTENT_NLU_DEBUG) {
+      console.log("[clarify-fallback] userText empty, returning null");
+    }
+    return null;
+  }
   const assistantText = normalizeMemoryText(assistantDraft, 700);
 
-  const model = "qwen3-vl:2b-instruct";
+  const model = INTENT_NLU_MODEL || "qwen3-vl:4b-instruct";
+  if (INTENT_NLU_DEBUG) {
+    console.log("[clarify-fallback] using model:", model);
+  }
   const baseInstructionLines = [
     "You generate one clarification popup payload as strict JSON for a UI modal.",
     "Output ONLY raw JSON. No markdown.",
@@ -1752,12 +1790,32 @@ async function buildForcedClarificationFallbackPayload(
         signal: controller.signal,
       });
 
-      if (!res.ok) return null;
+      if (!res.ok) {
+        if (INTENT_NLU_DEBUG) {
+          console.log("[clarify-fallback] fetch not ok:", res.status);
+        }
+        return null;
+      }
 
       const data = await res.json();
       const raw = String(data?.message?.content || "");
+      if (INTENT_NLU_DEBUG) {
+        console.log("[clarify-fallback] raw:", raw);
+      }
       const parsed = parseJsonObjectFromText(raw);
-      return sanitizeClarificationPayload(parsed);
+      if (INTENT_NLU_DEBUG) {
+        console.log("[clarify-fallback] parsed:", JSON.stringify(parsed));
+      }
+      const sanitized = sanitizeClarificationPayload(parsed);
+      if (INTENT_NLU_DEBUG) {
+        console.log("[clarify-fallback] sanitized:", JSON.stringify(sanitized));
+      }
+      return sanitized;
+    } catch (err) {
+      if (INTENT_NLU_DEBUG) {
+        console.log("[clarify-fallback] error in requestPayload:", err?.message);
+      }
+      return null;
     } finally {
       clearTimeout(timeoutHandle);
     }
@@ -1765,17 +1823,35 @@ async function buildForcedClarificationFallbackPayload(
 
   try {
     const primaryInstruction = baseInstructionLines.join("\n");
+    if (INTENT_NLU_DEBUG) {
+      console.log("[clarify-fallback] trying primary instruction");
+    }
     const firstPass = await requestPayload(primaryInstruction);
-    if (firstPass) return firstPass;
+    if (firstPass) {
+      if (INTENT_NLU_DEBUG) {
+        console.log("[clarify-fallback] first pass success");
+      }
+      return firstPass;
+    }
 
+    if (INTENT_NLU_DEBUG) {
+      console.log("[clarify-fallback] first pass returned null, trying retry");
+    }
     const retryInstruction = [
       ...baseInstructionLines,
       "Retry policy: if any option would be generic, replace it with a concrete scope/format choice.",
       "Return exactly 4 options (A, B, C, D).",
     ].join("\n");
 
-    return await requestPayload(retryInstruction);
-  } catch {
+    const retryResult = await requestPayload(retryInstruction);
+    if (INTENT_NLU_DEBUG) {
+      console.log("[clarify-fallback] retry result:", retryResult || "null");
+    }
+    return retryResult;
+  } catch (err) {
+    if (INTENT_NLU_DEBUG) {
+      console.log("[clarify-fallback] error in buildForcedClarificationFallbackPayload:", err?.message);
+    }
     return null;
   }
 }
@@ -3320,18 +3396,12 @@ function isLikelyCodingRequest(message = "", context = []) {
 
 function getModelResponseGuidance(model, { codingRequest = false } = {}) {
   if (codingRequest) {
-    if (model === "qwen3-vl:2b-instruct") {
-      return "Model guidance (coding): prioritize complete, usable code over shortness. Continue until all essential parts are provided. Avoid repeating already written lines.";
-    }
     if (model === "qwen3-vl:4b-instruct") {
       return "Model guidance (coding): provide complete implementations and finish incomplete snippets. Keep explanations concise, but do not truncate required code.";
     }
     return "Model guidance (coding): deliver complete end-to-end code with any required glue code and finish pending sections before stopping.";
   }
 
-  if (model === "qwen3-vl:2b-instruct") {
-    return "Model guidance: keep replies focused and practical. Expand when needed for correctness. Never output stage directions or roleplay text (for example 'smiles slightly').";
-  }
   if (model === "qwen3-vl:4b-instruct") {
     return "Model guidance: prioritize direct answers with enough detail to be complete. Never output stage directions or roleplay text (for example 'smiles slightly').";
   }
@@ -3361,12 +3431,6 @@ const OLLAMA_NUM_CTX_4B = getBoundedIntEnv(
   768,
   12_288,
 );
-const OLLAMA_NUM_CTX_2B = getBoundedIntEnv(
-  "OLLAMA_NUM_CTX_2B",
-  1536,
-  512,
-  8192,
-);
 const OLLAMA_NUM_PREDICT_8B = getBoundedIntEnv(
   "OLLAMA_NUM_PREDICT_8B",
   1536,
@@ -3378,12 +3442,6 @@ const OLLAMA_NUM_PREDICT_4B = getBoundedIntEnv(
   896,
   128,
   4096,
-);
-const OLLAMA_NUM_PREDICT_2B = getBoundedIntEnv(
-  "OLLAMA_NUM_PREDICT_2B",
-  640,
-  128,
-  3072,
 );
 
 const OLLAMA_OPTIONS_8B = {
@@ -3400,17 +3458,16 @@ const OLLAMA_OPTIONS_4B = {
   temperature: 0.55,
   ...OLLAMA_ANTI_REPEAT_OPTIONS,
 };
-const OLLAMA_OPTIONS_2B = {
+const OLLAMA_OPTIONS_MAX = {
   think: false,
-  num_ctx: OLLAMA_NUM_CTX_2B,
-  num_predict: OLLAMA_NUM_PREDICT_2B,
-  temperature: 0.5,
+  num_ctx: OLLAMA_NUM_CTX_8B,
+  num_predict: 3072,
+  temperature: 0.65,
   ...OLLAMA_ANTI_REPEAT_OPTIONS,
 };
 const ALLOWED_MODELS = new Set([
-  "qwen3-vl:8b-instruct",
   "qwen3-vl:4b-instruct",
-  "qwen3-vl:2b-instruct",
+  "qwen3-vl:8b-instruct",
 ]);
 
 function normalizePlan(plan) {
@@ -3429,8 +3486,7 @@ function getPlanRank(plan) {
 }
 
 function getModelRank(model) {
-  if (model === "qwen3-vl:8b-instruct") return 2;
-  if (model === "qwen3-vl:4b-instruct") return 1;
+  if (model === "qwen3-vl:8b-instruct") return 1;
   return 0;
 }
 
@@ -3442,19 +3498,23 @@ function getModelForPlan(plan) {
   const normalized = normalizePlan(plan);
   if (normalized === "admin" || normalized === "max")
     return "qwen3-vl:8b-instruct";
-  if (normalized === "pro") return "qwen3-vl:4b-instruct";
-  return "qwen3-vl:2b-instruct";
+  if (normalized === "pro") return "qwen3-vl:8b-instruct";
+  return "qwen3-vl:4b-instruct";
+}
+
+function normalizeModel(modelId) {
+  // strip -max suffix if present (v2.5 frontend id → v2 backend id)
+  return String(modelId || "").replace(/-max$/, "");
 }
 
 function getOptionsForModel(model) {
+  if (model === "qwen3-vl:8b-instruct-max") return OLLAMA_OPTIONS_MAX;
   if (model === "qwen3-vl:8b-instruct") return OLLAMA_OPTIONS_8B;
-  if (model === "qwen3-vl:4b-instruct") return OLLAMA_OPTIONS_4B;
-  return OLLAMA_OPTIONS_2B;
+  return OLLAMA_OPTIONS_4B;
 }
 
 function getStartupPrewarmModels() {
   const defaults = [
-    "qwen3-vl:2b-instruct",
     "qwen3-vl:4b-instruct",
     "qwen3-vl:8b-instruct",
   ];
@@ -3835,7 +3895,7 @@ app.post("/api/chat/preload", requireAuth, async (req, res) => {
   const userPlan = await resolveUserPlan(req);
 
   // Model Request gegen Plan validieren
-  const requestedModel = req.body?.model || getModelForPlan(userPlan);
+  const requestedModel = normalizeModel(req.body?.model) || getModelForPlan(userPlan);
   const requestedSafeModel = ALLOWED_MODELS.has(requestedModel)
     ? requestedModel
     : getModelForPlan(userPlan);
@@ -3845,7 +3905,7 @@ app.post("/api/chat/preload", requireAuth, async (req, res) => {
     ? requestedSafeModel
     : defaultModel;
 
-  const baseOptions = getOptionsForModel(model);
+  const baseOptions = getOptionsForModel(requestedModel);
 
   try {
     // Modell in Ollama warm halten
@@ -3908,7 +3968,10 @@ app.post(
     // resolve user plan + select appropriate model
     const userPlan = await resolveUserPlan(req);
 
-    const requestedModel = req.body.model || getModelForPlan(userPlan);
+    const requestedRawModel = req.body.model || getModelForPlan(userPlan);
+    const options = getOptionsForModel(requestedRawModel);  // before normalizeModel
+
+    const requestedModel = normalizeModel(requestedRawModel) || getModelForPlan(userPlan);
     const requestedSafeModel = ALLOWED_MODELS.has(requestedModel)
       ? requestedModel
       : getModelForPlan(userPlan);
@@ -3920,16 +3983,13 @@ app.post(
     // optional request parameters
     const aiStyle = req.body.aiStyle || "formal";
     const internetAccessEnabled =
-      getPlanRank(userPlan) >= getPlanRank("pro") &&
-      getModelRank(model) >= getModelRank("qwen3-vl:4b-instruct") &&
-      isEnvEnabled(req.body.internetAccess, false);
+      isEnvEnabled(req.body.internetAccess, true);
     const clarifyReply = isEnvEnabled(req.body.clarifyReply, false);
     const pageContext = parseClientPageContext(req.body.pageContext);
     const preferPageContext = isEnvEnabled(req.body.preferPageContext, false);
     const clientSource = normalizeClientSource(
       req.body.clientSource || (pageContext ? "extension" : "web"),
     );
-    const options = getOptionsForModel(model);
 
     let context = [];
     try {
@@ -3963,6 +4023,8 @@ app.post(
         "[intent-nlu]",
         JSON.stringify({
           message: normalizeMemoryText(message, 120),
+          model: model,
+          userPlan: userPlan,
           asksTime: intentSignals.asksTime,
           asksTodayEvents: intentSignals.asksTodayEvents,
           asksLiveWeb: intentSignals.asksLiveWeb,
@@ -4022,8 +4084,10 @@ app.post(
     let webUnavailable = false;
     const optionClarifyReply =
       clarifyReply && Boolean(intentSignals.clarifyOptionReply);
-    const shouldForceClarification = false;
+    const shouldForceClarification =
+      !clarifyReply && Boolean(intentSignals.needsClarification);
     const preIntentSaysNoClarify =
+      !shouldForceClarification &&
       intentSignals.needsClarification === false &&
       !isLikelyVagueBuildRequestForClarification(message);
     const shouldAttachClarificationStyleMessage = clarifyReply;
@@ -4263,7 +4327,9 @@ app.post(
           model,
           messages: ollamaMessages,
           stream: true,
-          options,
+          options: shouldForceClarification
+            ? { ...options, num_predict: 60, temperature: 0.3 }
+            : options,
           keep_alive: OLLAMA_KEEP_ALIVE,
         }),
         signal: upstreamAbort.signal,
@@ -4280,6 +4346,20 @@ app.post(
       );
       let streamedAssistantText = streamResult.text;
       const firstDoneReason = streamResult.doneReason;
+
+      // Debug: log clarification flow (only with INTENT_NLU_DEBUG)
+      if (INTENT_NLU_DEBUG) {
+        console.log("[clarify-debug] shouldForceClarification:", shouldForceClarification);
+        console.log("[clarify-debug] preIntentSaysNoClarify:", preIntentSaysNoClarify);
+        console.log("[clarify-debug] streamedText length:", streamedAssistantText.length);
+        console.log(
+          "[clarify-debug] alreadyHasClarification:",
+          hasClarificationPayload(streamedAssistantText),
+        );
+        console.log("[clarify-debug] streamedText:", streamedAssistantText);
+        console.log("[clarify-debug] res.writableEnded:", res.writableEnded);
+        console.log("[clarify-debug] res.destroyed:", res.destroyed);
+      }
 
       if (
         !upstreamAbort.signal.aborted &&
@@ -4381,17 +4461,30 @@ app.post(
         );
 
         if (!alreadyHasClarification) {
-          const needsClarify = await checkNeedsClarification(
+          const checkResult = await checkNeedsClarification(
             message,
             streamedAssistantText,
             context,
           );
+          if (INTENT_NLU_DEBUG) {
+            console.log("[clarify-debug] checkNeedsClarification result:", checkResult);
+          }
+          const needsClarify = shouldForceClarification || checkResult;
+          if (INTENT_NLU_DEBUG) {
+            console.log("[clarify-debug] final needsClarify:", needsClarify);
+          }
 
           if (needsClarify) {
             const finalPayload = await buildForcedClarificationFallbackPayload(
               message,
               streamedAssistantText,
             );
+            if (INTENT_NLU_DEBUG) {
+              console.log(
+                "[clarify-debug] finalPayload:",
+                JSON.stringify(finalPayload),
+              );
+            }
 
             if (finalPayload) {
               const separator = streamedAssistantText.trim() ? "\n" : "";

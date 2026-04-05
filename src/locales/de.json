@@ -143,9 +143,9 @@
       "Freut mich, dass du da bist, {{name}}. Legen wir los."
     ],
     "models": {
-      "free": "2B - Free",
-      "pro": "4B - Pro",
-      "precise": "8B - Präzise"
+      "free": "v1",
+      "pro": "v2",
+      "max": "v2.5"
     },
     "styles": {
       "formal": "Formell",
@@ -168,8 +168,8 @@
     "options": "Optionen",
     "internetSection": "Internetzugang",
     "internetAccess": "Internet nutzen",
-    "internetPlanLocked": "Internetzugang ist erst ab Pro verfügbar.",
-    "internetModelLocked": "Internetzugang ist mit 2B nicht verfugbar. Bitte 4B oder 8B waehlen.",
+    "internetPlanLocked": "Internetzugang ist für dein aktuelles Plan-Tier nicht verfügbar.",
+    "internetModelLocked": "Internetzugang ist für alle Modelle verfügbar.",
     "internetOn": "An",
     "internetOff": "Aus",
     "copied": "Kopiert!",
@@ -446,9 +446,9 @@
     "recommended": "Empfohlen",
     "perMonth": "/ Monat",
     "freeForever": "Für immer kostenlos.",
-    "freePlanHint": "Für immer kostenlos. Internetzugang ab Pro.",
+    "freePlanHint": "Für immer kostenlos.",
     "supportDev": "Unterstütze die Entwicklung von Wieland AI.",
-    "maxQuality": "Maximale Qualität mit Wieland 8B.",
+    "maxQuality": "Maximale Qualität mit erweiterten Token-Limits.",
     "planNames": {
       "free": "Kostenlos",
       "pro": "Pro",
@@ -463,14 +463,14 @@
     "faqLabel": "Häufige Fragen",
     "features": {
       "free": [
-        { "text": "Wieland 2B Modell", "enabled": true },
+        { "text": "Wieland v1", "enabled": true },
         { "text": "Unbegrenzte Gespräche", "enabled": true },
         { "text": "Bild-Upload & Analyse", "enabled": true },
         { "text": "Gesprächsverlauf", "enabled": true },
         { "text": "Internetzugang", "enabled": false },
         { "text": "Prioritäts-Support", "enabled": false },
-        { "text": "Wieland 4B Modell", "enabled": false },
-        { "text": "Wieland 8B Modell", "enabled": false }
+        { "text": "Wieland v2", "enabled": false },
+        { "text": "Wieland v2.5", "enabled": false }
       ],
       "pro": [
         { "text": "Alles aus Kostenlos", "enabled": true },
@@ -478,16 +478,16 @@
           "text": "Unterstützt die Entwicklung von Wieland AI",
           "enabled": true
         },
+        { "text": "Wieland v2", "enabled": true },
         { "text": "Internetzugang", "enabled": true },
         { "text": "Prioritäts-Support", "enabled": true },
         { "text": "Frühzeitiger Zugang zu neuen Releases", "enabled": true },
-        { "text": "Wieland 4B Modell", "enabled": true },
-        { "text": "Wieland 8B Modell", "enabled": false }
+        { "text": "Wieland v2.5", "enabled": false }
       ],
       "max": [
         { "text": "Alles aus Pro", "enabled": true },
         {
-          "text": "Beste Modellqualität mit Wieland 8B Modell",
+          "text": "Wieland v2.5 mit erweiterten Token-Limits",
           "enabled": true
         },
         { "text": "Prioritäts-Support", "enabled": true },

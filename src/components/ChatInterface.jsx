@@ -116,15 +116,15 @@ const GlobeIcon = () => (
 );
 
 const AVAILABLE_MODELS = [
-  { id: "qwen3-vl:2b-instruct", key: "chat.models.free", icon: <BotIcon /> },
+  { id: "qwen3-vl:4b-instruct", key: "chat.models.free", icon: <BotIcon /> },
   {
-    id: "qwen3-vl:4b-instruct",
+    id: "qwen3-vl:8b-instruct",
     key: "chat.models.pro",
     icon: <LightningIcon />,
   },
   {
-    id: "qwen3-vl:8b-instruct",
-    key: "chat.models.precise",
+    id: "qwen3-vl:8b-instruct-max",
+    key: "chat.models.max",
     icon: <TargetIcon />,
   },
 ];
@@ -146,20 +146,20 @@ const getPlanRank = (plan) => {
   return 0;
 };
 
-// get model rank: numeric tier comparison (0=2b, 1=4b, 2=8b)
+// get model rank: numeric tier comparison (0=v1, 1=v2, 2=v2.5)
 const getModelRank = (modelId) => {
-  if (modelId === "qwen3-vl:8b-instruct") return 2;
-  if (modelId === "qwen3-vl:4b-instruct") return 1;
+  if (modelId === "qwen3-vl:8b-instruct-max") return 2;
+  if (modelId === "qwen3-vl:8b-instruct") return 1;
   return 0;
 };
 
-// get plan model: return highest model available for user's plan tier
+// get plan model: return highest model available for user's plan tier (v1/v2/v2.5)
 const getPlanModel = (plan) => {
   const normalized = normalizePlan(plan);
   if (normalized === "admin" || normalized === "max")
-    return "qwen3-vl:8b-instruct";
-  if (normalized === "pro") return "qwen3-vl:4b-instruct";
-  return "qwen3-vl:2b-instruct";
+    return "qwen3-vl:8b-instruct-max";
+  if (normalized === "pro") return "qwen3-vl:8b-instruct";
+  return "qwen3-vl:4b-instruct";
 };
 
 const AI_STYLES = [
@@ -925,14 +925,10 @@ export default function ChatInterface({
     setSelectedModel(getPlanModel(user?.plan));
   }, [user?.plan]);
 
-  const isInternetAllowedForModel = getModelRank(selectedModel) >= 1;
-  const isInternetToggleAllowed =
-    isInternetAllowedForPlan && isInternetAllowedForModel;
+  const isInternetToggleAllowed = isInternetAllowedForPlan;
   const internetLockMessage = !isInternetAllowedForPlan
     ? t("chat.internetPlanLocked")
-    : !isInternetAllowedForModel
-      ? t("chat.internetModelLocked")
-      : "";
+    : "";
   const effectiveInternetAccess = isInternetToggleAllowed && internetAccess;
 
   useEffect(() => {
@@ -1532,7 +1528,7 @@ export default function ChatInterface({
         fd.append("message", userText);
         // pass conversation context so model knows previous messages
         fd.append("context", JSON.stringify(contextSnap));
-        fd.append("model", model); // which model to use (2b/4b/8b)
+        fd.append("model", model); // which model to use (4b/8b)
         fd.append("aiStyle", style); // formal/friendly/precise communication style
         fd.append("internetAccess", useInternet ? "true" : "false"); // allow web search?
         fd.append("clientSource", "web"); // track that request came from web (vs extension)
@@ -1983,7 +1979,7 @@ export default function ChatInterface({
                 onClick={() => {
                   if (!isInternetToggleAllowed) {
                     showToast(
-                      internetLockMessage || t("chat.internetModelLocked"),
+                      internetLockMessage || t("chat.internetPlanLocked"),
                       "error",
                     );
                     return;
@@ -2137,14 +2133,6 @@ export default function ChatInterface({
                               if (allowed) {
                                 setSelectedModel(m.id);
                                 setShowModelDropdown(false);
-
-                                if (internetAccess && getModelRank(m.id) < 1) {
-                                  setInternetAccess(false);
-                                  showToast(
-                                    t("chat.internetModelLocked"),
-                                    "error",
-                                  );
-                                }
                               }
                             }}
                             disabled={!allowed}

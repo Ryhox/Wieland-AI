@@ -139,9 +139,9 @@
       "Glad you're here, {{name}}. Let's build something useful."
     ],
     "models": {
-      "free": "2B - Free",
-      "pro": "4B - Pro",
-      "precise": "8B - Precise"
+      "free": "v1",
+      "pro": "v2",
+      "max": "v2.5"
     },
     "styles": {
       "formal": "Formal",
@@ -164,8 +164,8 @@
     "options": "Options",
     "internetSection": "Internet Access",
     "internetAccess": "Use internet",
-    "internetPlanLocked": "Internet access is available from Pro.",
-    "internetModelLocked": "Internet access is not available with 2B. Please choose 4B or 8B.",
+    "internetPlanLocked": "Internet access is not available for your current plan tier.",
+    "internetModelLocked": "Internet access is available for all models.",
     "internetOn": "On",
     "internetOff": "Off",
     "copied": "Copied!",
@@ -442,9 +442,9 @@
     "recommended": "Recommended",
     "perMonth": "/ month",
     "freeForever": "Free forever.",
-    "freePlanHint": "Free forever. Internet access starts with Pro.",
+    "freePlanHint": "Free forever.",
     "supportDev": "Support the development of Wieland AI.",
-    "maxQuality": "Maximum quality with Wieland 8B.",
+    "maxQuality": "Maximum quality with extended token limits.",
     "planNames": {
       "free": "Free",
       "pro": "Pro",
@@ -459,27 +459,27 @@
     "faqLabel": "FAQ",
     "features": {
       "free": [
-        { "text": "Wieland 2B model", "enabled": true },
+        { "text": "Wieland v1", "enabled": true },
         { "text": "Unlimited chats", "enabled": true },
         { "text": "Image upload & analysis", "enabled": true },
         { "text": "Chat history", "enabled": true },
         { "text": "Internet access", "enabled": false },
         { "text": "Priority support", "enabled": false },
-        { "text": "Wieland 4B model", "enabled": false },
-        { "text": "Wieland 8B model", "enabled": false }
+        { "text": "Wieland v2", "enabled": false },
+        { "text": "Wieland v2.5", "enabled": false }
       ],
       "pro": [
         { "text": "Everything from Free", "enabled": true },
         { "text": "Supports Wieland AI development", "enabled": true },
+        { "text": "Wieland v2", "enabled": true },
         { "text": "Internet access", "enabled": true },
         { "text": "Priority support", "enabled": true },
         { "text": "Early release access", "enabled": true },
-        { "text": "Wieland 4B model", "enabled": true },
-        { "text": "Wieland 8B model", "enabled": false }
+        { "text": "Wieland v2.5", "enabled": false }
       ],
       "max": [
         { "text": "Everything from Pro", "enabled": true },
-        { "text": "Best model quality with Wieland 8B", "enabled": true },
+        { "text": "Wieland v2.5 with extended token limits", "enabled": true },
         { "text": "Priority support", "enabled": true },
         { "text": "Early release access", "enabled": true }
       ]
