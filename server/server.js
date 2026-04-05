@@ -3503,7 +3503,7 @@ function getModelForPlan(plan) {
 }
 
 function normalizeModel(modelId) {
-  // strip -max suffix if present (v2.5 frontend id → v2 backend id)
+  // strip -max suffix if present (Supergiant frontend id → Star backend id)
   return String(modelId || "").replace(/-max$/, "");
 }
 
@@ -4320,6 +4320,12 @@ app.post(
     try {
       emitStatusEvent("thinking");
 
+      // 1. VOR dem Stream – nur wenn forced: parallelen Clarification-Build starten
+      let earlyPayloadPromise = null;
+      if (shouldForceClarification) {
+        earlyPayloadPromise = buildForcedClarificationFallbackPayload(message, "");
+      }
+
       const ollamaRes = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -4461,39 +4467,37 @@ app.post(
         );
 
         if (!alreadyHasClarification) {
-          const checkResult = await checkNeedsClarification(
-            message,
-            streamedAssistantText,
-            context,
-          );
-          if (INTENT_NLU_DEBUG) {
-            console.log("[clarify-debug] checkNeedsClarification result:", checkResult);
+          let needsClarify = shouldForceClarification;
+          let finalPayload = null;
+
+          if (shouldForceClarification) {
+            // bereits laufend, nur awaiten
+            finalPayload = await earlyPayloadPromise;
+          } else {
+            // parallel: check + build gleichzeitig
+            const [checkResult, builtPayload] = await Promise.all([
+              checkNeedsClarification(message, streamedAssistantText, context),
+              buildForcedClarificationFallbackPayload(message, streamedAssistantText),
+            ]);
+            needsClarify = checkResult;
+            finalPayload = builtPayload;
           }
-          const needsClarify = shouldForceClarification || checkResult;
+
           if (INTENT_NLU_DEBUG) {
             console.log("[clarify-debug] final needsClarify:", needsClarify);
+            console.log(
+              "[clarify-debug] finalPayload:",
+              finalPayload ? JSON.stringify(finalPayload) : "null",
+            );
           }
 
-          if (needsClarify) {
-            const finalPayload = await buildForcedClarificationFallbackPayload(
-              message,
-              streamedAssistantText,
-            );
-            if (INTENT_NLU_DEBUG) {
-              console.log(
-                "[clarify-debug] finalPayload:",
-                JSON.stringify(finalPayload),
-              );
-            }
-
-            if (finalPayload) {
-              const separator = streamedAssistantText.trim() ? "\n" : "";
-              const finalBlock =
-                CLARIFY_JSON_BLOCK_START +
-                JSON.stringify(finalPayload) +
-                CLARIFY_JSON_BLOCK_END;
-              res.write(`${separator}${finalBlock}`);
-            }
+          if (needsClarify && finalPayload) {
+            const separator = streamedAssistantText.trim() ? "\n" : "";
+            const finalBlock =
+              CLARIFY_JSON_BLOCK_START +
+              JSON.stringify(finalPayload) +
+              CLARIFY_JSON_BLOCK_END;
+            res.write(`${separator}${finalBlock}`);
           }
         }
       }

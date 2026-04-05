@@ -143,9 +143,9 @@
       "Freut mich, dass du da bist, {{name}}. Legen wir los."
     ],
     "models": {
-      "free": "v1",
-      "pro": "v2",
-      "max": "v2.5"
+      "free": "Dwarf",
+      "pro": "Star",
+      "max": "Supergiant"
     },
     "styles": {
       "formal": "Formell",
@@ -463,14 +463,14 @@
     "faqLabel": "Häufige Fragen",
     "features": {
       "free": [
-        { "text": "Wieland v1", "enabled": true },
+        { "text": "Wieland Dwarf", "enabled": true },
         { "text": "Unbegrenzte Gespräche", "enabled": true },
         { "text": "Bild-Upload & Analyse", "enabled": true },
         { "text": "Gesprächsverlauf", "enabled": true },
         { "text": "Internetzugang", "enabled": false },
         { "text": "Prioritäts-Support", "enabled": false },
-        { "text": "Wieland v2", "enabled": false },
-        { "text": "Wieland v2.5", "enabled": false }
+        { "text": "Wieland Star", "enabled": false },
+        { "text": "Wieland Supergiant", "enabled": false }
       ],
       "pro": [
         { "text": "Alles aus Kostenlos", "enabled": true },
@@ -478,16 +478,16 @@
           "text": "Unterstützt die Entwicklung von Wieland AI",
           "enabled": true
         },
-        { "text": "Wieland v2", "enabled": true },
+        { "text": "Wieland Star", "enabled": true },
         { "text": "Internetzugang", "enabled": true },
         { "text": "Prioritäts-Support", "enabled": true },
         { "text": "Frühzeitiger Zugang zu neuen Releases", "enabled": true },
-        { "text": "Wieland v2.5", "enabled": false }
+        { "text": "Wieland Supergiant", "enabled": false }
       ],
       "max": [
         { "text": "Alles aus Pro", "enabled": true },
         {
-          "text": "Wieland v2.5 mit erweiterten Token-Limits",
+          "text": "Wieland Supergiant mit erweiterten Token-Limits",
           "enabled": true
         },
         { "text": "Prioritäts-Support", "enabled": true },

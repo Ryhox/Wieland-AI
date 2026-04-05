@@ -115,17 +115,146 @@ const GlobeIcon = () => (
   </svg>
 );
 
+// svg icon: star variants for models (Dwarf/Star/Supergiant)
+// Dwarf: small, dense, orange star
+const DwarfStarIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 200 200"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ display: "inline-block", verticalAlign: "middle" }}
+  >
+    <defs>
+      <radialGradient id="dwarfCore" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#fff8e1" />
+        <stop offset="40%" stopColor="#ffe082" />
+        <stop offset="100%" stopColor="#ff8f00" />
+      </radialGradient>
+      <radialGradient id="dwarfGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#ffcc02" stopOpacity="0.4" />
+        <stop offset="100%" stopColor="#ff8f00" stopOpacity="0" />
+      </radialGradient>
+    </defs>
+    <circle cx="100" cy="100" r="72" fill="url(#dwarfGlow)" />
+    <g stroke="#ffcc02" strokeWidth="1" strokeLinecap="round" opacity="0.6">
+      <line x1="100" y1="48" x2="100" y2="36" />
+      <line x1="100" y1="152" x2="100" y2="164" />
+      <line x1="48" y1="100" x2="36" y2="100" />
+      <line x1="152" y1="100" x2="164" y2="100" />
+      <line x1="66" y1="66" x2="57" y2="57" />
+      <line x1="134" y1="66" x2="143" y2="57" />
+      <line x1="66" y1="134" x2="57" y2="143" />
+      <line x1="134" y1="134" x2="143" y2="143" />
+    </g>
+    <circle cx="100" cy="100" r="42" fill="url(#dwarfCore)" />
+    <circle cx="85" cy="90" r="7" fill="#e65100" opacity="0.18" />
+    <circle cx="112" cy="108" r="5" fill="#e65100" opacity="0.14" />
+    <circle cx="95" cy="115" r="4" fill="#e65100" opacity="0.11" />
+  </svg>
+);
+
+// Star: bright, standard star
+const StarIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 200 200"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ display: "inline-block", verticalAlign: "middle" }}
+  >
+    <defs>
+      <radialGradient id="starCore" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="30%" stopColor="#fff9c4" />
+        <stop offset="70%" stopColor="#ffeb3b" />
+        <stop offset="100%" stopColor="#f9a825" />
+      </radialGradient>
+      <radialGradient id="starGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#fff176" stopOpacity="0.45" />
+        <stop offset="100%" stopColor="#f9a825" stopOpacity="0" />
+      </radialGradient>
+    </defs>
+    <circle cx="100" cy="100" r="88" fill="url(#starGlow)" />
+    <g stroke="#fff176" strokeLinecap="round" opacity="0.6">
+      <line x1="100" y1="42" x2="100" y2="26" strokeWidth="2" />
+      <line x1="100" y1="158" x2="100" y2="174" strokeWidth="2" />
+      <line x1="42" y1="100" x2="26" y2="100" strokeWidth="2" />
+      <line x1="158" y1="100" x2="174" y2="100" strokeWidth="2" />
+      <line x1="60" y1="60" x2="48" y2="48" strokeWidth="1.5" />
+      <line x1="140" y1="60" x2="152" y2="48" strokeWidth="1.5" />
+      <line x1="60" y1="140" x2="48" y2="152" strokeWidth="1.5" />
+      <line x1="140" y1="140" x2="152" y2="152" strokeWidth="1.5" />
+    </g>
+    <circle cx="100" cy="100" r="58" fill="url(#starCore)" />
+    <circle cx="80" cy="84" r="10" fill="#f9a825" opacity="0.12" />
+    <circle cx="116" cy="90" r="8" fill="#f9a825" opacity="0.10" />
+    <circle cx="88" cy="118" r="9" fill="#f9a825" opacity="0.09" />
+    <circle cx="118" cy="112" r="6" fill="#e65100" opacity="0.08" />
+  </svg>
+);
+
+// Supergiant: massive, red star with expansive glow
+const SupergiantStarIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 200 200"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ display: "inline-block", verticalAlign: "middle" }}
+  >
+    <defs>
+      <radialGradient id="sgCore" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#fff3e0" />
+        <stop offset="25%" stopColor="#ffccbc" />
+        <stop offset="60%" stopColor="#ff7043" />
+        <stop offset="100%" stopColor="#bf360c" />
+      </radialGradient>
+      <radialGradient id="sgGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#ff7043" stopOpacity="0.45" />
+        <stop offset="70%" stopColor="#ff3d00" stopOpacity="0.12" />
+        <stop offset="100%" stopColor="#bf360c" stopOpacity="0" />
+      </radialGradient>
+    </defs>
+    <circle cx="100" cy="100" r="98" fill="url(#sgGlow)" />
+    <g fill="none" stroke="#ff7043" strokeWidth="0.8" opacity="0.22">
+      <path d="M100 22 Q76 10 54 18" />
+      <path d="M100 22 Q124 10 146 18" />
+      <path d="M100 178 Q74 190 52 182" />
+      <path d="M100 178 Q126 190 148 182" />
+      <path d="M22 100 Q10 76 18 54" />
+      <path d="M178 100 Q190 76 182 54" />
+    </g>
+    <g stroke="#ffab91" strokeLinecap="round" opacity="0.5">
+      <line x1="100" y1="28" x2="100" y2="10" strokeWidth="2.5" />
+      <line x1="100" y1="172" x2="100" y2="190" strokeWidth="2.5" />
+      <line x1="28" y1="100" x2="10" y2="100" strokeWidth="2.5" />
+      <line x1="172" y1="100" x2="190" y2="100" strokeWidth="2.5" />
+      <line x1="48" y1="48" x2="34" y2="34" strokeWidth="1.8" />
+      <line x1="152" y1="48" x2="166" y2="34" strokeWidth="1.8" />
+      <line x1="48" y1="152" x2="34" y2="166" strokeWidth="1.8" />
+      <line x1="152" y1="152" x2="166" y2="166" strokeWidth="1.8" />
+    </g>
+    <circle cx="100" cy="100" r="78" fill="url(#sgCore)" />
+    <circle cx="72" cy="76" r="18" fill="#bf360c" opacity="0.14" />
+    <circle cx="126" cy="72" r="14" fill="#bf360c" opacity="0.11" />
+    <circle cx="80" cy="126" r="16" fill="#bf360c" opacity="0.12" />
+    <circle cx="128" cy="120" r="11" fill="#e64a19" opacity="0.09" />
+    <circle cx="100" cy="95" r="10" fill="#fff3e0" opacity="0.06" />
+  </svg>
+);
+
 const AVAILABLE_MODELS = [
-  { id: "qwen3-vl:4b-instruct", key: "chat.models.free", icon: <BotIcon /> },
+  { id: "qwen3-vl:4b-instruct", key: "chat.models.free", icon: <DwarfStarIcon /> },
   {
     id: "qwen3-vl:8b-instruct",
     key: "chat.models.pro",
-    icon: <LightningIcon />,
+    icon: <StarIcon />,
   },
   {
     id: "qwen3-vl:8b-instruct-max",
     key: "chat.models.max",
-    icon: <TargetIcon />,
+    icon: <SupergiantStarIcon />,
   },
 ];
 
@@ -146,14 +275,14 @@ const getPlanRank = (plan) => {
   return 0;
 };
 
-// get model rank: numeric tier comparison (0=v1, 1=v2, 2=v2.5)
+// get model rank: numeric tier comparison (0=Dwarf, 1=Star, 2=Supergiant)
 const getModelRank = (modelId) => {
   if (modelId === "qwen3-vl:8b-instruct-max") return 2;
   if (modelId === "qwen3-vl:8b-instruct") return 1;
   return 0;
 };
 
-// get plan model: return highest model available for user's plan tier (v1/v2/v2.5)
+// get plan model: return highest model available for user's plan tier (Dwarf/Star/Supergiant)
 const getPlanModel = (plan) => {
   const normalized = normalizePlan(plan);
   if (normalized === "admin" || normalized === "max")

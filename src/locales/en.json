@@ -139,9 +139,9 @@
       "Glad you're here, {{name}}. Let's build something useful."
     ],
     "models": {
-      "free": "v1",
-      "pro": "v2",
-      "max": "v2.5"
+      "free": "Dwarf",
+      "pro": "Star",
+      "max": "Supergiant"
     },
     "styles": {
       "formal": "Formal",
@@ -459,27 +459,27 @@
     "faqLabel": "FAQ",
     "features": {
       "free": [
-        { "text": "Wieland v1", "enabled": true },
+        { "text": "Wieland Dwarf", "enabled": true },
         { "text": "Unlimited chats", "enabled": true },
         { "text": "Image upload & analysis", "enabled": true },
         { "text": "Chat history", "enabled": true },
         { "text": "Internet access", "enabled": false },
         { "text": "Priority support", "enabled": false },
-        { "text": "Wieland v2", "enabled": false },
-        { "text": "Wieland v2.5", "enabled": false }
+        { "text": "Wieland Star", "enabled": false },
+        { "text": "Wieland Supergiant", "enabled": false }
       ],
       "pro": [
         { "text": "Everything from Free", "enabled": true },
         { "text": "Supports Wieland AI development", "enabled": true },
-        { "text": "Wieland v2", "enabled": true },
+        { "text": "Wieland Star", "enabled": true },
         { "text": "Internet access", "enabled": true },
         { "text": "Priority support", "enabled": true },
         { "text": "Early release access", "enabled": true },
-        { "text": "Wieland v2.5", "enabled": false }
+        { "text": "Wieland Supergiant", "enabled": false }
       ],
       "max": [
         { "text": "Everything from Pro", "enabled": true },
-        { "text": "Wieland v2.5 with extended token limits", "enabled": true },
+        { "text": "Wieland Supergiant with extended token limits", "enabled": true },
         { "text": "Priority support", "enabled": true },
         { "text": "Early release access", "enabled": true }
       ]

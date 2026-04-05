@@ -287,6 +287,7 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(0, 0, 0, 0.34);
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .message-bubble .chat-code-head {
@@ -297,6 +298,7 @@
   padding: 8px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
+  box-sizing: border-box;
 }
 
 .message-bubble .chat-code-lang {
@@ -315,6 +317,8 @@
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .message-bubble .code-copy-btn:hover {
@@ -325,6 +329,9 @@
   margin: 0;
   padding: 10px;
   overflow-x: auto;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .message-bubble .chat-code-block pre code {
@@ -333,6 +340,9 @@
   color: #e6e9f2;
   display: block;
   line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 /* Loading animation */

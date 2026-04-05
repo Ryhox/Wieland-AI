@@ -139,9 +139,9 @@
       "Felice che tu sia qui, {{name}}. Mettiamoci al lavoro."
     ],
     "models": {
-      "free": "v1",
-      "pro": "v2",
-      "max": "v2.5"
+      "free": "Dwarf",
+      "pro": "Star",
+      "max": "Supergiant"
     },
     "styles": {
       "formal": "Formale",
@@ -463,27 +463,27 @@
     "faqLabel": "Domande frequenti",
     "features": {
       "free": [
-        { "text": "Wieland v1", "enabled": true },
+        { "text": "Wieland Dwarf", "enabled": true },
         { "text": "Chat illimitate", "enabled": true },
         { "text": "Upload e analisi immagini", "enabled": true },
         { "text": "Cronologia chat", "enabled": true },
         { "text": "Accesso a Internet", "enabled": false },
         { "text": "Supporto prioritario", "enabled": false },
-        { "text": "Wieland v2", "enabled": false },
-        { "text": "Wieland v2.5", "enabled": false }
+        { "text": "Wieland Star", "enabled": false },
+        { "text": "Wieland Supergiant", "enabled": false }
       ],
       "pro": [
         { "text": "Tutto del piano Free", "enabled": true },
         { "text": "Supporta lo sviluppo di Wieland AI", "enabled": true },
-        { "text": "Wieland v2", "enabled": true },
+        { "text": "Wieland Star", "enabled": true },
         { "text": "Accesso a Internet", "enabled": true },
         { "text": "Supporto prioritario", "enabled": true },
         { "text": "Accesso anticipato alle nuove funzioni", "enabled": true },
-        { "text": "Wieland v2.5", "enabled": false }
+        { "text": "Wieland Supergiant", "enabled": false }
       ],
       "max": [
         { "text": "Tutto del piano Pro", "enabled": true },
-        { "text": "Wieland v2.5 con token-limits estesi", "enabled": true },
+        { "text": "Wieland Supergiant con token-limits estesi", "enabled": true },
         { "text": "Supporto prioritario", "enabled": true },
         { "text": "Accesso anticipato alle nuove funzioni", "enabled": true }
       ]
