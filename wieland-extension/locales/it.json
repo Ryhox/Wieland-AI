@@ -28,7 +28,11 @@
     "errPasswordLength": "La password deve avere almeno 8 caratteri.",
     "errPasswordMismatch": "Le password non corrispondono.",
     "errGeneric": "Si e verificato un errore.",
-    "errServer": "Server non raggiungibile."
+    "errServer": "Server non raggiungibile.",
+    "legal": "Note legali",
+    "legalNotice": "Avviso legale",
+    "privacyPolicy": "Politica sulla privacy",
+    "termsOfService": "Condizioni di servizio"
   },
   "sidebar": {
     "closeMenu": "Chiudi menu",
@@ -89,12 +93,12 @@
       "memoryEmpty": "Nessun ricordo corrispondente.",
       "pageRead": "Leggo pagina: {title}",
       "currentPage": "pagina corrente"
+    },
+    "models": {
+      "free": "Dwarf",
+      "pro": "Star",
+      "max": "Supergiant"
     }
-  },
-  "models": {
-    "free": "2B - Free",
-    "pro": "4B - Pro",
-    "precise": "8B - Preciso"
   },
   "welcomeMessages": [
     "Cosa ti passa per la mente oggi?",

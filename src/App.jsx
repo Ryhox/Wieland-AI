@@ -54,6 +54,11 @@ function AppRoutes() {
     }
   }, [activeLang, i18n]);
 
+  // Scroll to top when route changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   if (!isSupportedLang(lang)) {
     return (
       <Navigate

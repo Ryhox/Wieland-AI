@@ -850,6 +850,13 @@
     "dangerZone": "Danger zone",
     "deleteAccount": "Delete account",
     "deleteDescription": "This will permanently delete your account and related data.",
+    "legalSection": "Legal",
+    "impressumTitle": "Legal notice",
+    "legalDescription": "Impressum and legal information",
+    "privacyTitle": "Privacy policy",
+    "privacyDescription": "Data protection and privacy",
+    "termsTitle": "Terms of service",
+    "termsDescription": "Terms of service and guidelines",
     "errors": {
       "title": "Error",
       "success": "Success",
@@ -887,117 +894,205 @@
   "legal": {
     "noticeEyebrow": "Legal",
     "noticeTitle": "Legal notice",
-    "noticeLead": "Information pursuant to Italian Legislative Decree No. 70/2003.",
+    "noticeLead": "Information pursuant to Italian Legislative Decree No. 70/2003 and EU Regulation 2016/679.",
     "privacyEyebrow": "Privacy",
     "privacyTitle": "Privacy policy",
-    "privacyLead": "We take protection of your data seriously.",
+    "privacyLead": "We take the protection of your personal data seriously. Here you can learn how we handle it.",
     "termsEyebrow": "Terms",
     "termsTitle": "Terms of Service",
     "termsLead": "Please read these terms carefully before using Wieland AI.",
-    "lastUpdated": "Last updated: March 2026",
-    "status": "Status: March 2025",
+    "lastUpdated": "Last updated: April 2026",
+    "status": "Status: April 2026",
     "noticeSections": [
       {
-        "title": "Provider",
+        "title": "Website operator and service provider",
         "paragraphs": [
-          "Wieland AI Project",
-          "c/o Wieland AI, Wielandstrasse 11, 39042 Brixen (BZ), Italy"
-        ]
-      },
-      { "title": "Contact", "paragraphs": ["Email: kontakt@wieland.ai"] },
-      {
-        "title": "Responsible for content",
-        "paragraphs": ["Wieland, Wielandstrasse 11, 39042 Brixen (BZ), Italy"]
-      },
-      {
-        "title": "Disclaimer",
-        "paragraphs": [
-          "All content is prepared with care. We cannot guarantee completeness or currentness."
+          "Wieland AI",
+          "Wielandstrasse 11",
+          "39042 Brixen",
+          "Italy"
         ]
       },
       {
-        "title": "Online dispute resolution",
+        "title": "Contact information",
         "paragraphs": [
-          "EU ODR platform: https://ec.europa.eu/consumers/odr/",
-          "We are not obliged or willing to participate in dispute procedures."
+          "Email: kontakt@wieland.ai"
+        ]
+      },
+      {
+        "title": "Responsible for content (pursuant to Art. 17 Abs. 2 MStV)",
+        "paragraphs": [
+          "Wieland AI",
+          "Wielandstrasse 11",
+          "39042 Brixen",
+          "Italy"
+        ]
+      },
+      {
+        "title": "Disclaimer of liability",
+        "paragraphs": [
+          "All content on our website has been carefully prepared. However, we cannot assume any liability or guarantee for the accuracy, completeness or currency of the content. As a service provider, we are responsible for our own content on these pages in accordance with general law. However, we are not obligated under Art. 8 to 10 of the TMG to monitor transmitted or stored third-party information, or to conduct investigations that would indicate illegal activity."
+        ]
+      },
+      {
+        "title": "Online Dispute Resolution (ODR)",
+        "paragraphs": [
+          "Pursuant to Art. 14 Abs. 1 ODR-VO, we would like to point out the online dispute settlement platform of the European Commission: https://ec.europa.eu/consumers/odr/",
+          "We are not willing or obligated to participate in dispute resolution proceedings before a consumer arbitration board. You can find our email address in our legal notice."
         ]
       }
     ],
     "privacySections": [
       {
-        "title": "1. Privacy at a glance",
+        "title": "1. General Information",
         "paragraphs": [
-          "Wieland AI is primarily local. By default no user data leaves your device."
+          "Wieland AI respects the privacy of all users and complies with all applicable data protection laws, in particular with the General Data Protection Regulation (EU) 2016/679 (GDPR) and the Italian Privacy Code (Decreto Legislativo 30 giugno 2003, n. 196) as amended by the Decreto Legislativo 10 agosto 2018, n. 101."
         ]
       },
       {
-        "title": "2. Collected data",
+        "title": "2. Data controller",
+        "paragraphs": [
+          "Wieland AI",
+          "Wielandstrasse 11",
+          "39042 Brixen",
+          "Italy",
+          "Email: kontakt@wieland.ai"
+        ]
+      },
+      {
+        "title": "3. Collected data and data processing",
         "list": [
-          "Local app: chats and accounts are stored locally.",
-          "Website: standard server logs."
+          "Local application: Chats and user accounts are by default stored only locally on your device and do not leave your device.",
+          "Website: Standard web server logs (IP address, access time, timestamp, requested resource, HTTP status code).",
+          "This data is processed for operational security and to detect and remedy errors."
         ]
       },
       {
-        "title": "3. Cookies",
-        "paragraphs": ["No marketing or tracking cookies are used."]
+        "title": "4. Cookies and similar technologies",
+        "paragraphs": [
+          "This website does not use marketing or tracking cookies from third parties. We only use functionally necessary cookies to maintain your user session. You can disable the storage of cookies in your browser settings; however, this may impair the functionality of the website."
+        ]
       },
       {
-        "title": "4. Data sharing",
-        "paragraphs": ["Your data is not sold or shared for advertising."]
+        "title": "5. Data sharing",
+        "paragraphs": [
+          "Your personal data will not be shared with third parties, sold, or used for advertising purposes. Data will only be shared if required by law or to enforce our terms of service."
+        ]
       },
       {
-        "title": "5. Your rights",
+        "title": "6. Data retention",
+        "paragraphs": [
+          "Data is stored only for as long as necessary to fulfill the processing purposes. Server logs are deleted after 90 days. User account data is deleted immediately upon account deactivation or deletion."
+        ]
+      },
+      {
+        "title": "7. Your rights",
         "list": [
-          "Access (Art. 15 GDPR)",
-          "Rectification (Art. 16 GDPR)",
-          "Erasure (Art. 17 GDPR)",
-          "Objection (Art. 21 GDPR)"
+          "Right of access (Art. 15 GDPR): You can request information about what data is stored about you at any time.",
+          "Right of rectification (Art. 16 GDPR): You can have incorrect data corrected.",
+          "Right to be forgotten (Art. 17 GDPR): You can request deletion of your data.",
+          "Right to data portability (Art. 20 GDPR): You can receive your data in a structured format.",
+          "Right to object (Art. 21 GDPR): You can object to data processing.",
+          "Right to restrict processing (Art. 18 GDPR)."
         ]
       },
       {
-        "title": "6. Contact",
-        "paragraphs": ["For privacy questions: kontakt@wieland.ai"]
+        "title": "8. Data security",
+        "paragraphs": [
+          "We take appropriate technical and organizational measures to protect the security of your data, including encryption during transmission."
+        ]
+      },
+      {
+        "title": "9. Data breach notification",
+        "paragraphs": [
+          "In case of a personal data breach, affected individuals will be notified immediately and the data protection authority within 72 hours."
+        ]
+      },
+      {
+        "title": "10. Contact",
+        "paragraphs": [
+          "If you have questions about privacy or wish to exercise your rights, please contact us at: kontakt@wieland.ai",
+          "You also have the right to file a complaint with the competent Italian data protection authority (Garante per la protezione dei dati personali)."
+        ]
       }
     ],
     "termsSections": [
       {
-        "title": "1. Scope",
+        "title": "1. Scope and acceptance",
         "paragraphs": [
-          "These terms apply to Wieland AI software and website use."
+          "These terms of service govern the use of Wieland AI software and website. Use of the service signifies your acceptance of these terms. If you do not agree, you may not use Wieland AI."
         ]
       },
       {
-        "title": "2. Usage rights",
-        "paragraphs": ["Wieland AI is provided under MIT license."]
+        "title": "2. License and usage rights",
+        "paragraphs": [
+          "Wieland AI is provided under the MIT License. You are granted a non-exclusive, non-transferable license for personal, non-commercial use, subject to the terms of the respective open-source license."
+        ]
       },
       {
-        "title": "3. Prohibited use",
+        "title": "3. User responsibilities",
+        "paragraphs": [
+          "You are solely responsible for all activities that occur under your user account. You may not share your password with others or use the software for illegal purposes or any activities that violate these terms."
+        ]
+      },
+      {
+        "title": "4. Prohibited activities",
         "list": [
-          "Illegal use",
-          "Abuse of online services",
-          "Security bypass",
-          "Sharing admin credentials"
+          "Illegal activities or violations of applicable law",
+          "Automated abuse of online services, including scraping and automation without permission",
+          "Attempts to bypass security mechanisms or the system",
+          "Sharing admin credentials or security keys with unauthorized persons",
+          "Use to harm others, including harassment, bullying, or fraud",
+          "Violation of copyrights or intellectual property rights",
+          "Distribution of malware or harmful software",
+          "Compromise of the integrity or security of services or systems"
         ]
       },
       {
-        "title": "4. Limitation of liability",
-        "paragraphs": ["Wieland AI is provided as is without warranties."]
-      },
-      {
-        "title": "5. AI-generated content",
+        "title": "5. Limitation of liability and disclaimer",
         "paragraphs": [
-          "AI output may be inaccurate and is not professional advice."
+          "Wieland AI is provided \"as is\" without warranties of any kind, either express or implied. This includes, without limitation, no warranties of merchantability, fitness for a particular purpose, or non-infringement of third-party rights.",
+          "In no event shall Wieland AI be liable for indirect, incidental, special, or consequential damages, including loss of profits, data loss, or business interruption, regardless of cause and on any theory of liability."
         ]
       },
       {
-        "title": "6. Changes",
+        "title": "6. AI-generated content",
         "paragraphs": [
-          "Terms may be updated and published on website/changelog."
+          "Wieland AI uses AI models to generate content. This content may be inaccurate, outdated, or incomplete and should not be considered professional advice. You are solely responsible for reviewing and using generated content.",
+          "You are responsible for all content you create or distribute through Wieland AI, including copyright compliance and adherence to applicable laws."
         ]
       },
       {
-        "title": "7. Governing law",
-        "paragraphs": ["Law of the Italian Republic applies."]
+        "title": "7. Changes and updates",
+        "paragraphs": [
+          "Wieland AI reserves the right to change these terms at any time. Changes become effective when published on this page. Continued use of the software after changes constitutes acceptance of the new terms.",
+          "Wieland AI may discontinue, modify, or interrupt services without prior notice."
+        ]
+      },
+      {
+        "title": "8. Termination",
+        "paragraphs": [
+          "Wieland AI may terminate access to services immediately if you violate these terms, in particular for illegal activities or repeated abuse."
+        ]
+      },
+      {
+        "title": "9. Intellectual property",
+        "paragraphs": [
+          "You grant Wieland AI the license to store, process, and review content as necessary to ensure the security and proper operation of services. You retain all rights to your original content."
+        ]
+      },
+      {
+        "title": "10. Governing law and jurisdiction",
+        "paragraphs": [
+          "These terms shall be governed by and construed in accordance with the laws of the Italian Republic, without regard to conflict principles.",
+          "Any claims or disputes arising from or related to these terms or use of the service shall be subject to the exclusive jurisdiction of the competent courts in Brixen (BZ), Italy, unless mandatory law provides otherwise."
+        ]
+      },
+      {
+        "title": "11. Severability clause",
+        "paragraphs": [
+          "If any provision of these terms is invalid or unenforceable, the validity of the remaining terms shall not be affected. An invalid provision shall be replaced by a valid one that achieves the original purpose as closely as possible."
+        ]
       }
     ]
   },

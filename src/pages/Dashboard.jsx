@@ -262,24 +262,22 @@ export default function Dashboard({ isSidebarOpen, onSidebarToggle }) {
         <div className="sidebar-spacer" />
 
         <div className="sidebar-bottom">
-          {isOpen && (
-            <a href={localPath("/")} className="db-back-link">
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M19 12H5" />
-                <polyline points="12 19 5 12 12 5" />
-              </svg>
-              {t("dashboard.backToSite")}
-            </a>
-          )}
+          <a href={localPath("/")} className="db-back-link">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            {isOpen && <span>{t("dashboard.backToSite")}</span>}
+          </a>
           <div className="sidebar-profile">
             <div className="sidebar-avatar">{initials}</div>
             {isOpen && (

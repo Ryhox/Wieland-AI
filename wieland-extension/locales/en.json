@@ -28,7 +28,11 @@
     "errPasswordLength": "Password must be at least 8 characters.",
     "errPasswordMismatch": "Passwords do not match.",
     "errGeneric": "An error occurred.",
-    "errServer": "Server unavailable."
+    "errServer": "Server unavailable.",
+    "legal": "Legal",
+    "legalNotice": "Legal Notice",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
   },
   "sidebar": {
     "closeMenu": "Close menu",
@@ -89,12 +93,12 @@
       "memoryEmpty": "No matching memory found.",
       "pageRead": "Reading page: {title}",
       "currentPage": "current page"
+    },
+    "models": {
+      "free": "Dwarf",
+      "pro": "Star",
+      "max": "Supergiant"
     }
-  },
-  "models": {
-    "free": "2B - Free",
-    "pro": "4B - Pro",
-    "precise": "8B - Precise"
   },
   "welcomeMessages": [
     "What is on your mind today?",

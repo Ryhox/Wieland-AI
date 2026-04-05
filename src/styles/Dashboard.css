@@ -1518,6 +1518,17 @@ a {
   color: #ffffff;
 }
 
+/* collapsed state: show only arrow icon */
+.sidebar.collapsed .db-back-link {
+  padding: 8px 6px;
+  gap: 0;
+  justify-content: center;
+}
+
+.sidebar.collapsed .db-back-link span {
+  display: none;
+}
+
 .db-header-sep {
   color: rgba(255, 255, 255, 0.2);
   font-size: 16px;
@@ -1586,5 +1597,20 @@ a {
   .db-main-area,
   .db-main-area.sidebar-open {
     left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .db-modal-footer {
+    flex-wrap: wrap;
+    padding: 10px 12px 12px;
+    justify-content: flex-start;
+  }
+
+  .db-table-count {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 }

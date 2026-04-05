@@ -854,6 +854,13 @@
     "dangerZone": "Zona pericolosa",
     "deleteAccount": "Elimina account",
     "deleteDescription": "Questo eliminera definitivamente il tuo account e i dati associati.",
+    "legalSection": "Aspetti legali",
+    "impressumTitle": "Avviso legale",
+    "legalDescription": "Informazioni legali e impressum",
+    "privacyTitle": "Informativa sulla privacy",
+    "privacyDescription": "Protezione dei dati e privacy",
+    "termsTitle": "Termini di servizio",
+    "termsDescription": "Termini di servizio e linee guida",
     "errors": {
       "title": "Errore",
       "success": "Successo",
@@ -887,119 +894,205 @@
   "legal": {
     "noticeEyebrow": "Legale",
     "noticeTitle": "Note legali",
-    "noticeLead": "Informazioni ai sensi del Decreto Legislativo italiano n. 70/2003.",
+    "noticeLead": "Informazioni ai sensi del Decreto Legislativo italiano n. 70/2003 e Regolamento UE 2016/679.",
     "privacyEyebrow": "Privacy",
-    "privacyTitle": "Informativa privacy",
-    "privacyLead": "Prendiamo sul serio la protezione dei tuoi dati.",
+    "privacyTitle": "Informativa sulla privacy",
+    "privacyLead": "Prendiamo molto seriamente la protezione dei tuoi dati personali. Qui imparerai come li gestiamo.",
     "termsEyebrow": "Termini",
     "termsTitle": "Termini di servizio",
-    "termsLead": "Leggi attentamente questi termini prima di usare Wieland AI.",
-    "lastUpdated": "Ultimo aggiornamento: marzo 2026",
-    "status": "Stato: marzo 2025",
+    "termsLead": "Leggi attentamente questi termini prima di utilizzare Wieland AI.",
+    "lastUpdated": "Ultimo aggiornamento: aprile 2026",
+    "status": "Stato: aprile 2026",
     "noticeSections": [
       {
-        "title": "Fornitore",
+        "title": "Gestore del sito web e fornitore del servizio",
         "paragraphs": [
-          "Progetto Wieland AI",
-          "c/o Wieland AI, Wielandstrasse 11, 39042 Bressanone (BZ), Italia"
-        ]
-      },
-      { "title": "Contatti", "paragraphs": ["Email: kontakt@wieland.ai"] },
-      {
-        "title": "Responsabile contenuti",
-        "paragraphs": [
-          "Wieland, Wielandstrasse 11, 39042 Bressanone (BZ), Italia"
+          "Wieland AI",
+          "Wielandstrasse 11",
+          "39042 Bressanone",
+          "Italia"
         ]
       },
       {
-        "title": "Disclaimer",
+        "title": "Informazioni di contatto",
         "paragraphs": [
-          "I contenuti sono creati con cura ma senza garanzia di completezza/attualità."
+          "Email: kontakt@wieland.ai"
         ]
       },
       {
-        "title": "Risoluzione controversie online",
+        "title": "Responsabile dei contenuti (ai sensi dell'Art. 17 Abs. 2 MStV)",
         "paragraphs": [
-          "Piattaforma ODR UE: https://ec.europa.eu/consumers/odr/",
-          "Non siamo obbligati né disponibili alla procedura di conciliazione."
+          "Wieland AI",
+          "Wielandstrasse 11",
+          "39042 Bressanone",
+          "Italia"
+        ]
+      },
+      {
+        "title": "Esclusione di responsabilità",
+        "paragraphs": [
+          "Tutti i contenuti del nostro sito web sono stati preparati con cura. Tuttavia, non possiamo assumere alcuna responsabilità o garanzia per l'accuratezza, la completezza o l'attualità dei contenuti. In qualità di fornitore di servizi, siamo responsabili per i nostri contenuti su queste pagine secondo la legge vigente. Tuttavia, non siamo obbligati secondo l'Art. 8 a 10 del TMG a monitorare le informazioni di terzi trasmesse o archiviate, o a condurre indagini che indicherebbero un'attività illegale."
+        ]
+      },
+      {
+        "title": "Risoluzione delle controversie online (ODR)",
+        "paragraphs": [
+          "Ai sensi dell'Art. 14 Abs. 1 ODR-VO, desideriamo segnalarvi la piattaforma di risoluzione delle controversie online della Commissione europea: https://ec.europa.eu/consumers/odr/",
+          "Non siamo disposti né obbligati a partecipare a procedimenti di risoluzione delle controversie davanti a un organismo di conciliazione del consumatore. Puoi trovare il nostro indirizzo email nel nostro avviso legale."
         ]
       }
     ],
     "privacySections": [
       {
-        "title": "1. Panoramica",
+        "title": "1. Informazioni generali",
         "paragraphs": [
-          "Wieland AI è principalmente locale. Di default nessun dato lascia il dispositivo."
+          "Wieland AI rispetta la privacy di tutti gli utenti e si conforma a tutte le leggi sulla protezione dei dati applicabili, in particolare al Regolamento generale sulla protezione dei dati (UE) 2016/679 (RGPD) e al Codice della Privacy italiano (Decreto Legislativo 30 giugno 2003, n. 196) come modificato dal Decreto Legislativo 10 agosto 2018, n. 101."
         ]
       },
       {
-        "title": "2. Dati raccolti",
-        "list": [
-          "App locale: chat e account salvati localmente.",
-          "Sito web: log server standard."
-        ]
-      },
-      {
-        "title": "3. Cookie",
-        "paragraphs": ["Non usiamo cookie di marketing o tracking."]
-      },
-      {
-        "title": "4. Condivisione dati",
+        "title": "2. Titolare del trattamento",
         "paragraphs": [
-          "I tuoi dati non vengono venduti né condivisi a fini pubblicitari."
+          "Wieland AI",
+          "Wielandstrasse 11",
+          "39042 Bressanone",
+          "Italia",
+          "Email: kontakt@wieland.ai"
         ]
       },
       {
-        "title": "5. Diritti",
+        "title": "3. Dati raccolti e trattamento dei dati",
         "list": [
-          "Accesso (Art. 15 GDPR)",
-          "Rettifica (Art. 16 GDPR)",
-          "Cancellazione (Art. 17 GDPR)",
-          "Opposizione (Art. 21 GDPR)"
+          "Applicazione locale: i chat e gli account utente sono per impostazione predefinita archiviati solo localmente sul tuo dispositivo e non lasciano il dispositivo.",
+          "Sito web: log del server web standard (indirizzo IP, momento dell'accesso, timestamp, risorsa richiesta, codice di stato HTTP).",
+          "Questi dati vengono elaborati per la sicurezza operativa e per rilevare e correggere gli errori."
         ]
       },
       {
-        "title": "6. Contatto",
-        "paragraphs": ["Per domande privacy: kontakt@wieland.ai"]
+        "title": "4. Cookie e tecnologie simili",
+        "paragraphs": [
+          "Questo sito web non utilizza cookie di marketing o tracciamento da terzi. Utilizziamo solo cookie funzionalmente necessari per mantenere la tua sessione utente. Puoi disabilitare l'archiviazione dei cookie nelle impostazioni del tuo browser; tuttavia, ciò potrebbe compromettere le funzionalità del sito web."
+        ]
+      },
+      {
+        "title": "5. Condivisione dei dati",
+        "paragraphs": [
+          "I tuoi dati personali non verranno condivisi con terzi, venduti o utilizzati a scopi pubblicitari. I dati verranno condivisi solo se richiesto dalla legge o per far valere i nostri termini di servizio."
+        ]
+      },
+      {
+        "title": "6. Conservazione dei dati",
+        "paragraphs": [
+          "I dati vengono conservati solo per il tempo necessario a raggiungere i fini del trattamento. I log del server vengono eliminati dopo 90 giorni. I dati dell'account utente vengono eliminati immediatamente alla disattivazione o cancellazione dell'account."
+        ]
+      },
+      {
+        "title": "7. Tuoi diritti",
+        "list": [
+          "Diritto di accesso (Art. 15 RGPD): puoi in qualsiasi momento richiedere informazioni su quali dati sono archiviati su di te.",
+          "Diritto di rettifica (Art. 16 RGPD): puoi far correggere i dati inesatti.",
+          "Diritto all'oblio (Art. 17 RGPD): puoi richiedere l'eliminazione dei tuoi dati.",
+          "Diritto alla portabilità dei dati (Art. 20 RGPD): puoi ricevere i tuoi dati in formato strutturato.",
+          "Diritto di opposizione (Art. 21 RGPD): puoi opporti al trattamento dei dati.",
+          "Diritto di limitare il trattamento (Art. 18 RGPD)."
+        ]
+      },
+      {
+        "title": "8. Sicurezza dei dati",
+        "paragraphs": [
+          "Adottiamo appropriate misure tecniche e organizzative per proteggere la sicurezza dei tuoi dati, inclusa la crittografia durante la trasmissione."
+        ]
+      },
+      {
+        "title": "9. Notifica di violazione dei dati",
+        "paragraphs": [
+          "In caso di violazione dei dati personali, gli interessati verranno immediatamente notificati e l'autorità per la protezione dei dati sarà informata entro 72 ore."
+        ]
+      },
+      {
+        "title": "10. Contatto",
+        "paragraphs": [
+          "Se hai domande riguardanti la privacy o desideri esercitare i tuoi diritti, contattaci all'indirizzo: kontakt@wieland.ai",
+          "Hai anche il diritto di presentare un reclamo all'autorità italiana competente per la protezione dei dati (Garante per la protezione dei dati personali)."
+        ]
       }
     ],
     "termsSections": [
       {
-        "title": "1. Ambito",
-        "paragraphs": ["Questi termini valgono per software e sito Wieland AI."]
+        "title": "1. Ambito di applicazione e accettazione",
+        "paragraphs": [
+          "Questi termini di servizio disciplinano l'utilizzo del software Wieland AI e del sito web. L'utilizzo del servizio significa che accetti questi termini. Se non sei d'accordo, non puoi utilizzare Wieland AI."
+        ]
       },
       {
-        "title": "2. Diritti d'uso",
-        "paragraphs": ["Wieland AI è distribuito con licenza MIT."]
+        "title": "2. Licenza e diritti di utilizzo",
+        "paragraphs": [
+          "Wieland AI è fornito secondo la Licenza MIT. Ti viene concessa una licenza non esclusiva, non trasferibile per l'uso personale e non commerciale, soggetta ai termini della rispettiva licenza open-source."
+        ]
       },
       {
-        "title": "3. Uso vietato",
+        "title": "3. Responsabilità dell'utente",
+        "paragraphs": [
+          "Sei l'unico responsabile di tutte le attività che si verificano nel tuo account utente. Non puoi condividere la tua password con altri o utilizzare il software per scopi illegali o qualsiasi attività che violi questi termini."
+        ]
+      },
+      {
+        "title": "4. Attività vietate",
         "list": [
-          "Uso illegale",
-          "Abuso dei servizi online",
-          "Bypass della sicurezza",
-          "Condivisione credenziali admin"
+          "Attività illegali o violazioni della legge applicabile",
+          "Abuso automatizzato di servizi online, incluso scraping e automazione senza permesso",
+          "Tentativi di aggirare i meccanismi di sicurezza o il sistema",
+          "Condivisione di credenziali amministratore o chiavi di sicurezza con persone non autorizzate",
+          "Utilizzo per danneggiare altri, incluso molestie, bullismo o frode",
+          "Violazione di diritti d'autore o di proprietà intellettuale",
+          "Distribuzione di malware o software dannoso",
+          "Compromissione dell'integrità o della sicurezza dei servizi o dei sistemi"
         ]
       },
       {
-        "title": "4. Limitazione di responsabilità",
-        "paragraphs": ["Wieland AI è fornito as-is senza garanzie."]
-      },
-      {
-        "title": "5. Contenuti AI",
+        "title": "5. Limitazione di responsabilità e disclaimer",
         "paragraphs": [
-          "I contenuti AI possono essere imprecisi e non sono consulenza professionale."
+          "Wieland AI è fornito \"così com'è\" senza garanzie di alcun tipo, esplicite o implicite. Questo include, senza limitazione, nessuna garanzia di commerciabilità, idoneiteità per un particolare scopo, o non violazione dei diritti di terzi.",
+          "In nessun caso Wieland AI sarà responsabile per danni indiretti, incidentali, speciali o consequenziali, inclusa la perdita di profitti, la perdita di dati o l'interruzione del business, indipendentemente dalla causa e su qualsiasi teoria della responsabilità."
         ]
       },
       {
-        "title": "6. Modifiche",
+        "title": "6. Contenuti generati dall'IA",
         "paragraphs": [
-          "I termini possono essere aggiornati e pubblicati su sito/changelog."
+          "Wieland AI utilizza modelli di IA per generare contenuti. Questi contenuti possono essere imprecisi, obsoleti o incompleti e non devono essere considerati come consulenza professionale. Sei l'unico responsabile della revisione e dell'utilizzo dei contenuti generati.",
+          "Sei responsabile di tutti i contenuti che crei o distribuisci attraverso Wieland AI, inclusa la conformità al copyright e alle leggi applicabili."
         ]
       },
       {
-        "title": "7. Legge applicabile",
-        "paragraphs": ["Si applica la legge della Repubblica Italiana."]
+        "title": "7. Modifiche e aggiornamenti",
+        "paragraphs": [
+          "Wieland AI si riserva il diritto di modificare questi termini in qualsiasi momento. Le modifiche diventano effettive quando pubblicate su questa pagina. L'utilizzo continuativo del software dopo le modifiche costituisce accettazione dei nuovi termini.",
+          "Wieland AI può interrompere, modificare o sospendere i servizi senza preavviso."
+        ]
+      },
+      {
+        "title": "8. Risoluzione",
+        "paragraphs": [
+          "Wieland AI può terminare immediatamente l'accesso ai servizi se violi questi termini, in particolare per attività illegali o abuso ripetuto."
+        ]
+      },
+      {
+        "title": "9. Proprietà intellettuale",
+        "paragraphs": [
+          "Concedi a Wieland AI la licenza per archiviare, elaborare e rivedere i contenuti come necessario per garantire la sicurezza e il corretto funzionamento dei servizi. Mantieni tutti i diritti sui tuoi contenuti originali."
+        ]
+      },
+      {
+        "title": "10. Legge applicabile e competenza",
+        "paragraphs": [
+          "Questi termini sono disciplinati e interpretati secondo le leggi della Repubblica Italiana, senza riguardo ai principi di conflitto.",
+          "Tutti i reclami o le controversie derivanti da o correlati a questi termini o all'utilizzo del servizio sono soggetti alla giurisdizione esclusiva dei tribunali competenti di Bressanone (BZ), Italia, a meno che la legge imperativa non preveda diversamente."
+        ]
+      },
+      {
+        "title": "11. Clausola di salvaguardia",
+        "paragraphs": [
+          "Se una disposizione di questi termini è nulla o inapplicabile, la validità delle rimanenti disposizioni non sarà interessata. Una disposizione nulla sarà sostituita da una valida che realizza lo scopo originale il più vicino possibile."
+        ]
       }
     ]
   },

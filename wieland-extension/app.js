@@ -150,14 +150,22 @@ async function detectWebsiteLanguageFromCookies() {
 }
 
 const MODELS = [
-  { id: "qwen3-vl:2b-instruct", labelKey: "models.free", rank: 0 },
-  { id: "qwen3-vl:4b-instruct", labelKey: "models.pro", rank: 1 },
-  { id: "qwen3-vl:8b-instruct", labelKey: "models.precise", rank: 2 },
+  { id: "qwen3-vl:4b-instruct", key: "chat.models.free", rank: 0 },
+  { id: "qwen3-vl:8b-instruct", key: "chat.models.pro", rank: 1 },
+  { id: "qwen3-vl:8b-instruct-max", key: "chat.models.max", rank: 2 },
 ];
 
 function getModelLabel(modelId) {
   const model = MODELS.find((m) => m.id === modelId);
-  return model ? tr(model.labelKey) : modelId;
+  if (!model) return modelId;
+  // fallback label while locales loading
+  const fallbacks = {
+    "qwen3-vl:4b-instruct": "Dwarf",
+    "qwen3-vl:8b-instruct": "Star",
+    "qwen3-vl:8b-instruct-max": "Supergiant",
+  };
+  if (!localesLoaded) return fallbacks[modelId] || modelId;
+  return tr(model.key);
 }
 
 async function detectWebsiteLanguage() {
@@ -302,6 +310,7 @@ async function syncLanguageFromWebsite() {
   currentLang = fromWebsite;
   await chromeSet({ [EXT_LANG_KEY]: fromWebsite });
   applyStaticTranslations();
+  updateLegalLabels();
 }
 
 function startLanguageSyncLoop() {
@@ -888,6 +897,18 @@ const authSpinner = $("#auth-spinner");
 const authSwitchTxt = $("#auth-switch-text");
 const authSwitchLnk = $("#auth-switch-link");
 
+// Legal Modal Elements
+const btnLegal = $("#btn-legal");
+const legalLabel = $("#legal-label");
+const legalModal = $("#legal-modal");
+const legalModalOverlay = $("#legal-modal");
+const legalModalClose = $("#legal-modal-close");
+const legalModalTitle = $("#legal-modal-title");
+const legalOptionNotice = $("#legal-option-notice");
+const legalOptionPrivacy = $("#legal-option-privacy");
+const legalOptionTerms = $("#legal-option-terms");
+const legalOptions = $$(".legal-modal-link");
+
 const messagesArea = $("#messages-area");
 const welcomeEl = $("#welcome-container");
 const welcomeText = $("#welcome-text");
@@ -1065,14 +1086,11 @@ function updateModelButtonState() {
 }
 
 function isInternetAllowedForCurrentSelection() {
-  return planRank(user?.plan) >= 1 && selectedModel !== "qwen3-vl:2b-instruct";
+  return planRank(user?.plan) >= 1;
 }
 
 function getInternetLockMessage() {
   if (planRank(user?.plan) < 1) return tr("chat.internetPlanLocked");
-  if (selectedModel === "qwen3-vl:2b-instruct") {
-    return tr("chat.internetModelLocked");
-  }
   return "";
 }
 
@@ -1562,6 +1580,7 @@ async function init() {
   await loadLocales();
   currentLang = await resolveLanguage();
   applyStaticTranslations();
+  updateLegalLabels();
   await syncLanguageFromWebsite();
   startLanguageSyncLoop();
 
@@ -1587,6 +1606,7 @@ async function init() {
     if (!newLang || newLang === currentLang) return;
     currentLang = newLang;
     applyStaticTranslations();
+    updateLegalLabels();
   });
 
   window.addEventListener(
@@ -1733,6 +1753,49 @@ $("#auth-form").addEventListener("keydown", (e) => {
   if (e.key === "Enter") handleAuth();
 });
 
+// Legal Modal Handler
+function openLegalModal() {
+  legalModal.classList.remove("hidden");
+}
+
+function closeLegalModal() {
+  legalModal.classList.add("hidden");
+}
+
+function updateLegalLabels() {
+  legalLabel.textContent = tr("auth.legal");
+  legalModalTitle.textContent = tr("auth.legal");
+  legalOptionNotice.textContent = tr("auth.legalNotice");
+  legalOptionPrivacy.textContent = tr("auth.privacyPolicy");
+  legalOptionTerms.textContent = tr("auth.termsOfService");
+}
+
+function handleLegalNavigation(page) {
+  const langCode = currentLang || "de";
+  const pageMap = {
+    "legal-notice": `/legal-notice`,
+    "privacy-policy": `/privacy-policy`,
+    "terms-of-service": `/terms-of-service`,
+  };
+  const pagePath = pageMap[page] || `/legal-notice`;
+  const url = `http://localhost:5173${pagePath}?lang=${langCode}`;
+  
+  chrome.tabs.create({ url });
+  closeLegalModal();
+}
+
+btnLegal?.addEventListener("click", openLegalModal);
+legalModalOverlay?.addEventListener("click", closeLegalModal);
+legalModalClose?.addEventListener("click", closeLegalModal);
+
+legalOptions?.forEach((opt) => {
+  opt.addEventListener("click", (e) => {
+    e.preventDefault();
+    const page = opt.dataset.page;
+    if (page) handleLegalNavigation(page);
+  });
+});
+
 // handle auth: login/register flow mit validation, error handling, token persistence
 async function handleAuth() {
   const email = inputEmail.value.trim();
@@ -1828,9 +1891,9 @@ function planRank(plan) {
 // update model for plan: assign model tier based on user subscription (2b free, 4b pro, 8b max)
 function updateModelForPlan() {
   const rank = planRank(user?.plan);
-  if (rank >= 2) selectedModel = "qwen3-vl:8b-instruct";
-  else if (rank >= 1) selectedModel = "qwen3-vl:4b-instruct";
-  else selectedModel = "qwen3-vl:2b-instruct";
+  if (rank >= 2) selectedModel = "qwen3-vl:8b-instruct-max";
+  else if (rank >= 1) selectedModel = "qwen3-vl:8b-instruct";
+  else selectedModel = "qwen3-vl:4b-instruct";
   updateModelButtonState();
 }
 
@@ -1871,12 +1934,6 @@ modelOptions.forEach((opt) => {
     }
     selectedModel = opt.dataset.model;
     modelLabelEl.textContent = modelLabelFor(selectedModel);
-    if (internetAccess && !isInternetAllowedForCurrentSelection()) {
-      internetAccess = false;
-      updateInternetToggleUI();
-      void chromeSet({ [EXT_WEB_ACCESS_KEY]: false });
-      toast(tr("chat.internetModelLocked"), "error");
-    }
     updateModelDropdown();
     modelDropdown.classList.add("hidden");
     void preloadModel(selectedModel);
@@ -1910,6 +1967,14 @@ headerLogo?.addEventListener("click", (e) => {
 btnLogout.addEventListener("click", async () => {
   await clearAuthSession();
   showAuth();
+});
+
+const sidebarProfile = $("#sidebar-profile");
+sidebarProfile?.addEventListener("click", (e) => {
+  // Prevent redirect if logout button is clicked
+  if (e.target.closest(".sidebar-logout")) return;
+  const url = "http://localhost:5173/profile";
+  chrome.tabs.create({ url });
 });
 
 // load chat list: fetch all user chats from backend API + render in sidebar

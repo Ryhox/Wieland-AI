@@ -78,6 +78,35 @@
           <a href="#" id="auth-switch-link">Registrieren</a>
         </p>
       </div>
+
+      <!-- Legal Button -->
+      <button class="ext-legal-button" id="btn-legal" title="Rechtliches">
+        <svg width="100%" viewBox="0 0 680 320" xmlns="http://www.w3.org/2000/svg">
+          <path d="M250 30 L390 30 L450 90 L450 290 L250 290 Z" fill="none" stroke="white" strokeWidth="6" strokeLinejoin="round" strokeLinecap="round"/>
+          <path d="M390 30 L390 90 L450 90" fill="none" stroke="white" strokeWidth="6" strokeLinejoin="round"/>
+          <line x1="282" y1="160" x2="418" y2="160" stroke="white" strokeWidth="5" strokeLinecap="round"/>
+          <line x1="282" y1="195" x2="418" y2="195" stroke="white" strokeWidth="5" strokeLinecap="round"/>
+          <line x1="282" y1="230" x2="355" y2="230" stroke="white" strokeWidth="5" strokeLinecap="round"/>
+        </svg>
+        <span class="ext-legal-label" id="legal-label">Rechtliches</span>
+      </button>
+    </div>
+
+    <!-- Legal Modal -->
+    <div id="legal-modal" class="legal-modal-backdrop hidden">
+      <div class="legal-modal" onclick="event.stopPropagation()">
+        <div class="legal-modal-header">
+          <h2 id="legal-modal-title">Rechtliches</h2>
+          <button class="legal-modal-close" id="legal-modal-close" title="Schließen">&#10005;</button>
+        </div>
+        <div class="legal-modal-body">
+          <nav class="legal-modal-links">
+            <a href="#" class="legal-modal-link" data-page="legal-notice" id="legal-option-notice">Impressum</a>
+            <a href="#" class="legal-modal-link" data-page="privacy-policy" id="legal-option-privacy">Datenschutz</a>
+            <a href="#" class="legal-modal-link" data-page="terms-of-service" id="legal-option-terms">Nutzungsbedingungen</a>
+          </nav>
+        </div>
+      </div>
     </div>
 
     <div id="chat-screen" class="screen hidden">
@@ -217,17 +246,17 @@
               </svg>
             </button>
             <div class="model-dropdown hidden" id="model-dropdown">
-              <button
-                class="model-option active"
-                data-model="qwen3-vl:2b-instruct"
-              >
-                2B · Free
-              </button>
-              <button class="model-option" data-model="qwen3-vl:4b-instruct">
-                4B · Pro
+              <button class="model-option active" data-model="qwen3-vl:4b-instruct">
+                <svg class="model-icon" viewBox="0 0 200 200" width="14" height="14"><defs><radialGradient id="dwarfGrad"><stop offset="0%" stop-color="#fff8e1"/><stop offset="100%" stop-color="#ff8f00"/></radialGradient></defs><circle cx="100" cy="100" r="60" fill="url(#dwarfGrad)"/></svg>
+                Dwarf
               </button>
               <button class="model-option" data-model="qwen3-vl:8b-instruct">
-                8B · Präzise
+                <svg class="model-icon" viewBox="0 0 200 200" width="14" height="14"><defs><radialGradient id="starGrad"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#f9a825"/></radialGradient></defs><circle cx="100" cy="100" r="70" fill="url(#starGrad)"/></svg>
+                Star
+              </button>
+              <button class="model-option" data-model="qwen3-vl:8b-instruct-max">
+                <svg class="model-icon" viewBox="0 0 200 200" width="14" height="14"><defs><radialGradient id="superGrad"><stop offset="0%" stop-color="#fff3e0"/><stop offset="100%" stop-color="#bf360c"/></radialGradient></defs><circle cx="100" cy="100" r="80" fill="url(#superGrad)"/></svg>
+                Supergiant
               </button>
             </div>
           </div>

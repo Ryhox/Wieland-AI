@@ -728,7 +728,72 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
                 </div>
               </div>
             </section>
+            <section className="profile-group">
+              <h2 className="profile-group-title">{t("profile.legalSection")}</h2>
+              
+              <div className="profile-row-card">
+                <div className="profile-row-left">
+                  <div className="profile-row-text">
+                    <span className="profile-row-title">
+                      {t("profile.impressumTitle")}
+                    </span>
+                    <span className="profile-row-meta">
+                      {t("profile.legalDescription")}
+                    </span>
+                  </div>
+                </div>
+                <div className="profile-row-right">
+                  <button
+                    className="profile-btn-secondary"
+                    onClick={() => navigate(localPath("/legal-notice"))}
+                  >
+                    {t("profile.impressumTitle")}
+                  </button>
+                </div>
+              </div>
 
+              <div className="profile-row-card">
+                <div className="profile-row-left">
+                  <div className="profile-row-text">
+                    <span className="profile-row-title">
+                      {t("profile.privacyTitle")}
+                    </span>
+                    <span className="profile-row-meta">
+                      {t("profile.privacyDescription")}
+                    </span>
+                  </div>
+                </div>
+                <div className="profile-row-right">
+                  <button
+                    className="profile-btn-secondary"
+                    onClick={() => navigate(localPath("/privacy-policy"))}
+                  >
+                    {t("profile.privacyTitle")}
+                  </button>
+                </div>
+              </div>
+
+              <div className="profile-row-card">
+                <div className="profile-row-left">
+                  <div className="profile-row-text">
+                    <span className="profile-row-title">
+                      {t("profile.termsTitle")}
+                    </span>
+                    <span className="profile-row-meta">
+                      {t("profile.termsDescription")}
+                    </span>
+                  </div>
+                </div>
+                <div className="profile-row-right">
+                  <button
+                    className="profile-btn-secondary"
+                    onClick={() => navigate(localPath("/terms-of-service"))}
+                  >
+                    {t("profile.termsTitle")}
+                  </button>
+                </div>
+              </div>
+            </section>
             <section className="profile-group">
               <h2 className="profile-group-title">{t("profile.dangerZone")}</h2>
               <div className="profile-row-card">
@@ -773,6 +838,8 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
                 </div>
               </div>
             </section>
+
+
           </div>
         </div>
       </main>
