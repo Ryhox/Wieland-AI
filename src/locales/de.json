@@ -858,6 +858,7 @@
     "memoryTypeAuto": "Automatisch erkannt",
     "memoryUsage": "{{count}}x verwendet",
     "dangerZone": "Gefahrenzone",
+    "logoutDescription": "Meldet dich aus deinem Konto ab.",
     "deleteAccount": "Konto löschen",
     "deleteDescription": "Dies wird dein Konto und alle zugehörigen Daten dauerhaft löschen.",
     "legalSection": "Rechtliches",

@@ -11,7 +11,7 @@
     "edit": "Modifica",
     "copy": "Copia",
     "send": "Invia",
-    "stop": "Interrompi",
+    "stop": "Stop",
     "refresh": "Aggiorna",
     "Refresh": "Aggiorna"
   },
@@ -37,13 +37,13 @@
     "dashboard": "/dashboard"
   },
   "header": {
-    "toggleSidebar": "Apri/chiudi barra laterale",
+    "toggleSidebar": "Apri/chiudi menu laterale",
     "menuOpen": "Apri menu",
     "menu": "Menu",
     "menuClose": "Chiudi menu",
     "navAbout": "Chi siamo",
     "navFaq": "FAQ",
-    "navChangelogs": "Changelog",
+    "navChangelogs": "Novità",
     "navConclusion": "Conclusione",
     "navPricing": "Prezzi",
     "downloadExtension": "Scarica estensione",
@@ -54,39 +54,39 @@
     "conclusion": "Conclusione",
     "legalNotice": "Note legali",
     "privacy": "Privacy",
-    "terms": "Termini di servizio",
+    "terms": "Termini",
     "copyright": "© {{year}} Wieland. Tutti i diritti riservati."
   },
   "cookie": {
-    "title": "Consenso cookie",
-    "text": "Usiamo cookie e memoria locale per mantenerti connesso e salvare la sessione. I tuoi dati non lasciano il dispositivo.",
+    "title": "Cookie",
+    "text": "Usiamo i cookie per tenerti connesso. I tuoi dati restano sul tuo dispositivo.",
     "accept": "Accetta",
     "decline": "Rifiuta"
   },
   "auth": {
     "welcomeBack": "Bentornato",
     "createAccount": "Crea account",
-    "loginSubtitle": "Accedi per inviare messaggi",
-    "registerSubtitle": "Inizia gratis - completamente offline",
+    "loginSubtitle": "Accedi per scrivere messaggi",
+    "registerSubtitle": "Inizia gratis - tutto offline",
     "login": "Accedi",
     "register": "Registrati",
     "username": "Nome utente",
     "email": "Email",
     "password": "Password",
-    "confirmPassword": "Conferma password",
+    "confirmPassword": "Ripeti password",
     "placeholderUsername": "wieland_user",
     "placeholderEmail": "tuo@email.com",
     "placeholderPassword": "Almeno 8 caratteri",
     "placeholderSecret": "........",
     "switchNoAccount": "Non hai un account?",
-    "switchHasAccount": "Hai gia un account?",
+    "switchHasAccount": "Hai già un account?",
     "errors": {
       "fillAll": "Compila tutti i campi.",
       "username": "Nome utente: 3-32 caratteri (lettere, numeri, _ -)",
       "invalidEmail": "Email non valida.",
       "passwordLength": "La password deve avere almeno 8 caratteri.",
-      "passwordMatch": "Le password non coincidono.",
-      "generic": "Si e verificato un errore.",
+      "passwordMatch": "Le password non sono uguali.",
+      "generic": "Si è verificato un errore.",
       "server": "Server non raggiungibile."
     }
   },
@@ -95,48 +95,48 @@
   "chat": {
     "nameFallback": "amico",
     "welcomeGuest": [
-      "Che bello vederti qui.",
-      "Su cosa ti va di lavorare oggi?",
-      "Raccontami al volo cosa devi fare.",
-      "Se vuoi, partiamo con calma.",
-      "Hai un'idea da mettere meglio a fuoco?",
-      "Ti serve una mano per fare ordine?",
-      "Mandami pure la versione grezza, la sistemiamo insieme.",
-      "Quale sarebbe un buon risultato per oggi?",
-      "Preferisci brainstorming o esecuzione diretta?",
-      "Se qualcosa si e bloccato, lo sblocchiamo passo passo.",
-      "Su cosa stai lavorando in questo momento?",
-      "Possiamo farla breve oppure andare a fondo.",
-      "Ti aiuto volentieri con scrittura, codice o organizzazione.",
-      "Trasformiamo le tue idee in un prossimo passo chiaro.",
-      "Dammi il contesto e ci muoviamo veloci.",
-      "Che risultato vorresti ottenere da questa chat?",
-      "Per iniziare basta anche una sola frase.",
-      "Vuoi che faccia anche un controllo critico del piano?",
+      "Ciao! Come posso aiutarti?",
+      "Su cosa vuoi lavorare oggi?",
+      "Dimmi cosa devi fare.",
+      "Iniziamo con calma.",
+      "Hai un'idea da sviluppare?",
+      "Ti serve aiuto?",
+      "Mandami il tuo testo, lo miglioriamo insieme.",
+      "Cosa vorresti fare oggi?",
+      "Vuoi fare brainstorming o qualcosa di concreto?",
+      "Se sei bloccato, lo risolviamo insieme.",
+      "Su cosa stai lavorando?",
+      "Possiamo essere veloci o andare a fondo.",
+      "Ti aiuto con scrittura, codice o organizzazione.",
+      "Dimmi la tua idea e troviamo il prossimo passo.",
+      "Dammi le informazioni e partiamo.",
+      "Cosa vuoi ottenere da questa chat?",
+      "Basta anche una sola frase per iniziare.",
+      "Vuoi che controlli anche il tuo piano?",
       "Nessuna fretta, lo facciamo insieme.",
-      "Quando vuoi, io ci sono."
+      "Quando vuoi, sono qui."
     ],
     "welcomeLoggedIn": [
-      "Ehi {{name}}, che piacere rivederti.",
-      "Bentornato {{name}}. Come vuoi impostare la giornata?",
-      "Ciao {{name}}, riprendiamo da dove eri rimasto?",
-      "Felice di vederti, {{name}}. Da cosa partiamo?",
-      "Ehi {{name}}, sono pronto quando vuoi.",
-      "{{name}}, quale sarebbe un buon passo avanti oggi?",
-      "Ciao {{name}}, mandami la bozza e la rifiniamo insieme.",
-      "Bentornato {{name}}. Preferisci velocita o approfondimento?",
-      "Grande rivederti, {{name}}. Qual e la priorita adesso?",
-      "{{name}}, se qualcosa si e incastrato lo sblocchiamo insieme.",
-      "Ciao {{name}}, vuoi ottimizzare qualcosa o ripartire da zero?",
-      "Ehi {{name}}, vuoi che lo divida in passaggi chiari?",
-      "Bentornato {{name}}. Facciamo progressi puliti e concreti.",
-      "{{name}}, quale risultato vuoi portarti a casa oggi?",
-      "Ciao {{name}}, teniamola semplice e focalizzata.",
-      "Ehi {{name}}, dammi il contesto e ci penso io alla struttura.",
-      "Bello riaverti qui, {{name}}. Continuiamo?",
-      "{{name}}, ti serve piu rapidita, piu dettaglio o un mix?",
-      "Bentornato {{name}}. Qual e la prima cosa da risolvere?",
-      "Felice che tu sia qui, {{name}}. Mettiamoci al lavoro."
+      "Ciao {{name}}, bentornato!",
+      "Ciao {{name}}. Come vuoi iniziare la giornata?",
+      "Ciao {{name}}, continuiamo da dove eri rimasto?",
+      "Ciao {{name}}. Da dove partiamo?",
+      "Ciao {{name}}, sono pronto.",
+      "{{name}}, cosa vuoi fare oggi?",
+      "Ciao {{name}}, mandami la bozza e la miglioriamo.",
+      "Ciao {{name}}. Vuoi essere veloce o andare a fondo?",
+      "Ciao {{name}}. Cosa è più importante adesso?",
+      "{{name}}, se sei bloccato lo risolviamo insieme.",
+      "Ciao {{name}}, vuoi migliorare qualcosa o ricominciare?",
+      "Ciao {{name}}, lo divido in passi chiari?",
+      "Ciao {{name}}. Lavoriamo bene insieme.",
+      "{{name}}, cosa vuoi finire oggi?",
+      "Ciao {{name}}, restiamo semplici e concentrati.",
+      "Ciao {{name}}, dimmi le informazioni e penso io alla struttura.",
+      "Ciao {{name}}! Continuiamo?",
+      "{{name}}, vuoi velocità, dettaglio o un po' di entrambi?",
+      "Ciao {{name}}. Cosa dobbiamo risolvere prima?",
+      "Ciao {{name}}, mettiamoci al lavoro."
     ],
     "models": {
       "free": "Dwarf",
@@ -149,7 +149,7 @@
       "precise": "Preciso"
     },
     "errors": {
-      "notImage": "\"{{name}}\" non e un'immagine.",
+      "notImage": "\"{{name}}\" non è un'immagine.",
       "tooLarge": "Immagine troppo grande (max {{max}} MB).",
       "server": "Server offline."
     },
@@ -162,33 +162,33 @@
     "imageUpload": "Carica immagine",
     "removeImage": "Rimuovi immagine",
     "options": "Opzioni",
-    "internetSection": "Accesso Internet",
+    "internetSection": "Internet",
     "internetAccess": "Usa internet",
-    "internetPlanLocked": "L'accesso a Internet non è disponibile per il tuo piano attuale.",
-    "internetModelLocked": "L'accesso a Internet e disponibile per tutti i modelli.",
+    "internetPlanLocked": "Internet non è disponibile per il tuo piano.",
+    "internetModelLocked": "Internet è disponibile per tutti i modelli.",
     "internetOn": "On",
     "internetOff": "Off",
     "copied": "Copiato!",
     "memorySaved": "Salvato in memoria ({{count}}).",
     "regenerate": "Rigenera",
-    "planModelLocked": "Questo modello e impostato automaticamente dal tuo piano.",
+    "planModelLocked": "Questo modello è scelto dal tuo piano.",
     "aiStyle": "Stile AI",
     "activity": {
       "thinking": "Sto pensando...",
-      "readingPage": "Leggo il contesto della pagina...",
+      "readingPage": "Leggo la pagina...",
       "readingMemory": "Leggo la memoria...",
       "searchingWeb": "Cerco su internet...",
-      "searchUnavailable": "Ricerca web non disponibile.",
-      "memoryUnavailable": "Ricerca memoria non disponibile.",
+      "searchUnavailable": "Ricerca non disponibile.",
+      "memoryUnavailable": "Memoria non disponibile.",
       "searchStart": "Cerco: \"{{query}}\"",
       "searchDone": "Trovata {{count}} fonte",
       "searchDone_plural": "Trovate {{count}} fonti",
       "sourceFallback": "Fonte {{index}}",
       "memoryStart": "Controllo memoria...",
       "memoryDone": "Trovato in memoria:",
-      "memoryEmpty": "Nessun ricordo corrispondente.",
+      "memoryEmpty": "Nessun risultato in memoria.",
       "pageRead": "Leggo pagina: {{title}}",
-      "currentPage": "pagina corrente"
+      "currentPage": "pagina attuale"
     }
   },
   "sidebar": {
@@ -197,68 +197,68 @@
     "searchChats": "Cerca chat",
     "searchPlaceholder": "Cerca chat...",
     "yourChats": "Le tue chat",
-    "noChats": "Nessuna chat disponibile",
+    "noChats": "Nessuna chat",
     "noChatsFound": "Nessuna chat trovata",
-    "deleteConfirm": "Eliminare davvero la chat?",
-    "deleteError": "Errore durante l'eliminazione della chat",
+    "deleteConfirm": "Vuoi eliminare questa chat?",
+    "deleteError": "Errore durante l'eliminazione",
     "delete": "Elimina",
     "openProfile": "Apri profilo",
     "goToPlan": "Vai al piano",
-    "logout": "Disconnetti",
+    "logout": "Esci",
     "chatLabel": "Chat {{id}}"
   },
   "about": {
     "eyebrow": "Su Wieland AI",
-    "title": "Progettato per",
+    "title": "Pensato per",
     "titleAccent": "la migliore esperienza AI",
-    "lead": "Wieland AI e una AI moderna con risposte in tempo reale e comprensione visiva.",
+    "lead": "Wieland AI è una AI moderna con risposte veloci e comprensione delle immagini.",
     "pills": [
-      "Streaming in tempo reale",
-      "Visione + testo",
-      "Sistemi scalabili"
+      "Risposte in tempo reale",
+      "Immagini + testo",
+      "Sistemi stabili"
     ],
     "stats": {
       "activeUsers": "Utenti attivi",
       "chats": "Chat",
       "sentMessages": "Messaggi inviati",
-      "uptime": "Operativita"
+      "uptime": "Disponibilità"
     },
-    "whyLabel": "Perche Wieland?",
-    "whyLead": "Altre AI sono spesso troppo semplici o troppo complesse.",
-    "whyBody": "Wieland AI unisce flusso veloce, risultati affidabili e UX familiare.",
-    "coreLabel": "Aree principali",
+    "whyLabel": "Perché Wieland?",
+    "whyLead": "Molte AI sono troppo semplici o troppo difficili.",
+    "whyBody": "Wieland AI è veloce, affidabile e facile da usare.",
+    "coreLabel": "Punti principali",
     "core": [
       {
-        "title": "Esperienza pronta",
-        "text": "Dalla prima richiesta al workflow completo, tutto e pensato per essere fluido."
+        "title": "Facile da usare",
+        "text": "Dal primo messaggio a tutto il lavoro, tutto funziona senza problemi."
       },
       {
-        "title": "Trasparenza e controllo",
-        "text": "Vedi cosa succede e controlli il tuo flusso AI."
+        "title": "Trasparente e controllato",
+        "text": "Vedi cosa succede e controlli tutto."
       },
       {
-        "title": "Vera multimodalita",
-        "text": "Comprensione di testo e immagini in un unico passaggio."
+        "title": "Testo e immagini",
+        "text": "Capisce testo e immagini insieme."
       },
       {
-        "title": "Scala senza interruzioni",
-        "text": "Distribuzioni robuste anche sotto carico elevato."
+        "title": "Stabile sotto carico",
+        "text": "Funziona bene anche con molti utenti."
       }
     ],
-    "stackLabel": "Stack tecnologico",
+    "stackLabel": "Tecnologie usate",
     "stack": {
       "frontend": "Frontend",
       "backend": "Backend",
       "data": "Dati",
-      "ai": "Motore AI"
+      "ai": "AI"
     }
   },
   "contact": {
     "eyebrow": "Contatto",
     "title": "Lavoriamo",
     "titleAccent": "insieme.",
-    "lead": "Hai domande o suggerimenti? Scrivici un messaggio.",
-    "formTitle": "Scrivici un messaggio",
+    "lead": "Hai domande? Scrivici un messaggio.",
+    "formTitle": "Scrivici",
     "name": "Nome",
     "email": "Email",
     "subject": "Oggetto",
@@ -273,19 +273,19 @@
     "privacy": "privacy policy",
     "agreeEnd": ".",
     "sending": "Invio in corso...",
-    "submit": "Invia modulo",
+    "submit": "Invia",
     "infoTitle": "Contattaci",
     "location": "Sede",
     "support": "Supporto",
-    "supportText": "Contattaci via modulo - rispondiamo rapidamente!",
+    "supportText": "Scrivici - rispondiamo presto!",
     "successTitle": "Messaggio inviato!",
-    "successMessage": "Il tuo messaggio e stato inviato con successo.",
-    "errorSend": "Si e verificato un problema durante l'invio.",
+    "successMessage": "Il tuo messaggio è stato inviato.",
+    "errorSend": "Errore durante l'invio.",
     "errorNetwork": "Errore di connessione. Controlla internet e riprova.",
     "validation": {
       "name": "Inserisci il tuo nome.",
-      "email": "Inserisci il tuo indirizzo email.",
-      "emailInvalid": "Inserisci un'email valida (es. nome@example.com).",
+      "email": "Inserisci la tua email.",
+      "emailInvalid": "Email non valida (es. nome@example.com).",
       "subject": "Inserisci un oggetto.",
       "message": "Inserisci un messaggio.",
       "messageMin": "Scrivi almeno 10 caratteri.",
@@ -295,160 +295,160 @@
   "faqPage": {
     "eyebrow": "Domande frequenti",
     "title": "Tutto quello che",
-    "titleAccent": "devi sapere.",
-    "lead": "Domande su Wieland AI? Qui trovi le risposte piu comuni.",
-    "searchPlaceholder": "Cerca domanda...",
-    "searchAria": "Ricerca FAQ",
-    "filterAria": "Filtro FAQ",
+    "titleAccent": "vuoi sapere.",
+    "lead": "Hai domande su Wieland AI? Qui trovi le risposte.",
+    "searchPlaceholder": "Cerca una domanda...",
+    "searchAria": "Cerca nelle FAQ",
+    "filterAria": "Filtra FAQ",
     "filters": {
       "all": "Tutti",
       "subscription": "Abbonamento",
       "model": "Modello",
       "about": "Info"
     },
-    "empty": "Nessun risultato trovato.",
+    "empty": "Nessun risultato.",
     "more": "Altre domande?",
     "contact": "Scrivici",
-    "moreEnd": "- il team e felice di aiutarti.",
+    "moreEnd": "- siamo felici di aiutarti.",
     "items": [
       {
-        "q": "I miei dati sono archiviati in modo sicuro?",
-        "a": "Sì, chat e dati utente sono salvati in forma cifrata."
+        "q": "I miei dati sono al sicuro?",
+        "a": "Sì, i tuoi dati sono salvati in modo sicuro."
       },
       {
-        "q": "Posso annullare in qualsiasi momento?",
-        "a": "Sì, tutti i piani sono disdicibili mensilmente."
+        "q": "Posso cancellare in qualsiasi momento?",
+        "a": "Sì, puoi cancellare ogni mese."
       },
       {
-        "q": "Quali livelli di modello sono disponibili?",
-        "a": "Free include modelli base, Pro modelli più forti, Max qualità massima."
+        "q": "Quali modelli ci sono?",
+        "a": "Free ha i modelli base, Pro modelli più forti, Max la qualità più alta."
       },
       {
         "q": "Posso caricare immagini?",
-        "a": "Sì, Wieland AI può analizzare immagini e rispondere."
+        "a": "Sì, Wieland AI può analizzare le immagini."
       },
       {
-        "q": "Quali dispositivi sono supportati?",
-        "a": "Tutti i browser moderni desktop e mobile."
+        "q": "Su quali dispositivi funziona?",
+        "a": "Su tutti i browser moderni, anche su smartphone."
       },
       {
         "q": "Quanto sono veloci le risposte?",
-        "a": "Le risposte vengono generate in tempo reale."
+        "a": "Le risposte arrivano in tempo reale."
       },
       {
-        "q": "Posso usare Wieland AI in team?",
-        "a": "Attualmente è pensato per uso individuale."
+        "q": "Posso usare Wieland AI in gruppo?",
+        "a": "Al momento è pensato per uso singolo."
       },
       {
-        "q": "Quanto è aggiornata la conoscenza dell'AI?",
-        "a": "Accesso internet live in pianificazione, non ancora attivo."
+        "q": "Le informazioni dell'AI sono aggiornate?",
+        "a": "L'accesso a internet sarà aggiunto in futuro."
       },
       {
         "q": "Ci sono limiti di utilizzo?",
-        "a": "Uso praticamente illimitato in condizioni normali."
+        "a": "Quasi nessun limite in condizioni normali."
       },
       {
-        "q": "Esiste una prova per Pro o Max?",
-        "a": "Al momento non è disponibile una prova temporanea."
+        "q": "C'è una prova per Pro o Max?",
+        "a": "Al momento non c'è una prova gratuita."
       },
       {
-        "q": "Posso cambiare piano in qualsiasi momento?",
-        "a": "Sì, upgrade e downgrade sono sempre possibili."
+        "q": "Posso cambiare piano?",
+        "a": "Sì, puoi cambiare piano in qualsiasi momento."
       },
       {
         "q": "Come funziona il supporto prioritario?",
-        "a": "Utenti Pro e Max ricevono risposte più rapide."
+        "a": "Gli utenti Pro e Max ricevono risposte più veloci."
       },
       {
         "q": "Cosa include Max?",
-        "a": "Max offre la massima qualità modello per compiti complessi."
+        "a": "Max ha la qualità più alta per compiti difficili."
       },
       {
-        "q": "Posso esportare la cronologia chat?",
-        "a": "Esportazione non ancora disponibile."
+        "q": "Posso esportare la cronologia?",
+        "a": "Non ancora disponibile."
       },
       {
-        "q": "C'è un limite per upload immagini?",
-        "a": "Sì, massimo un'immagine per richiesta."
+        "q": "C'è un limite per le immagini?",
+        "a": "Sì, massimo un'immagine per messaggio."
       },
       {
         "q": "Quali lingue sono supportate?",
-        "a": "Wieland AI supporta diverse lingue."
+        "a": "Wieland AI supporta più lingue."
       },
       {
-        "q": "Con quale frequenza vengono aggiornati i modelli?",
-        "a": "Modelli e funzioni vengono aggiornati regolarmente."
+        "q": "I modelli vengono aggiornati?",
+        "a": "Sì, aggiorniamo regolarmente."
       },
       {
-        "q": "Posso usarlo su smartphone?",
-        "a": "Sì, smartphone e tablet moderni sono supportati."
+        "q": "Funziona sullo smartphone?",
+        "a": "Sì, smartphone e tablet moderni funzionano."
       },
       {
-        "q": "Testo e analisi immagini possono essere usati insieme?",
-        "a": "Sì, l'analisi multimodale supporta entrambi."
+        "q": "Posso usare testo e immagini insieme?",
+        "a": "Sì, entrambi funzionano insieme."
       },
       {
-        "q": "Posso richiedere la cancellazione dei miei dati?",
-        "a": "Sì, puoi richiedere la cancellazione completa."
+        "q": "Posso chiedere di eliminare i miei dati?",
+        "a": "Sì, puoi chiedere la cancellazione completa."
       },
       {
-        "q": "Quanto è affidabile l'AI?",
-        "a": "Punta a risultati consistenti anche con prompt complessi."
+        "q": "L'AI è affidabile?",
+        "a": "Sì, cerca di dare risposte buone anche con domande difficili."
       },
       {
-        "q": "Posso lavorare su più progetti insieme?",
-        "a": "Sì, chat e progetti paralleli sono supportati."
+        "q": "Posso lavorare su più progetti?",
+        "a": "Sì, più chat allo stesso tempo sono possibili."
       },
       {
-        "q": "Come vengono distribuiti gli aggiornamenti?",
-        "a": "Gli aggiornamenti vengono distribuiti automaticamente."
+        "q": "Come arrivano gli aggiornamenti?",
+        "a": "Gli aggiornamenti arrivano automaticamente."
       },
       {
-        "q": "Posso personalizzare le risposte AI?",
-        "a": "Sì, tono e stile possono essere configurati."
+        "q": "Posso cambiare lo stile delle risposte?",
+        "a": "Sì, puoi scegliere il tono e lo stile."
       },
       {
         "q": "La piattaforma è sempre disponibile?",
-        "a": "L'infrastruttura è pensata per disponibilità 24/7."
+        "a": "Sì, è pensata per essere sempre online."
       },
       {
-        "q": "Sono disponibili notifiche?",
+        "q": "Ci sono notifiche?",
         "a": "Le notifiche non sono ancora disponibili."
       },
       {
-        "q": "È disponibile un accesso API?",
+        "q": "C'è un'API?",
         "a": "Un'API pubblica non è ancora disponibile."
       },
       {
-        "q": "C'è un limite per richieste simultanee?",
-        "a": "La piattaforma è scalabile per molte richieste."
+        "q": "Quante richieste posso fare insieme?",
+        "a": "La piattaforma può gestire molte richieste."
       },
       {
-        "q": "Quanto è semplice l'onboarding per nuovi utenti?",
-        "a": "Molto semplice: apri il browser e inizia."
+        "q": "È facile iniziare?",
+        "a": "Sì, apri il browser e inizia subito."
       },
       {
-        "q": "Ci sono tutorial disponibili?",
-        "a": "Non ci sono tutorial ufficiali al momento."
+        "q": "Ci sono tutorial?",
+        "a": "Al momento non ci sono tutorial ufficiali."
       },
       {
-        "q": "Quanto è sicura la piattaforma?",
-        "a": "Sono usati standard moderni con cifratura e monitoraggio."
+        "q": "La piattaforma è sicura?",
+        "a": "Sì, usiamo crittografia e controlli moderni."
       }
     ]
   },
   "pricing": {
     "eyebrow": "Prezzi",
     "title": "Semplice.",
-    "titleAccent": "Trasparente.",
-    "lead": "Wieland AI e disponibile per tutti. Se vuoi di piu, passa a Pro o Max.",
+    "titleAccent": "Chiaro.",
+    "lead": "Wieland AI è per tutti. Se vuoi di più, passa a Pro o Max.",
     "plansLabel": "Piani",
     "recommended": "Consigliato",
     "perMonth": "/ mese",
     "freeForever": "Gratis per sempre.",
     "freePlanHint": "Gratis per sempre.",
     "supportDev": "Supporta lo sviluppo di Wieland AI.",
-    "maxQuality": "Massima qualita con token-limits estesi.",
+    "maxQuality": "Qualità massima con più token.",
     "planNames": {
       "free": "Gratuito",
       "pro": "Pro",
@@ -458,16 +458,16 @@
     "upgrade": "Upgrade",
     "downgrade": "Downgrade",
     "adminLocked": "Non disponibile (Admin)",
-    "switchConfirm": "Vuoi davvero passare a {{plan}}?",
+    "switchConfirm": "Vuoi passare a {{plan}}?",
     "planUpdateError": "Impossibile aggiornare il piano.",
     "faqLabel": "Domande frequenti",
     "features": {
       "free": [
         { "text": "Wieland Dwarf", "enabled": true },
         { "text": "Chat illimitate", "enabled": true },
-        { "text": "Upload e analisi immagini", "enabled": true },
+        { "text": "Carica e analizza immagini", "enabled": true },
         { "text": "Cronologia chat", "enabled": true },
-        { "text": "Accesso a Internet", "enabled": false },
+        { "text": "Accesso a internet", "enabled": false },
         { "text": "Supporto prioritario", "enabled": false },
         { "text": "Wieland Star", "enabled": false },
         { "text": "Wieland Supergiant", "enabled": false }
@@ -476,30 +476,30 @@
         { "text": "Tutto del piano Free", "enabled": true },
         { "text": "Supporta lo sviluppo di Wieland AI", "enabled": true },
         { "text": "Wieland Star", "enabled": true },
-        { "text": "Accesso a Internet", "enabled": true },
+        { "text": "Accesso a internet", "enabled": true },
         { "text": "Supporto prioritario", "enabled": true },
         { "text": "Accesso anticipato alle nuove funzioni", "enabled": true },
         { "text": "Wieland Supergiant", "enabled": false }
       ],
       "max": [
         { "text": "Tutto del piano Pro", "enabled": true },
-        { "text": "Wieland Supergiant con token-limits estesi", "enabled": true },
+        { "text": "Wieland Supergiant con più token", "enabled": true },
         { "text": "Supporto prioritario", "enabled": true },
         { "text": "Accesso anticipato alle nuove funzioni", "enabled": true }
       ]
     },
     "faqItems": [
       {
-        "q": "I miei dati sono salvati nel cloud?",
-        "a": "Sì, i dati sono salvati cifrati nel database."
+        "q": "I miei dati sono nel cloud?",
+        "a": "Sì, i dati sono salvati in modo sicuro nel database."
       },
       {
-        "q": "Posso annullare quando voglio?",
-        "a": "Sì, l'abbonamento è disdicibile mensilmente."
+        "q": "Posso cancellare quando voglio?",
+        "a": "Sì, puoi cancellare ogni mese."
       },
       {
-        "q": "La qualità del modello cambia in base al piano?",
-        "a": "Sì, Pro e Max usano modelli più forti; Max è il top."
+        "q": "La qualità cambia con il piano?",
+        "a": "Sì, Pro e Max hanno modelli più forti. Max è il migliore."
       }
     ]
   },
@@ -507,30 +507,30 @@
     "eyebrow": "Download",
     "title": "Scarica",
     "titleAccent": "Wieland AI.",
-    "lead": "Locale, offline, senza telemetria.",
+    "lead": "Locale, offline, senza dati inviati.",
     "extensionTitle": "Wieland AI Extension",
-    "desc": "Usa Wieland AI ovunque nel browser.",
+    "desc": "Usa Wieland AI in tutto il browser.",
     "button": "Scarica",
     "runsOn": "Disponibile su",
     "howTo": {
-      "title": "Come scaricarla",
-      "step1": "Scarica e salva il file ZIP.",
-      "step2": "Estrai il file scaricato.",
+      "title": "Come installarla",
+      "step1": "Scarica il file ZIP.",
+      "step2": "Estrai il file.",
       "step3": "Apri la pagina estensioni del browser:",
       "browserListLabel": "Pagine estensioni dei browser supportati",
       "chrome": "Chrome: chrome://extensions/",
       "edge": "Edge: edge://extensions/",
       "firefox": "Firefox: about:debugging#/runtime/this-firefox",
-      "developerMode": "Attiva la Modalità sviluppatore (Chrome ed Edge).",
-      "step4": "Seleziona la cartella che hai appena scaricato."
+      "developerMode": "Attiva la modalità sviluppatore (Chrome ed Edge).",
+      "step4": "Seleziona la cartella che hai scaricato."
     }
   },
   "changelogs": {
     "eyebrow": "Changelog",
-    "title": "Cosa c'e",
+    "title": "Cosa c'è",
     "titleAccent": "di nuovo?",
-    "lead": "Tutte le versioni, fix e funzionalita.",
-    "initialTag": "Iniziale",
+    "lead": "Tutte le versioni, correzioni e nuove funzioni.",
+    "initialTag": "Inizio",
     "entries": [
       {
         "version": "v0.2.1",
@@ -539,57 +539,57 @@
         "title": "Aggiornamento Backend & UX",
         "changes": [
           "Correzioni bug",
-          "Routing intent rifatto (web vs estensione, contesto pagina, input immagine, risposte popup)",
-          "Web lookup piu preciso: temi live su SEARCH_WEB, richieste legate alla pagina su READ_PAGE",
-          "Flusso di chiarimento migliorato su web ed estensione (prompt piu chiari, payload stabili, popup duplicati rimossi)",
-          "Streaming piu robusto con auto-continue su cutoff di lunghezza e pulizia markdown/code-fence",
-          "JWT ora include il piano attivo e i cambi piano restituiscono subito un token aggiornato",
-          "Layer SQLite e transazioni cronologia rafforzati (rollback piu affidabile)",
-          "Recupero memoria migliorato con hint filtering lato SQL",
-          "Rifiniture profilo/UI: pagina Profilo ridisegnata, piano piu leggibile, layering welcome corretto e primo stile AI attivo di default nell'estensione"
+          "Intent routing rifatto (web, estensione, pagina, immagini, popup)",
+          "Ricerca web più precisa: temi live su SEARCH_WEB, pagina attiva su READ_PAGE",
+          "Flusso di chiarimento migliorato su web ed estensione",
+          "Streaming più stabile con auto-continue e pulizia markdown",
+          "JWT ora include il piano attivo, cambio piano restituisce subito un token aggiornato",
+          "SQLite e cronologia più stabili con rollback migliore",
+          "Memoria migliorata con filtri SQL",
+          "Pagina Profilo ridisegnata, piano più leggibile, primo stile AI attivo di default nell'estensione"
         ]
       },
       {
         "version": "v0.2.0",
         "date": "02 aprile 2026",
         "tag": "pink",
-        "title": "Espansione AI, Estensione e UX",
+        "title": "AI, Estensione e UX",
         "changes": [
           "Correzioni bug",
-          "Migliorata l'estensione con gestione migliore del contesto pagina",
-          "Migliorata la ricerca siti nell'estensione",
+          "Estensione migliorata con miglior gestione del contesto pagina",
+          "Ricerca siti nell'estensione migliorata",
           "Memoria AI migliorata (salvataggio automatico, rilevanza, supporto multilingue)",
-          "Migliorati accesso internet e intent routing",
-          "Aggiunta modal popup di chiarimento in web ed estensione (opzioni + testo libero)",
-          "Migliorato il flusso di chiarimento e pulizia dell'output in streaming",
-          "Pagina 404 rifatta in stile cinematografico con nuova scena 3D"
+          "Accesso internet e intent routing migliorati",
+          "Aggiunta finestra popup di chiarimento in web ed estensione",
+          "Flusso di chiarimento e output streaming migliorati",
+          "Pagina 404 rifatta con scena 3D cinematografica"
         ]
       },
       {
         "version": "v0.1.9",
         "date": "30 marzo 2026",
         "tag": "green",
-        "title": "Estensione Browser e Accesso Internet",
+        "title": "Estensione Browser e Internet",
         "changes": [
-          "Aggiunta la Browser Extension di Wieland AI (chat nel side panel del browser)",
-          "Aggiunta modalita accesso internet per il modello con fonti e fallback offline",
-          "Aggiunto supporto lingue nella Browser Extension (de/en/it) con sincronizzazione automatica della lingua del sito",
-          "Aggiunto pacchetto favicon completo + web manifest per migliore supporto browser e dispositivi",
-          "La pagina Download ora scarica la Browser Extension in formato ZIP",
-          "Correzioni bug e pulizia UI in chat e menu dell'estensione"
+          "Aggiunta la Browser Extension (chat nel side panel del browser)",
+          "Aggiunto accesso internet con fonti e fallback offline",
+          "Aggiunto supporto lingue nell'estensione (de/en/it) con sincronizzazione automatica",
+          "Aggiunto favicon completo e web manifest",
+          "La pagina Download scarica l'estensione in ZIP",
+          "Correzioni bug e pulizia UI"
         ]
       },
       {
         "version": "v0.1.8",
         "date": "30 marzo 2026",
         "tag": "purple",
-        "title": "Language UPDATEEEE (i18n)",
+        "title": "Lingue (i18n)",
         "changes": [
-          "Integrato i18next su tutte le pagine (de/en/it)",
-          "Aggiunto routing basato sulla lingua con /de/, /en/, /it/",
-          "Collegato il pulsante lingua nell'header a cambio route + locale",
-          "Estese le traduzioni per pagine, modali e dashboard",
-          "Risolti bug cambio lingua (welcome in Home aggiornata live, card statistiche About sempre visibili)"
+          "Aggiunto i18next su tutte le pagine (de/en/it)",
+          "Routing per lingua con /de/, /en/, /it/",
+          "Pulsante lingua nell'header collegato al cambio di lingua",
+          "Traduzioni estese per pagine, modali e dashboard",
+          "Corretti bug nel cambio lingua"
         ]
       },
       {
@@ -600,7 +600,7 @@
         "changes": [
           "Migrazione da PostgreSQL a SQLite",
           "Aggiunto script CLI admin",
-          "Cookie login legato al consenso",
+          "Login con cookie legato al consenso",
           "Correzioni bug"
         ]
       },
@@ -608,15 +608,15 @@
         "version": "v0.1.6",
         "date": "23 marzo 2026",
         "tag": "purple",
-        "title": "Aggiornamento Design & Contenuti",
+        "title": "Design & Contenuti",
         "changes": [
           "Correzioni bug",
-          "Rifacimento visuale di più pagine",
-          "Revisione contenuti",
+          "Nuovo design per più pagine",
+          "Testi aggiornati",
           "Animazioni GSAP",
           "Aggiunto piano Max e modello 2B",
-          "Migliore responsività mobile",
-          "Ricerca e filtri FAQ"
+          "Migliore visualizzazione su mobile",
+          "Ricerca e filtri nelle FAQ"
         ]
       },
       {
@@ -626,10 +626,10 @@
         "title": "Contenuti v2.0",
         "changes": [
           "Correzioni bug",
-          "Refresh design",
+          "Nuovo design",
           "Aggiunte pagine Profilo e Contatti",
           "Funzioni account e abbonamento",
-          "Link chat diretti via UUID"
+          "Link diretti alle chat via UUID"
         ]
       },
       {
@@ -650,7 +650,7 @@
         "title": "Dashboard admin",
         "changes": [
           "Nuova /dashboard con grafici",
-          "Strumenti admin utenti e modelli",
+          "Strumenti admin per utenti e modelli",
           "Correzioni bug"
         ]
       },
@@ -672,8 +672,8 @@
         "title": "AI migliorata",
         "changes": [
           "Correzioni bug",
-          "Supporto elaborazione immagini",
-          "Redesign header e sidebar"
+          "Supporto immagini",
+          "Nuovo design header e sidebar"
         ]
       },
       {
@@ -682,10 +682,10 @@
         "tag": "gray",
         "title": "Pre-release",
         "changes": [
-          "Avvio progetto",
-          "Sviluppo funzionalità base",
+          "Inizio del progetto",
+          "Funzioni base",
           "Integrazione Ollama",
-          "Integrazione personaggio 3D"
+          "Personaggio 3D"
         ]
       }
     ]
@@ -694,44 +694,44 @@
     "eyebrow": "Capitolo finale",
     "title": "Conclusione:",
     "titleAccent": "Dal caos al sistema.",
-    "lead": "Questa è la mia conclusione onesta del progetto. Non costruita per \"fare bella figura\", ma per raccontare com'è andata davvero: tanti giri lunghi, tante correzioni e, alla fine, un sistema molto più solido rispetto all'inizio.",
-    "leadSecondary": "Non volevo fare il classico recap pieno di buzzword vuote. Volevo mostrare il percorso che di solito non si vede nei commit e nei log: decisioni sotto pressione, rotture tecniche e lezioni concrete.",
+    "lead": "Questa è la mia conclusione onesta del progetto. Non scritta per fare bella figura, ma per raccontare com'è andata davvero: tanti errori, tante correzioni e alla fine un sistema molto più solido.",
+    "leadSecondary": "Non volevo fare un riassunto pieno di parole vuote. Volevo mostrare il percorso che di solito non si vede: decisioni difficili, problemi tecnici e lezioni concrete.",
     "pills": [
       "Web app + estensione",
       "Node / Express",
       "SQLite invece di PostgreSQL",
-      "Prima esperienza con Three.js",
-      "Prodotto invece di demo"
+      "Prima volta con Three.js",
+      "Prodotto vero, non demo"
     ],
     "acts": [
       {
         "kicker": "Atto I",
-        "title": "L'inizio è stato più duro del previsto",
+        "title": "L'inizio è stato difficile",
         "offset": false,
         "paragraphs": [
-          "[[React all'inizio era un vero cantiere]]. Avevo troppe dipendenze tra componenti, state drift tra web app ed estensione e diversi flussi che si sovrascrivevano a vicenda.",
-          "Nel chat questo era chiarissimo: streaming, modifica, regenerate, upload immagini, cronologia e auth dovevano funzionare insieme in modo corretto. All'inizio spesso funzionava \"più o meno\", ma non in modo affidabile.",
-          "Il punto di svolta è stato separare le responsabilità con disciplina: confini più chiari tra componenti, flussi utente riproducibili e meno quick fix direttamente nella UI. Solo da lì il progetto ha iniziato a sembrare un vero prodotto e non una demo con pezzi scollegati."
+          "[[React all'inizio era un cantiere]]. Avevo troppi componenti collegati tra loro, problemi con lo stato tra web app ed estensione e flussi che si bloccavano.",
+          "Nella chat era chiaro: streaming, modifica, rigenera, immagini, cronologia e login dovevano funzionare insieme. All'inizio funzionava solo più o meno.",
+          "Il punto di svolta è stato separare bene le responsabilità: confini chiari tra componenti e meno correzioni veloci direttamente nella UI. Da lì il progetto ha iniziato a sembrare un prodotto vero."
         ]
       },
       {
         "kicker": "Atto II",
-        "title": "Realtà database: da PostgreSQL a SQLite",
+        "title": "Da PostgreSQL a SQLite",
         "offset": true,
         "paragraphs": [
-          "PostgreSQL era il percorso che avevo pianificato all'inizio. Nella pratica però proprio lì continuavano a emergere attriti: setup locale, migrazioni, coerenza tra macchine diverse e complessità inutile per lo stato reale del prodotto.",
-          "Il passaggio a [[SQLite con WAL]] non è stato un ripiego, ma una scelta di prodotto consapevole. Volevo una base dati locale, veloce, stabile e senza battaglie secondarie.",
-          "Il risultato si è sentito subito: meno tempo perso con lo stress infrastrutturale, più tempo per funzionalità vere, bugfix e coerenza. In questa fase del progetto, quella scelta era quella giusta."
+          "PostgreSQL era il piano iniziale. Ma in pratica creava sempre problemi: setup locale, migrazioni, differenze tra computer e complessità inutile.",
+          "Passare a [[SQLite con WAL]] non è stato un ripiego, ma una scelta consapevole. Volevo un database locale, veloce e stabile.",
+          "Il risultato è stato subito chiaro: meno tempo perso con l'infrastruttura, più tempo per le funzioni vere. In questa fase del progetto era la scelta giusta."
         ]
       },
       {
         "kicker": "Atto III",
-        "title": "Prima volta con Three.js e asset 3D",
+        "title": "Prima volta con Three.js",
         "offset": false,
         "paragraphs": [
-          "[[Three.js per me era completamente nuovo]]. Ho dovuto imparare FBX import, gestione materiali, logica camera, performance ed errori di rendering nello stesso momento, mentre il resto dell'app andava avanti in parallelo.",
-          "All'inizio è stato puro trial and error: texture non caricate, scene troppo scure, animazioni artificiali o instabili. Ma proprio quella fase è stata decisiva, perché mi ha insegnato quali scelte di camera e movimento risultano davvero cinematografiche e quali sono solo rumorose.",
-          "Alla fine ne è uscita una lingua visiva non intercambiabile: più atmosfera, più regia, ma comunque abbastanza controllata tecnicamente da mantenere la pagina stabile."
+          "[[Three.js era completamente nuovo per me]]. Ho dovuto imparare import FBX, materiali, camera, performance ed errori di rendering tutto insieme.",
+          "All'inizio era solo tentativi: texture che non caricavano, scene troppo scure, animazioni artificiali. Ma quella fase è stata importante, perché mi ha insegnato cosa funziona davvero.",
+          "Alla fine è uscito uno stile visivo riconoscibile: più atmosfera, ma tecnicamente stabile."
         ]
       },
       {
@@ -739,85 +739,85 @@
         "title": "Il vero salto: qualità nei dettagli",
         "offset": true,
         "paragraphs": [
-          "Il progresso più grande non è arrivato da una singola nuova funzione, ma dai cantieri \"invisibili\": intent routing pulito, clarification flow senza overtrigger, lingua di risposta coerente, streaming robusto e fallback di errore chiari.",
-          "È lì che si decide se un prodotto AI impressiona soltanto oppure funziona davvero nella pratica quotidiana. Se routing, lingua, contesto e UI non sono allineati, il miglior modello non basta.",
-          "La lezione principale di questo atto: [[non basta costruire feature, bisogna rendere stabile il comportamento]]. Solo così nasce fiducia nel prodotto."
+          "Il progresso più grande non è arrivato da una grande funzione nuova, ma dai lavori invisibili: routing pulito, lingua corretta, streaming stabile e messaggi di errore chiari.",
+          "Lì si decide se un prodotto AI funziona davvero nella pratica. Se routing, lingua, contesto e UI non sono allineati, anche il modello migliore non basta.",
+          "La lezione principale: [[non basta aggiungere funzioni, bisogna rendere il comportamento stabile]]. Solo così nasce fiducia nel prodotto."
         ]
       },
       {
         "kicker": "Atto V",
-        "title": "Tenere sincronizzati due mondi: web app ed estensione",
+        "title": "Tenere sincronizzati web app ed estensione",
         "offset": false,
         "paragraphs": [
-          "Un punto che avevo sottovalutato: mantenere [[la stessa logica stabile su due interfacce diverse]]. Tra web app ed estensione, piccole differenze fanno subito percepire due prodotti diversi se lingua, popup, stato input o testi errore non coincidono perfettamente.",
-          "Per questo ho [[uniformato molte cose]]: stesse regole di clarification, percorsi coerenti di rendering markdown/codice, fallback puliti e comportamento uguale durante interruzioni di streaming. Non era spettacolare, ma ha alzato moltissimo la qualità percepita.",
-          "La lezione di questo atto è stata netta: quando un prodotto vive su più superfici, [[la coerenza non è opzionale, è una funzione centrale]]."
+          "Un punto che avevo sottovalutato: mantenere [[la stessa logica su due interfacce diverse]]. Tra web app ed estensione, piccole differenze fanno subito sembrare due prodotti separati.",
+          "Per questo ho [[uniformato molte cose]]: stesse regole di chiarimento, stesso markdown, stessi fallback e stesso comportamento durante problemi di streaming.",
+          "La lezione: quando un prodotto funziona su più superfici, [[la coerenza non è opzionale, è una funzione centrale]]."
         ]
       },
       {
         "kicker": "Atto VI",
-        "title": "Pressione di rilascio, passi indietro e decisioni pulite",
+        "title": "Pressione, passi indietro e scelte chiare",
         "offset": true,
         "paragraphs": [
-          "Verso la fine non si trattava più di \"un'altra feature\", ma di [[prioritizzazione]]. Ho dovuto decidere più volte cosa non costruire, per garantire che ciò che rimaneva fosse davvero stabile. Soprattutto [[sotto pressione di tempo]] è più difficile di quanto sembri.",
-          "Ci sono stati anche passi indietro: cose che nel breve sembravano buone hanno creato effetti collaterali e sono state rimosse. Tornare indietro all'inizio è stato frustrante, ma necessario per [[mantenere una linea tecnica chiara]].",
-          "Forse l'effetto più importante di questa fase: oggi penso molto più in [[manutenibilità e comportamento nel tempo]], non solo in \"funziona adesso\"."
+          "Verso la fine non si trattava più di aggiungere funzioni, ma di [[scegliere le priorità]]. Ho dovuto decidere più volte cosa non costruire, per tenere stabile ciò che restava. [[Sotto pressione]] è più difficile di quanto sembra.",
+          "Ci sono stati anche passi indietro: cose che sembravano buone hanno creato problemi e sono state rimosse. Tornare indietro era frustrante, ma necessario.",
+          "L'effetto più importante: oggi penso molto più in [[manutenibilità]], non solo in \"funziona adesso\"."
         ]
       }
     ],
     "reflection": {
       "sectionLabel": "Epilogo",
       "title": "Cosa ha cambiato in me questo progetto",
-      "intro": "Se oggi riassumo tutto il percorso, la differenza più grande non si vede solo nel risultato, ma soprattutto in [[come affronto i problemi]].",
-      "quickTitle": "Se lo riduco a quattro punti:",
+      "intro": "Se riassume tutto il percorso, la differenza più grande non si vede solo nel risultato, ma in [[come risolvo i problemi]].",
+      "quickTitle": "In quattro punti:",
       "quick": [
-        "[[Il pensiero di sistema batte il puro pensiero per feature.]]",
+        "[[Pensare al sistema batte pensare solo alle funzioni.]]",
         "[[Correggere la rotta è forza, non debolezza.]]",
-        "[[La qualità nasce nei casi limite e nelle transizioni.]]",
-        "[[Il debugging è un processo centrale, non una modalità di emergenza.]]"
+        "[[La qualità nasce nei casi difficili e nelle transizioni.]]",
+        "[[Il debugging è una parte normale del lavoro.]]"
       ],
       "chapters": [
         {
           "title": "1) Dal pensiero per schermate al pensiero di sistema",
           "paragraphs": [
-            "Oggi ragiono molto più in sistemi che in singole schermate. Una buona schermata è importante, ma [[senza flussi dati stabili, routing chiaro e gestione stato pulita]] resta solo superficie. Questa è stata probabilmente la crescita più grande dell'intero progetto.",
-            "Guardando indietro, vedo meno le singole feature e più il cambio di mentalità: da \"costruisco qualcosa che in qualche modo gira\" a [[\"progetto qualcosa che si comporta in modo affidabile\"]]."
+            "Oggi penso molto più in sistemi che in singole schermate. Una buona schermata è importante, ma [[senza dati stabili, routing chiaro e stato pulito]] è solo superficie.",
+            "Guardando indietro, vedo meno le singole funzioni e più il cambio di mentalità: da \"costruisco qualcosa che gira\" a [[\"progetto qualcosa che si comporta in modo affidabile\"]]."
           ]
         },
         {
-          "title": "2) Coraggio di cambiare rotta",
+          "title": "2) Coraggio di cambiare",
           "paragraphs": [
-            "Allo stesso tempo ho imparato a correggere con decisione le scelte tecniche. Il passaggio PostgreSQL-SQLite è stato un esempio chiaro: non restare attaccato a un piano solo perché all'inizio sembrava \"giusto\", ma [[scegliere ciò che è davvero sensato per lo stato attuale del prodotto]].",
-            "A posteriori, è stata decisiva proprio questa combinazione: sensibilità frontend, disciplina backend e disponibilità a ripensare l'architettura quando la realtà lo richiede. Prima avrei difeso alcune decisioni troppo a lungo, oggi [[correggo prima e meglio]]."
+            "Ho imparato a correggere le scelte tecniche con decisione. Il passaggio PostgreSQL-SQLite è un esempio: non restare attaccato a un piano solo perché sembrava giusto, ma [[scegliere ciò che è davvero utile adesso]].",
+            "Prima avrei difeso alcune decisioni troppo a lungo, oggi [[correggo prima e meglio]]."
           ]
         },
         {
           "title": "3) La qualità nasce tra un passaggio e l'altro",
           "paragraphs": [
-            "Ho capito che la qualità di prodotto nasce spesso nelle transizioni: timeout, testi di errore, logica di reconnect, coerenza linguistica e proprio nei momenti in cui gli utenti non seguono l'happy path. È lì che si decide se [[la fiducia cresce o si rompe]].",
-            "E sul piano personale, Three.js è stata la parte che mi ha fatto crescere di più: non perché tutto funzionasse subito, ma perché i problemi reali mi hanno insegnato a [[unire qualità visiva e stabilità tecnica]]."
+            "La qualità nasce spesso nelle transizioni: timeout, testi di errore, reconnect, lingua coerente. Lì si decide se [[la fiducia cresce o si rompe]].",
+            "Three.js è stata la parte che mi ha fatto crescere di più: non perché tutto funzionasse subito, ma perché i problemi reali mi hanno insegnato a [[unire qualità visiva e stabilità tecnica]]."
           ]
         },
         {
           "title": "4) Il metodo batte la motivazione",
           "paragraphs": [
-            "Sul piano professionale porto con me che il debugging non è una \"modalità emergenza\", ma un processo di sviluppo normale. Log buoni, passi riproducibili e fix piccoli ma mirati hanno fatto avanzare questo progetto più di grandi refactor rischiosi.",
-            "Sul piano personale porto con me che un progetto di questa dimensione non si regge solo sulla motivazione, ma su [[metodo]]: fissare priorità, documentare decisioni, chiudere un blocco prima di aprire il successivo."
+            "Il debugging non è una modalità di emergenza, ma una parte normale dello sviluppo. Log buoni, passi riproducibili e fix piccoli hanno fatto avanzare il progetto più di grandi modifiche rischiose.",
+            "Un progetto grande non si regge solo sulla motivazione, ma su [[metodo]]: fissare priorità, documentare decisioni, finire un blocco prima di aprire il prossimo."
           ]
         }
       ],
-      "keyline": "Nella pratica, il progresso raramente appare spettacolare. Nasce da tante decisioni pulite che, insieme, fanno sentire un [[grande salto]]."
+      "keyline": "Il progresso raramente sembra spettacolare. Nasce da tante piccole decisioni che insieme fanno sentire un [[grande salto]]."
     },
     "finale": [
-      "La mia conclusione in una frase: [[Wieland AI non è diventato forte grazie a un singolo colpo di scena, ma grazie a molte decisioni dure e concrete prese sotto pressione reale]].",
-      "Per questo, per me questa conclusione non sembra una fine, ma il punto in cui gli esperimenti sono diventati una direzione chiara."
+      "La mia conclusione in una frase: [[Wieland AI non è diventato forte grazie a un singolo momento, ma grazie a molte decisioni difficili prese sotto pressione reale]].",
+      "Per questo questa conclusione non sembra una fine, ma il punto in cui gli esperimenti sono diventati una direzione chiara."
     ]
   },
   "profile": {
     "eyebrow": "Profilo",
     "title": "Gestisci",
     "titleAccent": "il tuo account.",
-    "lead": "Email, password, abbonamento - tutto in un unico posto.",
+    "lead": "Email, password, abbonamento - tutto in un posto solo.",
     "accountSection": "Account",
     "contactSection": "Contatti",
     "securitySection": "Sicurezza",
@@ -830,65 +830,66 @@
     "changePassword": "Cambia password",
     "currentPassword": "Password attuale",
     "newPassword": "Nuova password",
-    "confirmPassword": "Conferma password",
+    "confirmPassword": "Ripeti password",
     "subscription": "Abbonamento",
     "plan": "Piano",
-    "cancelSubscription": "Annulla abbonamento",
-    "upgradePlan": "Passa di piano",
-    "adminNoCancel": "Come admin non puoi annullare l'abbonamento.",
-    "subscriptionPaidHint": "Puoi annullare l'abbonamento in qualsiasi momento.",
-    "subscriptionFreeHint": "Passa a un piano superiore per più potenza e funzioni.",
+    "cancelSubscription": "Cancella abbonamento",
+    "upgradePlan": "Cambia piano",
+    "adminNoCancel": "Come admin non puoi cancellare l'abbonamento.",
+    "subscriptionPaidHint": "Puoi cancellare in qualsiasi momento.",
+    "subscriptionFreeHint": "Passa a un piano superiore per più funzioni.",
     "memorySection": "Memoria",
-    "memoryLabel": "Fatti salvati",
+    "memoryLabel": "Cose salvate",
     "memoryDescription": "Qui vedi cosa la AI ha salvato su di te. Puoi eliminare singoli elementi o tutto.",
     "openMemory": "Apri memoria",
     "memoryModalTitle": "La tua memoria AI",
     "memoryModalSub": "{{count}} elementi salvati",
-    "memoryEmpty": "Al momento non ci sono elementi salvati.",
+    "memoryEmpty": "Nessun elemento salvato.",
     "memoryCount": "{{count}} elementi",
     "memoryDeleteAll": "Elimina tutto",
     "memoryUpdatedAt": "Aggiornato: {{date}}",
-    "memoryTypeExplicit": "Salvato esplicitamente",
+    "memoryTypeExplicit": "Salvato manualmente",
     "memoryTypeAuto": "Rilevato automaticamente",
-    "memoryUsage": "Usato {{count}}x",
+    "memoryUsage": "Usato {{count}} volte",
     "dangerZone": "Zona pericolosa",
+    "logoutDescription": "Esci dal tuo account.",
     "deleteAccount": "Elimina account",
-    "deleteDescription": "Questo eliminera definitivamente il tuo account e i dati associati.",
-    "legalSection": "Aspetti legali",
-    "impressumTitle": "Avviso legale",
-    "legalDescription": "Informazioni legali e impressum",
-    "privacyTitle": "Informativa sulla privacy",
-    "privacyDescription": "Protezione dei dati e privacy",
-    "termsTitle": "Termini di servizio",
-    "termsDescription": "Termini di servizio e linee guida",
+    "deleteDescription": "Questo elimina il tuo account e tutti i dati. Non è possibile annullare.",
+    "legalSection": "Legale",
+    "impressumTitle": "Note legali",
+    "legalDescription": "Informazioni legali",
+    "privacyTitle": "Privacy",
+    "privacyDescription": "Protezione dei dati",
+    "termsTitle": "Termini",
+    "termsDescription": "Termini di servizio",
     "errors": {
       "title": "Errore",
-      "success": "Successo",
-      "emailSame": "Email invariata o vuota",
-      "displayNameUnavailable": "La modifica del nome visualizzato non è al momento disponibile.",
+      "success": "Fatto",
+      "emailSame": "Email uguale o vuota",
+      "displayNameUnavailable": "La modifica del nome non è disponibile ora.",
       "emailUpdate": "Errore durante l'aggiornamento email",
       "passwordFields": "Tutti i campi sono obbligatori",
-      "passwordMismatch": "Le nuove password non coincidono",
+      "passwordMismatch": "Le nuove password non sono uguali",
       "passwordLength": "La password deve avere almeno 8 caratteri",
       "passwordUpdate": "Errore durante l'aggiornamento password",
       "accountDelete": "Errore durante l'eliminazione account",
-      "subscriptionCancel": "Errore durante l'annullamento abbonamento",
+      "subscriptionCancel": "Errore durante la cancellazione abbonamento",
       "memoryLoad": "Errore durante il caricamento della memoria",
-      "memoryDelete": "Impossibile eliminare l'elemento di memoria",
+      "memoryDelete": "Impossibile eliminare l'elemento",
       "memoryDeleteAll": "Impossibile eliminare tutta la memoria"
     },
     "success": {
-      "emailUpdated": "Email aggiornata con successo!",
-      "passwordUpdated": "Password aggiornata con successo!",
-      "subscriptionCanceled": "Abbonamento annullato con successo. Passerai al piano Free.",
-      "memoryDeleted": "Elemento di memoria eliminato.",
+      "emailUpdated": "Email aggiornata!",
+      "passwordUpdated": "Password aggiornata!",
+      "subscriptionCanceled": "Abbonamento cancellato. Passerai al piano Free.",
+      "memoryDeleted": "Elemento eliminato.",
       "memoryCleared": "Memoria eliminata completamente."
     },
     "confirm": {
       "deleteTitle": "Eliminare account?",
-      "deleteText": "Questa azione eliminera definitivamente account e dati. Non e reversibile.",
-      "cancelTitle": "Annullare abbonamento?",
-      "cancelText": "Sei sicuro? Verrai riportato al piano Free."
+      "deleteText": "Questa azione elimina account e dati. Non è possibile annullare.",
+      "cancelTitle": "Cancellare abbonamento?",
+      "cancelText": "Sei sicuro? Tornerai al piano Free."
     }
   },
   "legal": {
@@ -896,16 +897,16 @@
     "noticeTitle": "Note legali",
     "noticeLead": "Informazioni ai sensi del Decreto Legislativo italiano n. 70/2003 e Regolamento UE 2016/679.",
     "privacyEyebrow": "Privacy",
-    "privacyTitle": "Informativa sulla privacy",
-    "privacyLead": "Prendiamo molto seriamente la protezione dei tuoi dati personali. Qui imparerai come li gestiamo.",
+    "privacyTitle": "Privacy",
+    "privacyLead": "Prendiamo la protezione dei tuoi dati molto seriamente. Qui spieghiamo come li gestiamo.",
     "termsEyebrow": "Termini",
     "termsTitle": "Termini di servizio",
-    "termsLead": "Leggi attentamente questi termini prima di utilizzare Wieland AI.",
+    "termsLead": "Leggi questi termini prima di usare Wieland AI.",
     "lastUpdated": "Ultimo aggiornamento: aprile 2026",
     "status": "Stato: aprile 2026",
     "noticeSections": [
       {
-        "title": "Gestore del sito web e fornitore del servizio",
+        "title": "Responsabile del sito",
         "paragraphs": [
           "Wieland AI",
           "Wielandstrasse 11",
@@ -914,13 +915,13 @@
         ]
       },
       {
-        "title": "Informazioni di contatto",
+        "title": "Contatto",
         "paragraphs": [
           "Email: kontakt@wieland.ai"
         ]
       },
       {
-        "title": "Responsabile dei contenuti (ai sensi dell'Art. 17 Abs. 2 MStV)",
+        "title": "Responsabile dei contenuti (Art. 17 Abs. 2 MStV)",
         "paragraphs": [
           "Wieland AI",
           "Wielandstrasse 11",
@@ -929,16 +930,16 @@
         ]
       },
       {
-        "title": "Esclusione di responsabilità",
+        "title": "Limitazione di responsabilità",
         "paragraphs": [
-          "Tutti i contenuti del nostro sito web sono stati preparati con cura. Tuttavia, non possiamo assumere alcuna responsabilità o garanzia per l'accuratezza, la completezza o l'attualità dei contenuti. In qualità di fornitore di servizi, siamo responsabili per i nostri contenuti su queste pagine secondo la legge vigente. Tuttavia, non siamo obbligati secondo l'Art. 8 a 10 del TMG a monitorare le informazioni di terzi trasmesse o archiviate, o a condurre indagini che indicherebbero un'attività illegale."
+          "Tutti i contenuti del sito sono stati preparati con cura. Non possiamo però garantire che siano sempre completi o aggiornati. Siamo responsabili dei nostri contenuti secondo la legge, ma non siamo obbligati a controllare i contenuti di terzi."
         ]
       },
       {
-        "title": "Risoluzione delle controversie online (ODR)",
+        "title": "Risoluzione delle controversie online",
         "paragraphs": [
-          "Ai sensi dell'Art. 14 Abs. 1 ODR-VO, desideriamo segnalarvi la piattaforma di risoluzione delle controversie online della Commissione europea: https://ec.europa.eu/consumers/odr/",
-          "Non siamo disposti né obbligati a partecipare a procedimenti di risoluzione delle controversie davanti a un organismo di conciliazione del consumatore. Puoi trovare il nostro indirizzo email nel nostro avviso legale."
+          "Ai sensi dell'Art. 14 ODR-VO: https://ec.europa.eu/consumers/odr/",
+          "Non siamo obbligati a partecipare a procedure di conciliazione."
         ]
       }
     ],
@@ -946,11 +947,11 @@
       {
         "title": "1. Informazioni generali",
         "paragraphs": [
-          "Wieland AI rispetta la privacy di tutti gli utenti e si conforma a tutte le leggi sulla protezione dei dati applicabili, in particolare al Regolamento generale sulla protezione dei dati (UE) 2016/679 (RGPD) e al Codice della Privacy italiano (Decreto Legislativo 30 giugno 2003, n. 196) come modificato dal Decreto Legislativo 10 agosto 2018, n. 101."
+          "Wieland AI rispetta la privacy degli utenti e segue il Regolamento UE 2016/679 (RGPD) e la legge italiana sulla privacy."
         ]
       },
       {
-        "title": "2. Titolare del trattamento",
+        "title": "2. Responsabile del trattamento",
         "paragraphs": [
           "Wieland AI",
           "Wielandstrasse 11",
@@ -960,160 +961,159 @@
         ]
       },
       {
-        "title": "3. Dati raccolti e trattamento dei dati",
+        "title": "3. Dati raccolti",
         "list": [
-          "Applicazione locale: i chat e gli account utente sono per impostazione predefinita archiviati solo localmente sul tuo dispositivo e non lasciano il dispositivo.",
-          "Sito web: log del server web standard (indirizzo IP, momento dell'accesso, timestamp, risorsa richiesta, codice di stato HTTP).",
-          "Questi dati vengono elaborati per la sicurezza operativa e per rilevare e correggere gli errori."
+          "App locale: chat e account sono salvati solo sul tuo dispositivo.",
+          "Sito web: log standard del server (IP, orario, risorsa, codice HTTP).",
+          "Questi dati servono per la sicurezza e per correggere errori."
         ]
       },
       {
-        "title": "4. Cookie e tecnologie simili",
+        "title": "4. Cookie",
         "paragraphs": [
-          "Questo sito web non utilizza cookie di marketing o tracciamento da terzi. Utilizziamo solo cookie funzionalmente necessari per mantenere la tua sessione utente. Puoi disabilitare l'archiviazione dei cookie nelle impostazioni del tuo browser; tuttavia, ciò potrebbe compromettere le funzionalità del sito web."
+          "Questo sito non usa cookie di marketing. Usiamo solo cookie necessari per la tua sessione. Puoi disabilitarli nel browser, ma alcune funzioni potrebbero non funzionare."
         ]
       },
       {
         "title": "5. Condivisione dei dati",
         "paragraphs": [
-          "I tuoi dati personali non verranno condivisi con terzi, venduti o utilizzati a scopi pubblicitari. I dati verranno condivisi solo se richiesto dalla legge o per far valere i nostri termini di servizio."
+          "I tuoi dati non vengono condivisi con terzi, venduti o usati per pubblicità. Vengono condivisi solo se richiesto dalla legge."
         ]
       },
       {
         "title": "6. Conservazione dei dati",
         "paragraphs": [
-          "I dati vengono conservati solo per il tempo necessario a raggiungere i fini del trattamento. I log del server vengono eliminati dopo 90 giorni. I dati dell'account utente vengono eliminati immediatamente alla disattivazione o cancellazione dell'account."
+          "I dati vengono salvati solo per il tempo necessario. I log del server vengono eliminati dopo 90 giorni. I dati dell'account vengono eliminati subito alla cancellazione."
         ]
       },
       {
-        "title": "7. Tuoi diritti",
+        "title": "7. I tuoi diritti",
         "list": [
-          "Diritto di accesso (Art. 15 RGPD): puoi in qualsiasi momento richiedere informazioni su quali dati sono archiviati su di te.",
-          "Diritto di rettifica (Art. 16 RGPD): puoi far correggere i dati inesatti.",
-          "Diritto all'oblio (Art. 17 RGPD): puoi richiedere l'eliminazione dei tuoi dati.",
-          "Diritto alla portabilità dei dati (Art. 20 RGPD): puoi ricevere i tuoi dati in formato strutturato.",
-          "Diritto di opposizione (Art. 21 RGPD): puoi opporti al trattamento dei dati.",
-          "Diritto di limitare il trattamento (Art. 18 RGPD)."
+          "Accesso (Art. 15 RGPD): puoi chiedere quali dati abbiamo su di te.",
+          "Correzione (Art. 16 RGPD): puoi far correggere dati sbagliati.",
+          "Cancellazione (Art. 17 RGPD): puoi chiedere di eliminare i tuoi dati.",
+          "Portabilità (Art. 20 RGPD): puoi ricevere i tuoi dati in formato strutturato.",
+          "Opposizione (Art. 21 RGPD): puoi opporti al trattamento.",
+          "Limitazione (Art. 18 RGPD)."
         ]
       },
       {
-        "title": "8. Sicurezza dei dati",
+        "title": "8. Sicurezza",
         "paragraphs": [
-          "Adottiamo appropriate misure tecniche e organizzative per proteggere la sicurezza dei tuoi dati, inclusa la crittografia durante la trasmissione."
+          "Usiamo misure tecniche per proteggere i tuoi dati, inclusa la crittografia."
         ]
       },
       {
-        "title": "9. Notifica di violazione dei dati",
+        "title": "9. Violazione dei dati",
         "paragraphs": [
-          "In caso di violazione dei dati personali, gli interessati verranno immediatamente notificati e l'autorità per la protezione dei dati sarà informata entro 72 ore."
+          "In caso di violazione, gli utenti vengono avvisati subito e l'autorità competente entro 72 ore."
         ]
       },
       {
         "title": "10. Contatto",
         "paragraphs": [
-          "Se hai domande riguardanti la privacy o desideri esercitare i tuoi diritti, contattaci all'indirizzo: kontakt@wieland.ai",
-          "Hai anche il diritto di presentare un reclamo all'autorità italiana competente per la protezione dei dati (Garante per la protezione dei dati personali)."
+          "Per domande sulla privacy: kontakt@wieland.ai",
+          "Puoi anche fare un reclamo al Garante per la protezione dei dati personali."
         ]
       }
     ],
     "termsSections": [
       {
-        "title": "1. Ambito di applicazione e accettazione",
+        "title": "1. Accettazione",
         "paragraphs": [
-          "Questi termini di servizio disciplinano l'utilizzo del software Wieland AI e del sito web. L'utilizzo del servizio significa che accetti questi termini. Se non sei d'accordo, non puoi utilizzare Wieland AI."
+          "Questi termini regolano l'uso di Wieland AI. Se usi il servizio, accetti questi termini. Se non sei d'accordo, non puoi usare Wieland AI."
         ]
       },
       {
-        "title": "2. Licenza e diritti di utilizzo",
+        "title": "2. Licenza",
         "paragraphs": [
-          "Wieland AI è fornito secondo la Licenza MIT. Ti viene concessa una licenza non esclusiva, non trasferibile per l'uso personale e non commerciale, soggetta ai termini della rispettiva licenza open-source."
+          "Wieland AI è distribuito con licenza MIT. Hai una licenza personale e non commerciale."
         ]
       },
       {
         "title": "3. Responsabilità dell'utente",
         "paragraphs": [
-          "Sei l'unico responsabile di tutte le attività che si verificano nel tuo account utente. Non puoi condividere la tua password con altri o utilizzare il software per scopi illegali o qualsiasi attività che violi questi termini."
+          "Sei responsabile di tutto ciò che fai con il tuo account. Non puoi condividere la password o usare il software per scopi illegali."
         ]
       },
       {
         "title": "4. Attività vietate",
         "list": [
-          "Attività illegali o violazioni della legge applicabile",
-          "Abuso automatizzato di servizi online, incluso scraping e automazione senza permesso",
-          "Tentativi di aggirare i meccanismi di sicurezza o il sistema",
-          "Condivisione di credenziali amministratore o chiavi di sicurezza con persone non autorizzate",
-          "Utilizzo per danneggiare altri, incluso molestie, bullismo o frode",
-          "Violazione di diritti d'autore o di proprietà intellettuale",
-          "Distribuzione di malware o software dannoso",
-          "Compromissione dell'integrità o della sicurezza dei servizi o dei sistemi"
+          "Attività illegali",
+          "Uso automatizzato senza permesso (scraping, bot)",
+          "Tentativi di aggirare la sicurezza",
+          "Condivisione di credenziali admin",
+          "Molestie, frode o danni ad altri",
+          "Violazione di copyright",
+          "Distribuzione di malware",
+          "Mettere in pericolo la sicurezza del servizio"
         ]
       },
       {
-        "title": "5. Limitazione di responsabilità e disclaimer",
+        "title": "5. Limitazione di responsabilità",
         "paragraphs": [
-          "Wieland AI è fornito \"così com'è\" senza garanzie di alcun tipo, esplicite o implicite. Questo include, senza limitazione, nessuna garanzia di commerciabilità, idoneiteità per un particolare scopo, o non violazione dei diritti di terzi.",
-          "In nessun caso Wieland AI sarà responsabile per danni indiretti, incidentali, speciali o consequenziali, inclusa la perdita di profitti, la perdita di dati o l'interruzione del business, indipendentemente dalla causa e su qualsiasi teoria della responsabilità."
+          "Wieland AI è fornito così com'è, senza garanzie. Non siamo responsabili per danni indiretti o perdita di dati."
         ]
       },
       {
-        "title": "6. Contenuti generati dall'IA",
+        "title": "6. Contenuti generati dall'AI",
         "paragraphs": [
-          "Wieland AI utilizza modelli di IA per generare contenuti. Questi contenuti possono essere imprecisi, obsoleti o incompleti e non devono essere considerati come consulenza professionale. Sei l'unico responsabile della revisione e dell'utilizzo dei contenuti generati.",
-          "Sei responsabile di tutti i contenuti che crei o distribuisci attraverso Wieland AI, inclusa la conformità al copyright e alle leggi applicabili."
+          "I contenuti generati dall'AI possono essere sbagliati o incompleti. Non sono consulenza professionale. Sei responsabile dell'uso di questi contenuti.",
+          "Sei responsabile di tutto ciò che crei o condividi con Wieland AI."
         ]
       },
       {
-        "title": "7. Modifiche e aggiornamenti",
+        "title": "7. Modifiche",
         "paragraphs": [
-          "Wieland AI si riserva il diritto di modificare questi termini in qualsiasi momento. Le modifiche diventano effettive quando pubblicate su questa pagina. L'utilizzo continuativo del software dopo le modifiche costituisce accettazione dei nuovi termini.",
-          "Wieland AI può interrompere, modificare o sospendere i servizi senza preavviso."
+          "Possiamo modificare questi termini in qualsiasi momento. Le modifiche entrano in vigore quando pubblicate qui. L'uso continuato del servizio significa che accetti i nuovi termini.",
+          "Possiamo anche fermare o modificare il servizio senza preavviso."
         ]
       },
       {
-        "title": "8. Risoluzione",
+        "title": "8. Chiusura account",
         "paragraphs": [
-          "Wieland AI può terminare immediatamente l'accesso ai servizi se violi questi termini, in particolare per attività illegali o abuso ripetuto."
+          "Possiamo chiudere il tuo account subito se violi questi termini, soprattutto per attività illegali."
         ]
       },
       {
         "title": "9. Proprietà intellettuale",
         "paragraphs": [
-          "Concedi a Wieland AI la licenza per archiviare, elaborare e rivedere i contenuti come necessario per garantire la sicurezza e il corretto funzionamento dei servizi. Mantieni tutti i diritti sui tuoi contenuti originali."
+          "Ci dai il permesso di salvare ed elaborare i tuoi contenuti per garantire la sicurezza del servizio. I tuoi contenuti restano tuoi."
         ]
       },
       {
-        "title": "10. Legge applicabile e competenza",
+        "title": "10. Legge e giurisdizione",
         "paragraphs": [
-          "Questi termini sono disciplinati e interpretati secondo le leggi della Repubblica Italiana, senza riguardo ai principi di conflitto.",
-          "Tutti i reclami o le controversie derivanti da o correlati a questi termini o all'utilizzo del servizio sono soggetti alla giurisdizione esclusiva dei tribunali competenti di Bressanone (BZ), Italia, a meno che la legge imperativa non preveda diversamente."
+          "Questi termini seguono la legge italiana.",
+          "Tutte le controversie sono gestite dai tribunali di Bressanone (BZ), Italia."
         ]
       },
       {
         "title": "11. Clausola di salvaguardia",
         "paragraphs": [
-          "Se una disposizione di questi termini è nulla o inapplicabile, la validità delle rimanenti disposizioni non sarà interessata. Una disposizione nulla sarà sostituita da una valida che realizza lo scopo originale il più vicino possibile."
+          "Se una parte di questi termini non è valida, il resto rimane valido."
         ]
       }
     ]
   },
   "notFound": {
-    "moonMessage": "Sembra che tu sia rimasto bloccato sulla luna...",
+    "moonMessage": "Sembra che tu sia bloccato sulla luna...",
     "returnSafety": "Torna al sicuro"
   },
   "alertModal": { "ok": "OK" },
   "confirmModal": { "cancel": "Annulla", "confirm": "Conferma" },
   "payment": {
-    "title": "Metodo di pagamento e conferma",
+    "title": "Pagamento e conferma",
     "method": "Metodo di pagamento",
-    "security": "Tutti i pagamenti sono elaborati in modo sicuro.",
+    "security": "Tutti i pagamenti sono sicuri.",
     "upgradeAccount": "Stai per aggiornare questo account.",
     "plan": "Piano:",
     "duration": "Durata:",
-    "monthlyCancelable": "Annullabile mensilmente",
-    "dueNow": "da pagare ora",
+    "monthlyCancelable": "Cancellabile ogni mese",
+    "dueNow": "da pagare adesso",
     "perMonth": "/mese",
     "tax": "Tasse escluse",
-    "proratedNote": "Upgrade prorata. Dal prossimo ciclo di fatturazione: ${{fullPrice}}/mese.",
+    "proratedNote": "Upgrade proporzionale. Dal prossimo mese: ${{fullPrice}}/mese.",
     "confirmUpgrade": "Conferma upgrade",
     "methods": {
       "card": "Carta di credito",
@@ -1126,14 +1126,14 @@
     }
   },
   "purchase": {
-    "processing": "Pagamento in elaborazione...",
+    "processing": "Pagamento in corso...",
     "upgrading": "Upgrade al piano {{plan}}",
     "downgrading": "Passaggio al piano {{plan}}",
-    "downgradeProcessing": "Aggiornamento abbonamento in corso...",
+    "downgradeProcessing": "Aggiornamento abbonamento...",
     "success": "Upgrade completato!",
     "welcome": "Benvenuto nel piano {{plan}}. Buon lavoro!",
     "downgradeConfirmTitle": "Conferma downgrade",
-    "downgradeConfirmText": "Stai per passare a {{plan}}. Il piano {{plan}} sarà attivo solo dal prossimo mese.",
+    "downgradeConfirmText": "Stai per passare a {{plan}}. Il piano {{plan}} sarà attivo dal prossimo mese.",
     "confirmDowngrade": "Conferma downgrade",
     "downgradeSuccess": "Downgrade completato!",
     "downgradeWelcome": "Ora sei nel piano {{plan}}.",
@@ -1143,12 +1143,12 @@
     "tabs": { "overview": "Panoramica", "users": "Utenti", "chats": "Chat" },
     "adminPanel": "Pannello admin",
     "backToSite": "Torna al sito",
-    "toggleSidebar": "Apri/chiudi barra laterale",
+    "toggleSidebar": "Apri/chiudi menu laterale",
     "search": "Cerca...",
     "all": "Tutti",
     "addUser": "+ Utente",
     "refresh": "Aggiorna",
-    "confirmDeleteUser": "Eliminare l'utente \"{{name}}\"? Verranno eliminate anche tutte le chat.",
+    "confirmDeleteUser": "Eliminare l'utente \"{{name}}\"? Vengono eliminate anche tutte le chat.",
     "confirmDeleteChat": "Eliminare la chat \"{{title}}\"?",
     "stats": {
       "totalUsers": "Utenti totali",
@@ -1198,8 +1198,8 @@
       "since": "dal",
       "usernamePlaceholder": "max_mustermann",
       "emailPlaceholder": "max@example.com",
-      "newPasswordOptional": "Nuova password (vuoto = invariata)",
-      "keepPassword": "Lascia vuoto per mantenere la password attuale",
+      "newPasswordOptional": "Nuova password (vuoto = nessuna modifica)",
+      "keepPassword": "Lascia vuoto per mantenere la password",
       "saving": "Salvataggio...",
       "update": "Aggiorna",
       "create": "Crea"

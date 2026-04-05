@@ -848,6 +848,7 @@
     "memoryTypeAuto": "Detected automatically",
     "memoryUsage": "Used {{count}}x",
     "dangerZone": "Danger zone",
+    "logoutDescription": "Sign out from your account.",
     "deleteAccount": "Delete account",
     "deleteDescription": "This will permanently delete your account and related data.",
     "legalSection": "Legal",

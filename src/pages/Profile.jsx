@@ -801,9 +801,7 @@ function Profile({ isSidebarOpen, onSidebarToggle }) {
                   <div className="profile-row-text">
                     <span className="profile-row-title">{t("sidebar.logout")}</span>
                     <span className="profile-row-meta">
-                      {t("profile.logoutDescription", {
-                        defaultValue: "Meldet dich aus deinem Konto ab.",
-                      })}
+                      {t("profile.logoutDescription")}
                     </span>
                   </div>
                 </div>
