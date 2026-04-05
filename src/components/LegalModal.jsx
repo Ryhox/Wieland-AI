@@ -17,7 +17,7 @@ export default function LegalModal({ isOpen, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="legal-modal-header">
-          <h2 className="legal-modal-title">{t("legal.title")}</h2>
+          <h2 className="legal-modal-title">{t("legal.noticeEyebrow")}</h2>
           <button
             className="legal-modal-close"
             onClick={onClose}
@@ -33,28 +33,28 @@ export default function LegalModal({ isOpen, onClose }) {
               className="legal-modal-link"
               onClick={onClose}
             >
-              {t("legal.imprint")}
+              {t("legal.noticeTitle")}
             </a>
             <a 
               href={localPath("/privacy-policy")} 
               className="legal-modal-link"
               onClick={onClose}
             >
-              {t("legal.privacy")}
+              {t("legal.privacyTitle")}
             </a>
             <a 
               href={localPath("/terms-of-service")} 
               className="legal-modal-link"
               onClick={onClose}
             >
-              {t("legal.terms")}
+              {t("legal.termsTitle")}
             </a>
           </nav>
         </div>
 
         <div className="legal-modal-footer">
           <p className="legal-modal-copyright">
-            {t("legal.copyright", { year: new Date().getFullYear() })}
+            {t("footer.copyright", { year: new Date().getFullYear() })}
           </p>
         </div>
       </div>

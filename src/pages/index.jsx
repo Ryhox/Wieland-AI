@@ -65,7 +65,7 @@ function Home({ isSidebarOpen, onSidebarToggle }) {
         <button
           className="home-legal-button"
           onClick={() => setIsLegalModalOpen(true)}
-          title={t("legal.title")}
+          title={t("legal.noticeEyebrow")}
         >
           <svg width="100%" viewBox="0 0 680 320" xmlns="http://www.w3.org/2000/svg">
             <path d="M250 30 L390 30 L450 90 L450 290 L250 290 Z" fill="none" stroke="white" strokeWidth="6" strokeLinejoin="round" strokeLinecap="round"/>
@@ -74,7 +74,7 @@ function Home({ isSidebarOpen, onSidebarToggle }) {
             <line x1="282" y1="195" x2="418" y2="195" stroke="white" strokeWidth="5" strokeLinecap="round"/>
             <line x1="282" y1="230" x2="355" y2="230" stroke="white" strokeWidth="5" strokeLinecap="round"/>
           </svg>
-          <span className="home-legal-label">{t("legal.title")}</span>
+          <span className="home-legal-label">{t("legal.noticeEyebrow")}</span>
         </button>
       )}
 
