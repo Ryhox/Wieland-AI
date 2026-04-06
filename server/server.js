@@ -2275,7 +2275,7 @@ async function analyzeMessageIntentWithModel(
   const systemInstruction = [
     "You are a JSON intent classifier. Output ONLY raw JSON, nothing else.",
     "",
-    `Output schema: {"action":"${actionSchema}","memory_items":[{"key":"string","value":"string"}],"search_query":"","needs_clarification":false,"clarify_option_reply":false}`,
+    `Output schema: {"action":"${actionSchema}","memory_items":[{"key":"string","value":"string"}],"search_query":"","needs_clarification":false,"clarify_option_reply":false,"asks_time":false}`,
     "",
     ...(sourceContextInstruction ? [sourceContextInstruction, ""] : []),
     "MEMORY_STORE: user SHARES or STATES personal info (e.g., 'I am 20 years old', 'My name is John', 'I work as engineer', 'I live in Berlin', 'My favorite color is blue', 'Ich bin 20 Jahre alt', 'Mein Name ist Anna'). Extract key+value pairs from statements that provide personal facts.",
@@ -2316,6 +2316,8 @@ async function analyzeMessageIntentWithModel(
     'Input: "whats the weather in Vienna" -> {"action":"SEARCH_WEB","memory_items":[],"search_query":"weather Vienna","needs_clarification":false,"clarify_option_reply":false}',
     'Input: "what are the news today?" -> {"action":"SEARCH_WEB","memory_items":[],"search_query":"news today","needs_clarification":false,"clarify_option_reply":false}',
     'Input: "heyho!" -> {"action":"CHAT","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
+    'Input: "wie spät ist es" -> {"action":"CHAT","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false,"asks_time":true}',
+    'Input: "what time is it" -> {"action":"CHAT","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false,"asks_time":true}',
     ...(allowReadPageAction
       ? [
           'Input: "was steht auf dieser website" -> {"action":"READ_PAGE","memory_items":[],"search_query":"","needs_clarification":false,"clarify_option_reply":false}',
