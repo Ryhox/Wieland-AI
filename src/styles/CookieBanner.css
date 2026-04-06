@@ -5,7 +5,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(48, 48, 48, 0.205);
+  background: rgba(2, 2, 2, 0.5);
   backdrop-filter: blur(10px);
   border-top: 1px solid rgba(252, 252, 252, 0.2);
   z-index: 10000;
@@ -69,9 +69,9 @@
 
 /* Accept button */
 .cookie-btn-accept {
-  background: rgba(22, 163, 41, 0.205);
+  background: rgba(22, 163, 41, 0.37);
   color: white;
-  border: 1px solid rgba(8, 219, 36, 0.2);
+  border: 1px solid rgba(8, 219, 36, 0.418);
 }
 
 .cookie-btn-accept:hover {
@@ -79,16 +79,29 @@
   box-shadow: 0 8px 24px rgba(90, 216, 73, 0.192);
 }
 
+/* Privacy policy link in cookie banner */
+.cookie-privacy-link {
+  color: inherit;
+  opacity: 0.7;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity 0.15s;
+}
+
+.cookie-privacy-link:hover {
+  opacity: 1;
+}
+
 /* Decline button */
 .cookie-btn-decline {
-  background: rgba(246, 92, 92, 0.1);
-  color: #c7c7c7;
-  border: 1px solid rgba(246, 92, 105, 0.2);
+  background: rgba(252, 44, 44, 0.521);
+  color: #ffffff;
+  border: 1px solid rgba(255, 14, 34, 0.473);
 }
 
 .cookie-btn-decline:hover {
-  background: rgba(246, 92, 92, 0.15);
-  border-color: rgba(246, 92, 92, 0.3);
+  background: rgba(253, 28, 28, 0.445);
+  border-color: rgba(255, 39, 39, 0.3);
 }
 
 @media (max-width: 768px) {

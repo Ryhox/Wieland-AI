@@ -53,13 +53,13 @@
     "contact": "Kontakt",
     "conclusion": "Fazit",
     "legalNotice": "Impressum",
-    "privacy": "Datenschutz",
+    "privacy": "Datenschutzerklärung",
     "terms": "Nutzungsbedingungen",
     "copyright": "© {{year}} Wieland. Alle Rechte vorbehalten."
   },
   "cookie": {
     "title": "Cookie-Einwilligung",
-    "text": "Wir verwenden Cookies und lokale Speicherung, um dich angemeldet zu halten und deine Sitzung zu speichern. Deine Daten verlassen dein Gerät nicht.",
+    "text": "Wir verwenden funktionale Cookies und lokale Speicherung, um deine Sitzung aufrechtzuerhalten. Personenbezogene Daten werden verschlüsselt gespeichert. Weitere Informationen findest du in unserer",
     "accept": "Akzeptieren",
     "decline": "Ablehnen"
   },

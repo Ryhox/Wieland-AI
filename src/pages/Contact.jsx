@@ -8,14 +8,12 @@ import Footer from "../components/Footer";
 import Sidebar from "../components/Sidebar";
 import { useAuth } from "../context/AuthContext";
 
-// kontakt-form seite: voll klient-seitig validiert + GSAP animationen + success modal
 function Contact({ isSidebarOpen, onSidebarToggle }) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const rootRef = useRef(null);
   const introTl = useRef(null);
 
-  // form state: name + email + subject + message + checkbox
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -31,7 +29,6 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
   const formRef = useRef(null);
   const infoRef = useRef(null);
 
-  // animation und side-effects hier gebündelt, cleanup ist wichtig :/
   useLayoutEffect(() => {
     if (!rootRef.current) return;
 
@@ -57,31 +54,17 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
         })
         .to(
           ".contact-divider",
-          {
-            opacity: 1,
-            duration: 0.14,
-            ease: "power2.out",
-          },
+          { opacity: 1, duration: 0.14, ease: "power2.out" },
           "-=0.08",
         )
         .to(
           ".contact-form-wrapper",
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.2,
-            ease: "power2.out",
-          },
+          { opacity: 1, y: 0, duration: 0.2, ease: "power2.out" },
           "-=0.04",
         )
         .to(
           ".contact-info-section",
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.18,
-            ease: "power2.out",
-          },
+          { opacity: 1, y: 0, duration: 0.18, ease: "power2.out" },
           "-=0.1",
         );
     }, rootRef);
@@ -104,11 +87,11 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
       ".contact-form-wrapper",
       {
         boxShadow: "0 0 0px rgba(76, 175, 80, 0)",
-        borderColor: "rgba(255, 255, 255, 0.08)",
+        borderColor: "rgba(255, 255, 255, 0.07)",
       },
       {
-        boxShadow: "0 0 30px rgba(76, 175, 80, 0.3)",
-        borderColor: "rgba(76, 175, 80, 0.5)",
+        boxShadow: "0 0 30px rgba(76, 175, 80, 0.2)",
+        borderColor: "rgba(76, 175, 80, 0.4)",
         duration: 0.5,
         yoyo: true,
         repeat: 1,
@@ -120,16 +103,14 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
     gsap.to(".contact-success-modal", {
       scale: 0.95,
       opacity: 0,
-      duration: 0.2,
+      duration: 0.18,
       ease: "power2.in",
       onComplete: () => setModal({ show: false, title: "", message: "" }),
     });
   };
 
   const validateField = (name, value) => {
-    // field-validierung: mindestlänge, email format, checkbox status
     let error = "";
-
     switch (name) {
       case "name":
         if (!value.trim()) error = t("contact.validation.name");
@@ -139,9 +120,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
           error = t("contact.validation.email");
         } else {
           const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
-          if (!emailRegex.test(value)) {
-            error = t("contact.validation.emailInvalid");
-          }
+          if (!emailRegex.test(value)) error = t("contact.validation.emailInvalid");
         }
         break;
       case "subject":
@@ -160,26 +139,20 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
       default:
         break;
     }
-
     return error;
   };
 
-  // user-action flow: validierung beim eintippen (real-time error clearing)
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     const fieldValue = type === "checkbox" ? checked : value;
     setFormData((prev) => ({ ...prev, [name]: fieldValue }));
 
-    // wenn feld vorher fehlerhaft war: error clearen sobald user tippt
     if (errors[name]) {
       const error = validateField(name, fieldValue);
-      if (!error) {
-        setErrors((prev) => ({ ...prev, [name]: "" }));
-      }
+      if (!error) setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
-  // handler separat halten, sonst wird die render-logik schnell wirr
   const handleBlur = (e) => {
     const { name, value, type, checked } = e.target;
     const fieldValue = type === "checkbox" ? checked : value;
@@ -189,13 +162,12 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
     if (error && name !== "agreeToTerms") {
       gsap.fromTo(
         `.contact-error-${name}`,
-        { x: -10, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.3, ease: "back.out" },
+        { x: -8, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.25, ease: "back.out" },
       );
     }
   };
 
-  // user-action flow hier sauber trennen, fehlerpfad sitzt direkt daneben
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -214,14 +186,14 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
 
     if (hasError) {
       const firstErrorField = document.querySelector(
-        ".contact-form-group input.error, .contact-form-group textarea.error, .contact-checkbox-group.error",
+        ".contact-form-group input.error, .contact-form-group textarea.error",
       );
       if (firstErrorField) {
         firstErrorField.scrollIntoView({ behavior: "smooth", block: "center" });
         gsap.fromTo(
           firstErrorField,
-          { x: -5, borderColor: "rgba(244, 67, 54, 0.5)" },
-          { x: 0, duration: 0.3, yoyo: true, repeat: 2 },
+          { x: -4 },
+          { x: 0, duration: 0.25, yoyo: true, repeat: 3 },
         );
       }
       return;
@@ -230,10 +202,10 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
     setIsSubmitting(true);
 
     gsap.to(".contact-submit-btn", {
-      scale: 0.98,
-      duration: 0.2,
+      scale: 0.97,
+      duration: 0.15,
       yoyo: true,
-      repeat: 2,
+      repeat: 1,
     });
 
     try {
@@ -245,15 +217,8 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
 
       if (response.ok) {
         showSuccessModal();
-        setFormData({
-          name: "",
-          email: "",
-          subject: "",
-          message: "",
-          agreeToTerms: false,
-        });
+        setFormData({ name: "", email: "", subject: "", message: "", agreeToTerms: false });
         setErrors({});
-
         gsap.fromTo(
           ".contact-form",
           { opacity: 0.5 },
@@ -265,19 +230,11 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
         if (formError) {
           formError.textContent = errorData.message || t("contact.errorSend");
           formError.style.display = "block";
-          gsap.fromTo(
-            formError,
-            { y: -20, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.3 },
-          );
+          gsap.fromTo(formError, { y: -16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.25 });
           setTimeout(() => {
             gsap.to(formError, {
-              opacity: 0,
-              duration: 0.3,
-              onComplete: () => {
-                formError.style.display = "none";
-                formError.textContent = "";
-              },
+              opacity: 0, duration: 0.25,
+              onComplete: () => { formError.style.display = "none"; formError.textContent = ""; },
             });
           }, 5000);
         }
@@ -288,19 +245,11 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
       if (formError) {
         formError.textContent = t("contact.errorNetwork");
         formError.style.display = "block";
-        gsap.fromTo(
-          formError,
-          { y: -20, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.3 },
-        );
+        gsap.fromTo(formError, { y: -16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.25 });
         setTimeout(() => {
           gsap.to(formError, {
-            opacity: 0,
-            duration: 0.3,
-            onComplete: () => {
-              formError.style.display = "none";
-              formError.textContent = "";
-            },
+            opacity: 0, duration: 0.25,
+            onComplete: () => { formError.style.display = "none"; formError.textContent = ""; },
           });
         }, 5000);
       }
@@ -315,9 +264,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
       ref={rootRef}
     >
       <Header isSidebarOpen={isSidebarOpen} onSidebarToggle={onSidebarToggle} />
-      {user && (
-        <Sidebar isOpen={isSidebarOpen} onOpenChange={onSidebarToggle} />
-      )}
+      {user && <Sidebar isOpen={isSidebarOpen} onOpenChange={onSidebarToggle} />}
 
       <main className="page-content">
         <div className="page-container contact-container">
@@ -337,10 +284,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
             <div className="contact-form-wrapper">
               <h2 className="contact-form-title">{t("contact.formTitle")}</h2>
 
-              <div
-                className="contact-form-error"
-                style={{ display: "none" }}
-              ></div>
+              <div className="contact-form-error" style={{ display: "none" }} />
 
               <form onSubmit={handleSubmit} className="contact-form" noValidate>
                 <div className="contact-form-row">
@@ -358,9 +302,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                       className={errors.name ? "error" : ""}
                     />
                     {errors.name && (
-                      <div className={`contact-error contact-error-name`}>
-                        {errors.name}
-                      </div>
+                      <div className="contact-error contact-error-name">{errors.name}</div>
                     )}
                   </div>
 
@@ -378,9 +320,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                       className={errors.email ? "error" : ""}
                     />
                     {errors.email && (
-                      <div className={`contact-error contact-error-email`}>
-                        {errors.email}
-                      </div>
+                      <div className="contact-error contact-error-email">{errors.email}</div>
                     )}
                   </div>
                 </div>
@@ -399,9 +339,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                     className={errors.subject ? "error" : ""}
                   />
                   {errors.subject && (
-                    <div className={`contact-error contact-error-subject`}>
-                      {errors.subject}
-                    </div>
+                    <div className="contact-error contact-error-subject">{errors.subject}</div>
                   )}
                 </div>
 
@@ -420,20 +358,15 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                   />
                   <span className="contact-char-count">
                     {formData.message.length} {t("contact.chars")}{" "}
-                    {formData.message.length < 10 &&
-                      formData.message.length > 0 &&
-                      t("contact.min10")}
+                    {formData.message.length < 10 && formData.message.length > 0 && t("contact.min10")}
                   </span>
                   {errors.message && (
-                    <div className={`contact-error contact-error-message`}>
-                      {errors.message}
-                    </div>
+                    <div className="contact-error contact-error-message">{errors.message}</div>
                   )}
                 </div>
 
-                <div
-                  className={`contact-form-group contact-checkbox-group ${errors.agreeToTerms ? "has-error" : ""}`}
-                >
+                {/* Custom checkbox */}
+                <div className={`contact-form-group contact-checkbox-group ${errors.agreeToTerms ? "has-error" : ""}`}>
                   <label className="contact-checkbox-label">
                     <input
                       type="checkbox"
@@ -442,24 +375,29 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       disabled={isSubmitting}
-                      className={errors.agreeToTerms ? "error" : ""}
                     />
+                    {/* Custom visual box */}
+                    <span className="contact-custom-checkbox" aria-hidden="true">
+                      <svg viewBox="0 0 9 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M1 3.5L3.5 6L8 1"
+                          stroke="rgba(232,35,250,0.9)"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
                     <span className="checkbox-text">
                       {t("contact.agree")}{" "}
-                      <a
-                        href={`/${i18n.language}/privacy-policy`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <a href={`/${i18n.language}/privacy-policy`} target="_blank" rel="noopener noreferrer">
                         {t("contact.privacy")}
                       </a>{" "}
                       {t("contact.agreeEnd")}
                     </span>
                   </label>
                   {errors.agreeToTerms && (
-                    <div className={`contact-error contact-error-agreeToTerms`}>
-                      {errors.agreeToTerms}
-                    </div>
+                    <div className="contact-error contact-error-agreeToTerms">{errors.agreeToTerms}</div>
                   )}
                 </div>
 
@@ -470,7 +408,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                 >
                   {isSubmitting ? (
                     <>
-                      <span className="spinner"></span>
+                      <span className="spinner" />
                       {t("contact.sending")}
                     </>
                   ) : (
@@ -487,9 +425,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
             <h2 className="contact-info-title">{t("contact.infoTitle")}</h2>
             <div className="contact-info-grid">
               <div className="contact-info-card">
-                <span className="contact-info-label">
-                  {t("contact.location")}
-                </span>
+                <span className="contact-info-label">{t("contact.location")}</span>
                 <p>
                   Wielandstrasse 11
                   <br />
@@ -503,9 +439,7 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
                 </p>
               </div>
               <div className="contact-info-card">
-                <span className="contact-info-label">
-                  {t("contact.support")}
-                </span>
+                <span className="contact-info-label">{t("contact.support")}</span>
                 <p>{t("contact.supportText")}</p>
               </div>
             </div>
@@ -517,15 +451,10 @@ function Contact({ isSidebarOpen, onSidebarToggle }) {
 
       {modal.show && (
         <div className="contact-success-backdrop" onClick={closeModal}>
-          <div
-            className="contact-success-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="contact-success-modal" onClick={(e) => e.stopPropagation()}>
             <div className="contact-success-header">
-              <div className="contact-success-icon">?"??o</div>
-              <button className="contact-success-close" onClick={closeModal}>
-                {"\u00D7"}
-              </button>
+              <div className="contact-success-icon">✓</div>
+              <button className="contact-success-close" onClick={closeModal}>×</button>
             </div>
             <div className="contact-success-content">
               <h2 className="contact-success-title">{modal.title}</h2>

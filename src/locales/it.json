@@ -53,13 +53,13 @@
     "contact": "Contatto",
     "conclusion": "Conclusione",
     "legalNotice": "Note legali",
-    "privacy": "Privacy",
+    "privacy": "Informativa sulla Privacy",
     "terms": "Termini",
     "copyright": "© {{year}} Wieland. Tutti i diritti riservati."
   },
   "cookie": {
     "title": "Cookie",
-    "text": "Usiamo i cookie per tenerti connesso. I tuoi dati restano sul tuo dispositivo.",
+    "text": "Utilizziamo i cookie funzionali e l'archiviazione locale per mantenere la tua sessione. I dati personali vengono archiviati in modo criptato. Scopri di più nella nostra",
     "accept": "Accetta",
     "decline": "Rifiuta"
   },

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import "../styles/CookieBanner.css";
 
 // cookie banner: GDPR consent prompt with accept/decline buttons
@@ -40,7 +41,12 @@ export default function CookieBanner() {
       <div className="cookie-banner-content">
         <div className="cookie-banner-text">
           <h3>🍪 {t("cookie.title")}</h3>
-          <p>{t("cookie.text")}</p>
+          <p>
+            {t("cookie.text")}{" "}
+            <Link to={t("routes.privacy")} className="cookie-privacy-link">
+              {t("footer.privacy")}
+            </Link>
+          </p>
         </div>
         <div className="cookie-banner-buttons">
           <button

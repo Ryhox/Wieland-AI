@@ -53,13 +53,13 @@
     "contact": "Contact",
     "conclusion": "Conclusion",
     "legalNotice": "Legal notice",
-    "privacy": "Privacy policy",
+    "privacy": "Privacy Policy",
     "terms": "Terms of service",
     "copyright": "© {{year}} Wieland. All rights reserved."
   },
   "cookie": {
     "title": "Cookie consent",
-    "text": "We use cookies and local storage to keep you signed in and persist your session. Your data does not leave your device.",
+    "text": "We use functional cookies and local storage to maintain your session. Personal data is encrypted and stored. Learn more in our",
     "accept": "Accept",
     "decline": "Decline"
   },

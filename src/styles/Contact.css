@@ -12,7 +12,6 @@
 /* Badge/tag */
 .contact-eyebrow {
   display: inline-block;
-  font-family: "DM Mono", monospace;
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 3.5px;
@@ -65,31 +64,30 @@
   margin-bottom: 48px;
 }
 
+/* ── Form wrapper ── */
 .contact-form-wrapper {
   padding: 40px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
   margin-bottom: 12px;
-  transition:
-    boxShadow 0.3s ease,
-    borderColor 0.3s ease;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 /* Form title */
 .contact-form-title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: #fff;
-  margin-bottom: 28px;
-  letter-spacing: -0.5px;
+  margin-bottom: 32px;
+  letter-spacing: -0.4px;
 }
 
 /* Form section */
 .contact-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
 }
 
 .contact-form-row {
@@ -101,351 +99,385 @@
 .contact-form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
   position: relative;
 }
 
+/* Label */
 .contact-form-group label {
-  font-family: "DM Mono", monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.35);
 }
 
+/* Inputs & textarea */
 .contact-form-group input,
 .contact-form-group textarea {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 12px 14px;
-  color: #fff;
-  font-family: "Inter", sans-serif;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 11px 14px;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 14px;
   line-height: 1.5;
-  transition:
-    border-color 0.2s,
-    background 0.2s;
+  transition: border-color 0.18s ease, background 0.18s ease;
+  resize: vertical;
 }
 
 .contact-form-group input::placeholder,
 .contact-form-group textarea::placeholder {
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.18);
 }
 
 .contact-form-group input:focus,
 .contact-form-group textarea:focus {
   outline: none;
-  border-color: rgba(232, 35, 250, 0.4);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(232, 35, 250, 0.35);
+  background: rgba(232, 35, 250, 0.04);
 }
 
+/* Char count */
 .contact-char-count {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.25);
   text-align: right;
-  margin-top: -4px;
+  margin-top: -3px;
 }
 
+/* ── Checkbox ── */
 .contact-checkbox-group {
-  margin: 8px 0 4px;
+  margin: 4px 0;
 }
 
 .contact-checkbox-label {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 11px;
   cursor: pointer;
-  font-size: 13px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.7);
+  user-select: none;
 }
 
+/* Hide native checkbox */
 .contact-checkbox-label input[type="checkbox"] {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  margin-top: 2px;
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  appearance: none;
-  -webkit-appearance: none;
-  position: relative;
-  transition: all 0.2s ease;
-}
-
-.contact-checkbox-label input[type="checkbox"]:checked::after {
-  content: "✓";
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #e823fa;
-  font-size: 12px;
-  font-weight: bold;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
 }
 
-.contact-checkbox-label input[type="checkbox"]:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(232, 35, 250, 0.2);
+/* Custom checkbox box */
+.contact-checkbox-label input[type="checkbox"] + .checkbox-text::before {
+  content: "";
+  display: inline-block;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  margin-right: 11px;
+  vertical-align: -3px;
+  transition: border-color 0.18s ease, background 0.18s ease;
+  position: relative;
 }
 
-.contact-checkbox-label input[type="checkbox"].error {
-  border-color: rgba(244, 67, 54, 0.6);
+.contact-checkbox-label input[type="checkbox"]:checked + .checkbox-text::before {
+  border-color: rgba(232, 35, 250, 0.6);
+  background: rgba(232, 35, 250, 0.12);
 }
 
-.contact-checkbox-label input[type="checkbox"].error:checked {
-  background: rgba(244, 67, 54, 0.2);
-  border-color: rgba(244, 67, 54, 0.6);
+/* Checkmark via sibling trick — fallback: use a wrapper span */
+.contact-checkbox-label input[type="checkbox"]:checked + .checkbox-text::after {
+  content: "";
+  position: absolute;
+  /* can't position off ::before, so we do a simple SVG bg approach */
+}
+
+/* Better approach: use a real custom element via the label wrapper */
+.contact-custom-checkbox {
+  flex-shrink: 0;
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.18s ease, background 0.18s ease;
+  pointer-events: none;
+}
+
+.contact-checkbox-label:has(input:checked) .contact-custom-checkbox {
+  border-color: rgba(232, 35, 250, 0.55);
+  background: rgba(232, 35, 250, 0.1);
+}
+
+.contact-checkbox-label:has(input:checked) .contact-custom-checkbox svg {
+  opacity: 1;
+}
+
+.contact-custom-checkbox svg {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  width: 9px;
+  height: 9px;
+}
+
+/* Error state for custom checkbox */
+.contact-checkbox-group.has-error .contact-custom-checkbox {
+  border-color: rgba(244, 67, 54, 0.5);
 }
 
 .checkbox-text {
-  flex: 1;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .checkbox-text a {
   color: rgba(232, 35, 250, 0.8);
-  text-decoration: underline;
-  transition: color 0.2s;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(232, 35, 250, 0.3);
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .checkbox-text a:hover {
   color: #e823fa;
+  border-color: rgba(232, 35, 250, 0.7);
 }
 
 .contact-checkbox-group.has-error .checkbox-text {
-  color: rgba(244, 67, 54, 0.8);
+  color: rgba(244, 67, 54, 0.7);
 }
 
+/* ── Submit button ── */
 .contact-submit-btn {
-  margin-top: 8px;
-  padding: 14px 32px;
-  border: none;
-  border-radius: 8px;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  margin-top: 6px;
+  padding: 11px 28px;
+  border-radius: 9px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.2s;
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
-  border: 1px solid rgba(232, 35, 250, 0.459);
-  background-color: #e823fa2a;
-  gap: 8px;
+  gap: 9px;
+  border: 1px solid rgba(232, 35, 250, 0.28);
+  background: rgba(232, 35, 250, 0.08);
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.12s ease;
 }
 
-.contact-submit-btn:hover {
-  opacity: 0.9;
-  background-color: #e823fa3d;
-  border-color: rgba(232, 35, 250, 0.6);
+.contact-submit-btn:hover:not(:disabled) {
+  background: rgba(232, 35, 250, 0.14);
+  border-color: rgba(232, 35, 250, 0.45);
+  color: #fff;
+  transform: translateY(-1px);
 }
 
-.contact-submit-btn:active {
+.contact-submit-btn:active:not(:disabled) {
   transform: translateY(0);
 }
 
-.contact-submit-btn.submitting {
-  opacity: 0.7;
+.contact-submit-btn.submitting,
+.contact-submit-btn:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
+/* Spinner */
 .spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-top-color: rgba(255, 255, 255, 0.8);
   border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+  animation: spin 0.7s linear infinite;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
+/* ── Errors ── */
+.contact-form-group input.error,
+.contact-form-group textarea.error {
+  border-color: rgba(244, 67, 54, 0.45);
+  background: rgba(244, 67, 54, 0.04);
+}
+
+.contact-error {
+  font-size: 10.5px;
+  letter-spacing: 0.3px;
+  color: rgba(244, 67, 54, 0.8);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+}
+
+.contact-form-error {
+  background: rgba(244, 67, 54, 0.07);
+  border: 1px solid rgba(244, 67, 54, 0.25);
+  border-radius: 8px;
+  padding: 11px 16px;
+  margin-bottom: 20px;
+  color: rgba(244, 67, 54, 0.9);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ── Info section ── */
 .contact-info-section {
   text-align: center;
   margin-top: 48px;
 }
 
 .contact-info-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
-  color: #fff;
-  margin-bottom: 32px;
-  letter-spacing: -0.5px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 28px;
+  letter-spacing: -0.4px;
 }
 
 .contact-info-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 16px;
 }
 
 .contact-info-card {
   padding: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 12px;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  text-align: left;
 }
 
 .contact-info-card:hover {
   border-color: rgba(232, 35, 250, 0.18);
   background: rgba(232, 35, 250, 0.03);
-  transform: translateY(-4px);
+  transform: translateY(-3px);
 }
 
 .contact-info-label {
   display: inline-block;
-  font-family: "DM Mono", monospace;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 2px;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: rgba(232, 35, 250, 0.7);
-  margin-bottom: 8px;
+  color: rgba(232, 35, 250, 0.6);
+  margin-bottom: 9px;
 }
 
 .contact-info-card p {
-  font-size: 14px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.5);
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.45);
   margin: 0;
 }
 
 .contact-info-card a {
-  color: rgba(232, 35, 250, 0.8);
+  color: rgba(232, 35, 250, 0.75);
   text-decoration: none;
-  transition: color 0.2s;
+  border-bottom: 1px solid rgba(232, 35, 250, 0.25);
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .contact-info-card a:hover {
   color: #e823fa;
-  text-decoration: underline;
+  border-color: rgba(232, 35, 250, 0.6);
 }
 
-.contact-form-group input.error,
-.contact-form-group textarea.error {
-  border-color: rgba(244, 67, 54, 0.6);
-  background: rgba(244, 67, 54, 0.05);
-}
-
-.contact-error {
-  font-size: 12px;
-  color: #f44336;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 8px;
-  border-radius: 4px;
-}
-
-.contact-error-icon {
-  font-size: 12px;
-}
-
-.contact-form-error {
-  background: rgba(244, 67, 54, 0.1);
-  border: 1px solid rgba(244, 67, 54, 0.3);
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  color: #f44336;
-  font-size: 13px;
-  text-align: center;
-}
-
+/* ── Success modal ── */
 .contact-success-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.25s ease;
 }
 
 .contact-success-modal {
-  background: rgba(19, 19, 19, 0.993);
-  border: 1px solid rgba(76, 175, 80, 0.4);
+  background: rgba(14, 14, 14, 0.98);
+  border: 1px solid rgba(76, 175, 80, 0.3);
   border-radius: 16px;
-  max-width: 450px;
+  max-width: 420px;
   width: 90%;
-  box-shadow: 0 20px 80px rgba(76, 175, 80, 0.25);
-  animation: modalSlideIn 0.4s ease;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 40px rgba(76, 175, 80, 0.1);
+  animation: modalSlideIn 0.3s ease;
   overflow: hidden;
 }
 
 .contact-success-header {
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(76, 175, 80, 0.2);
+  border-bottom: 1px solid rgba(76, 175, 80, 0.12);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .contact-success-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(
-    135deg,
-    rgba(76, 175, 80, 0.2),
-    rgba(139, 195, 74, 0.1)
-  );
-  border: 2px solid rgba(76, 175, 80, 0.5);
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
-  font-weight: bold;
-  color: #4caf50;
+  font-size: 20px;
 }
 
 .contact-success-close {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 24px;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 22px;
   cursor: pointer;
   padding: 0;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  transition: all 0.2s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .contact-success-close:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .contact-success-content {
-  padding: 32px;
+  padding: 28px 32px 32px;
   text-align: center;
 }
 
 .contact-success-title {
-  margin: 0 0 12px;
-  font-size: 24px;
+  margin: 0 0 10px;
+  font-size: 22px;
   font-weight: 700;
+  letter-spacing: -0.4px;
   background: linear-gradient(135deg, #4caf50, #8bc34a);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -455,76 +487,61 @@
 .contact-success-message {
   margin: 0 0 24px;
   font-size: 14px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .contact-success-btn {
-  background: linear-gradient(
-    135deg,
-    rgba(76, 175, 80, 0.3),
-    rgba(139, 195, 74, 0.2)
-  );
-  border: 1px solid rgba(76, 175, 80, 0.4);
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
   border-radius: 8px;
-  padding: 12px 32px;
-  color: #4caf50;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 10px 28px;
+  color: rgba(76, 175, 80, 0.9);
+  font-size: 11.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.18s ease, border-color 0.18s ease;
 }
 
 .contact-success-btn:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(76, 175, 80, 0.4),
-    rgba(139, 195, 74, 0.3)
-  );
-  border-color: rgba(76, 175, 80, 0.6);
-  transform: translateY(-2px);
+  background: rgba(76, 175, 80, 0.17);
+  border-color: rgba(76, 175, 80, 0.5);
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes modalSlideIn {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+  from { transform: scale(0.94) translateY(8px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
 }
 
-/* mobile tweaks ab hier getrennt, sonst wirds schnell unklar */
+/* ── Mobile ── */
 @media (max-width: 768px) {
   .contact-content {
     margin-bottom: 32px;
   }
 
   .contact-form-wrapper {
-    padding: 24px;
+    padding: 24px 20px;
   }
 
   .contact-form-row {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 22px;
   }
 
   .contact-info-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
+  }
+
+  .contact-info-card {
+    text-align: left;
   }
 
   .contact-h1 {
@@ -536,13 +553,12 @@
   }
 
   .contact-info-title {
-    font-size: 18px;
-    margin-bottom: 24px;
+    font-size: 17px;
+    margin-bottom: 20px;
   }
 
   .contact-error {
-    font-size: 11px;
-    padding: 4px 6px;
+    font-size: 10px;
   }
 
   .contact-success-modal {
@@ -550,20 +566,14 @@
   }
 
   .contact-success-content {
-    padding: 24px;
+    padding: 22px 24px 28px;
   }
 
   .contact-success-title {
     font-size: 20px;
   }
 
-  .contact-checkbox-label {
+  .checkbox-text {
     font-size: 12px;
-    gap: 10px;
-  }
-
-  .contact-checkbox-label input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
   }
 }
